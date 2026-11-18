@@ -7,7 +7,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { twitchSnapshot, twitchExtras, kickSnapshot, youtubeSnapshot, creds, strip, setLearnedPortugal, ptSignal } from '../lib/platforms.js';
+import { twitchSnapshot, twitchExtras, kickSnapshot, youtubeSnapshot, creds, strip, setLearnedPortugal, ptSignal, usage } from '../lib/platforms.js';
 import { forecast, peakOf } from '../public/forecast.js';
 import PORTUGAL_LIST from '../portugal.js';
 
@@ -29,8 +29,16 @@ const ts = now.toISOString().replace('.000Z', 'Z');
 const state = readJSON(path.join(PRIV, 'state.json'), {});
 const ago = (k) => (state[k] ? now.getTime() - Date.parse(state[k]) : Infinity);
 const force = process.env.FORCE_YT_VIDEOS === '1';
-const withYoutube = force || ago('youtube') >= 55 * 60e3;
-const withVideos = force || (withYoutube && ago('youtube_videos') >= 175 * 60e3);
+// Quota do YouTube: 10 000 unidades/dia, repõe à meia-noite do Pacífico. Guardamos o gasto do dia
+// e paramos a 9 000 (margem de 10%) — mesmo com execuções manuais ou forçadas.
+const YT_DAILY_CAP = 9000, YT_RUN_COST = 300, YT_VIDEOS_COST = 600;
+const ptDay = (d) => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Los_Angeles' }).format(d);
+const quota = state.yt_quota && state.yt_quota.day === ptDay(now) ? state.yt_quota : { day: ptDay(now), units: 0 };
+const ytAfford = (cost) => quota.units + cost <= YT_DAILY_CAP;
+const dueYoutube = ago('youtube') >= 55 * 60e3;
+const withYoutube = (force || dueYoutube) && ytAfford(YT_RUN_COST);
+const withVideos = withYoutube && (force || ago('youtube_videos') >= 175 * 60e3) && ytAfford(YT_RUN_COST + YT_VIDEOS_COST);
+if ((force || dueYoutube) && !withYoutube) console.log(`YouTube: quota do dia (${quota.units}/${YT_DAILY_CAP}) — a saltar esta recolha`);
 
 async function run() {
   const c = creds();
@@ -50,10 +58,16 @@ async function run() {
   await Promise.all(Object.entries(jobs).map(async ([k, p]) => {
     if (!p) { console.log(`${k}: sem credenciais, a saltar`); return; }
     try { res[k] = await p; console.log(`${k}: ${res[k].streams} streams, ${res[k].viewers} espectadores`); }
-    catch (e) { errors.push(`${k}: ${e.message}`); console.error(`ERRO ${k}:`, e.message); }
+    catch (e) {
+      errors.push(`${k}: ${e.message}`); console.error(`ERRO ${k}:`, e.message);
+      // quota esgotada de verdade (403): bloqueia o YouTube até ao fim do dia do Pacífico
+      if (k === 'youtube' && e.quotaExceeded) quota.units = Math.max(quota.units, 10000);
+    }
   }));
 
   // ---- YouTube: guardar estado e cache dos canais
+  if (withYoutube && !process.env.MOCK) quota.units += usage.youtube;
+  state.yt_quota = quota;
   if (res.youtube) {
     state.youtube = ts; if (withVideos) state.youtube_videos = ts;
     if (res.youtube.channel_cache) writeJSON(path.join(PRIV, 'yt-channels.json'), res.youtube.channel_cache);
@@ -88,6 +102,7 @@ async function run() {
     extras.games = prevLatest.games.twitch.map((g) => (g.gta ? { ...g, viewers: res.twitch.viewers, streams: res.twitch.streams } : g)).sort((a, b) => b.viewers - a.viewers);
   }
   writeJSON(path.join(PRIV, 'state.json'), state);
+  console.log(`Consumo desta execução: Twitch ${usage.twitch} pedidos (limite 800/min), Kick ${usage.kick}, YouTube ${usage.youtube} unidades (hoje ${quota.units}/10000), repetições ${usage.retries}, 429 finais ${usage.throttled}`);
 
   // ---- canais únicos acumulados
   const seen = readJSON(path.join(PRIV, 'seen.json'), {});
@@ -97,6 +112,26 @@ async function run() {
     seen[k] = [...set];
   }
   writeJSON(path.join(PRIV, 'seen.json'), seen);
+
+  // ---- entradas e saídas de streams desde a recolha anterior (só se a recolha anterior foi há ≤ 25 min
+  // e a lista é completa; a Kick só dá o top 100, por isso só conta quando há menos de 100 streams)
+  const liveSets = readJSON(path.join(PRIV, 'live-ids.json'), {});
+  const flow = {}, nextSets = { ts };
+  for (const [k, r] of Object.entries(res)) {
+    if (k === 'youtube') continue;
+    const sets = { g: new Set(r.list.map((x) => x.id)), p: new Set(r.list.filter((x) => x.lang === 'pt').map((x) => x.id)), q: new Set(r.list.filter((x) => x.portugal).map((x) => x.id)) };
+    nextSets[k] = Object.fromEntries(Object.entries(sets).map(([n, v]) => [n, [...v]]));
+    const prevSets = liveSets[k];
+    if (!prevSets || !liveSets.ts || now - Date.parse(liveSets.ts) > 25 * 60e3 || now <= Date.parse(liveSets.ts) || r.complete === false) continue;
+    const f = {};
+    for (const [n, cur] of Object.entries(sets)) {
+      const old = new Set(prevSets[n] || []);
+      f[n] = { i: [...cur].filter((x) => !old.has(x)).length, o: [...old].filter((x) => !cur.has(x)).length };
+    }
+    flow[k] = f;
+  }
+  for (const k of Object.keys(liveSets)) if (k !== 'ts' && !nextSets[k]) nextSets[k] = liveSets[k]; // plataforma falhou: mantém
+  if (!(liveSets.ts && Date.parse(liveSets.ts) >= now.getTime())) writeJSON(path.join(PRIV, 'live-ids.json'), nextSets);
 
   // ---- histórico
   const history = readJSON(path.join(PUB, 'history.json'), { points: [] });
@@ -109,6 +144,7 @@ async function run() {
   for (const [k, r] of Object.entries(res)) {
     point[k] = { v: r.viewers, s: r.streams, pv: r.pt_viewers, ps: r.pt_streams, ppv: r.ptpt_viewers, pps: r.ptpt_streams };
     if (r.rank != null) point[k].rank = r.rank;
+    if (flow[k]) Object.assign(point[k], { si: flow[k].g.i, so: flow[k].g.o, psi: flow[k].p.i, pso: flow[k].p.o, ppsi: flow[k].q.i, ppso: flow[k].q.o });
     if (r.top10 != null) point[k].t10 = r.top10;
     const dom = k === 'twitch' ? extras.dominance : r.dominance;
     if (dom) Object.assign(point[k], { dg: dom.gta_viewers, dt: dom.sample_viewers, d100: dom.gta_in_top100, d10: dom.gta_in_top10, dn: dom.sample });
@@ -222,7 +258,8 @@ async function run() {
   const all = [...Object.entries(res).filter(([k]) => k !== 'youtube').flatMap(([, r]) => r.list), ...ytLive];
   const latest = {
     ts, updated: new Date().toISOString(), errors,
-    totals: { ...(prev.totals || {}), ...Object.fromEntries(Object.entries(res).map(([k, r]) => [k, { viewers: r.viewers, streams: r.streams, pt_viewers: r.pt_viewers, ptpt_viewers: r.ptpt_viewers, complete: r.complete, rank: r.rank ?? null, at: ts }])) },
+    totals: { ...(prev.totals || {}), ...Object.fromEntries(Object.entries(res).map(([k, r]) => [k, { min_v: r.min_v || 0, viewers: r.viewers, streams: r.streams, pt_viewers: r.pt_viewers, ptpt_viewers: r.ptpt_viewers, complete: r.complete, rank: r.rank ?? null, at: ts }])) },
+    limits: { kick_top: 100, youtube_top: 50, twitch_sample: extras.dominance?.sample ?? prev.limits?.twitch_sample ?? null, yt_units: quota.units },
     youtube_live: ytLive.slice(0, 60).map((x) => ({ ...strip(x), country: x.country || '' })), youtube_live_ts: res.youtube ? ts : prev.youtube_live_ts,
     games: { twitch: extras.games || prev.games?.twitch || [], kick: res.kick?.dominance?.games || prev.games?.kick || [] },
     videos_portugal: res.youtube?.videos_portugal || prev.videos_portugal || [],

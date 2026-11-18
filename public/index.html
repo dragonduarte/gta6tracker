@@ -116,7 +116,19 @@ h2 { font-family: var(--font-display); font-size: 26px; margin: 0; letter-spacin
 .kpi .value { font-family: var(--font-display); font-size: 34px; font-weight: 700; letter-spacing: -.03em; margin-top: 6px; line-height: 1.05; }
 .kpi .note { color: var(--text-muted); font-size: 12px; margin-top: 6px; }
 
-.platforms { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 12px; }
+.platforms { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-top: 12px; }
+.plat.off { opacity: .6; }
+.plat.off .value { color: var(--text-secondary); }
+.src { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 14px 0 0; }
+.src > span:first-child { color: var(--text-secondary); font-size: 13px; font-weight: 500; }
+.src-note { color: var(--text-muted); font-size: 12.5px; margin: 8px 0 0; max-width: 62ch; }
+.info { all: unset; box-sizing: border-box; display: inline-grid; place-items: center; width: 16px; height: 16px; margin-left: 6px; border-radius: 50%; border: 1px solid var(--text-muted); color: var(--text-muted); font: italic 700 10px/1 Georgia, serif; cursor: help; vertical-align: middle; flex: none; }
+.info:hover, .info:focus-visible { color: var(--text-primary); border-color: var(--text-primary); background: var(--surface-2); }
+.info:focus-visible { outline: 2px solid var(--sun-1); outline-offset: 2px; }
+.itip { position: fixed; z-index: 80; max-width: min(300px, calc(100vw - 16px)); background: #0a0910; border: 1px solid var(--border); color: var(--text-primary); border-radius: 10px; padding: 10px 12px; font-size: 13px; line-height: 1.45; font-weight: 400; box-shadow: 0 8px 24px rgba(0,0,0,.5); pointer-events: none; }
+.kpis.four { grid-template-columns: repeat(4, 1fr); }
+.disc { color: var(--text-muted); font-size: 13px; margin: 12px 0 0; max-width: 80ch; }
+.grid2.even { grid-template-columns: 1fr 1fr; }
 .plat { background: var(--surface-1); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; min-width: 0; }
 .plat .top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .plat .name { display: flex; align-items: center; gap: 8px; font-weight: 600; }
@@ -245,7 +257,8 @@ main.nodata > section:not(:first-child), main.nodata > div, main.nodata #platfor
   .hero .wrap { grid-template-columns: 1.15fr 1fr !important; }
   .grid2 { grid-template-columns: 1.6fr 1fr !important; }
   .kpis { grid-template-columns: repeat(4, 1fr) !important; }
-  .platforms { grid-template-columns: repeat(3, 1fr) !important; }
+  .platforms { grid-template-columns: repeat(2, 1fr) !important; }
+  .itip, .info { display: none !important; }
   .videos { grid-template-columns: repeat(4, 1fr) !important; }
   .chart { height: 260px !important; } .panel.flex .chart { min-height: 260px; }
   .wrap { max-width: none; padding: 0 14px; }
@@ -253,8 +266,9 @@ main.nodata > section:not(:first-child), main.nodata > div, main.nodata #platfor
 }
 @media (max-width: 1000px) {
   .hero .wrap, .grid2 { grid-template-columns: 1fr; }
-  .kpis { grid-template-columns: repeat(2, 1fr); }
+  .kpis, .kpis.four { grid-template-columns: repeat(2, 1fr); }
   .platforms { grid-template-columns: 1fr; }
+  .grid2.even { grid-template-columns: 1fr; }
   .videos { grid-template-columns: repeat(2, 1fr); }
   .byline { display: none; }
 }
@@ -306,6 +320,8 @@ main.nodata > section:not(:first-child), main.nodata > div, main.nodata #platfor
         <div><div class="big tnum" id="heroStreams">—</div><div class="lbl" data-i="hero_streams"></div></div>
       </div>
       <p class="scope-note" id="scopeNote"></p>
+      <div class="src"><span data-i="src_label"></span><div class="seg" role="group" aria-label="Fonte" id="srcSeg"><button data-src="twitch"></button><button data-src="kick"></button><button data-src="all"></button></div><span class="info-slot" data-info="src"></span></div>
+      <p class="src-note" id="srcNote"></p>
       <div class="hero-meta"><span id="heroSub"></span><span class="visitors" id="visitors" hidden></span></div>
     </div>
     <div class="hero-chart panel" aria-live="polite">
@@ -345,6 +361,11 @@ main.nodata > section:not(:first-child), main.nodata > div, main.nodata #platfor
         <div class="board" id="board"></div>
       </div>
     </div>
+    <div class="panel" style="margin-top:12px">
+      <div class="card-head"><div><h3><span id="flowT"></span><span class="info-slot" data-info="flow"></span></h3><div class="desc" id="flowD"></div></div><div class="legend" id="flowLegend"></div></div>
+      <p class="insight" id="flowInsight" style="margin:0 0 8px"></p>
+      <div class="chart sm"><canvas id="flowChart" aria-label="Streams a entrar e a sair"></canvas></div>
+    </div>
     <div class="grid2 fc-row" id="secForecast">
       <div class="panel"><h3 data-i="fc_title"></h3><p class="insight" id="fcInsight" style="margin-bottom:0"></p></div>
       <div class="panel"><h3 data-i="fc_track"></h3><div class="desc" data-i="fc_track_desc"></div><div id="fcTable"></div></div>
@@ -357,12 +378,21 @@ main.nodata > section:not(:first-child), main.nodata > div, main.nodata #platfor
   <section id="youtube">
     <h2>YouTube</h2>
     <p class="insight" id="ytSub"></p>
-    <div class="panel">
+    <div class="kpis four" id="ytKpis"></div>
+    <div class="grid2 even" style="margin-top:12px">
+      <div class="panel">
+        <h3 id="ytLiveT"></h3><div class="desc" id="ytLiveD"></div>
+        <div class="chart sm"><canvas id="ytLive" aria-label="YouTube"></canvas></div>
+      </div>
+      <div class="panel"><h3 id="ytBoardT"></h3><div class="board" id="ytBoard"></div></div>
+    </div>
+    <p class="disc" id="ytDisc"></p>
+    <div class="panel" style="margin-top:12px">
       <h3 id="vidTitle"></h3><div class="desc" id="vidDesc"></div>
       <div class="videos" id="videos"></div>
     </div>
     <div class="panel" style="margin-top:12px">
-      <h3 data-i="yt_new_title"></h3><div class="desc" data-i="yt_new_desc"></div>
+      <h3><span data-i="yt_new_title"></span><span class="info-slot" data-info="yt_new"></span></h3><div class="desc" data-i="yt_new_desc"></div>
       <div class="chart sm"><canvas id="ytChart"></canvas></div>
     </div>
   </section>

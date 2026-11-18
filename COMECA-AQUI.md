@@ -30,7 +30,7 @@ Lista curta para pôr o site no ar. Os detalhes de cada passo estão no `README.
 - [ ] Opcional: **Storage → Upstash (Redis) Free → Connect Project → Redeploy** para o contador de pessoas no site.
 
 ### 4. Personalizar (no GitHub, ficheiro `public/config.js`)
-- [ ] `sponsor.url`: o teu link da Instant Gaming, no lugar de `COLOCA_AQUI`.
+- [x] `sponsor.url`: já tem o teu link da Instant Gaming (GTA 6).
 - [ ] Confirma o `author` e o `authorUrl`.
 - [ ] Opcional: acrescenta streamers portugueses ao `portugal.js`.
 

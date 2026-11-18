@@ -12,10 +12,10 @@ window.SITE_CONFIG = {
   // Hora do lançamento (UTC). 00:00Z = meia-noite em Lisboa no dia 19.
   launch: '2026-11-19T00:00:00Z',
 
-  // 💸 ANÚNCIO / AFILIADO — cola aqui o TEU link de afiliado da Instant Gaming
-  // (algo como https://www.instant-gaming.com/?igr=oteunome). Enquanto tiver "COLOCA_AQUI", o anúncio fica escondido.
+  // 💸 BANNER "COMPRA O GTA VI" — o teu link de afiliado da Instant Gaming (só aceita links instant-gaming.com).
+  // Se apagares o link ou deixares "COLOCA_AQUI", o banner fica escondido.
   sponsor: {
-    url: 'https://www.instant-gaming.com/?igr=COLOCA_AQUI',
+    url: 'https://www.instant-gaming.com/pt/l/gta6?igr=dragonduarte',
     name: 'Instant Gaming',
   },
 

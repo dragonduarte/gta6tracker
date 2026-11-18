@@ -8,18 +8,18 @@
   const EX = {
     pt: {
       ad_note: 'link de afiliado',
-      ad_title: 'Compra aqui os teus jogos mais baratos',
-      ad_text: 'GTA VI e outros jogos para PS5, Xbox e PC, com desconto na Instant Gaming.', ad_cta: 'Ver preços',
+      ad_title: 'Compra o GTA VI aqui',
+      ad_text: 'Vê o preço do GTA VI na Instant Gaming e compra os teus jogos mais baratos.', ad_cta: 'Ver preços',
       games_h2: 'GTA VI vs outros jogos', games_tw: 'Twitch: os jogos mais vistos agora', games_tw_sub: 'Espectadores somados de todas as streams de cada jogo. Sem Just Chatting e outras categorias que não são jogos.',
-      games_kk: 'Kick: os jogos mais vistos agora', games_kk_sub: 'Nas 100 maiores streams da Kick (limite da API pública), por jogo.',
+      games_kk: 'Kick: os jogos mais vistos agora', games_kk_sub: 'Nas 100 maiores streams da Kick (limite da API pública), por jogo. Não inclui as mais pequenas.',
       games_rank: 'Lugar entre os jogos na Twitch', games_vs: (x, n) => `${x} o 2º lugar (${n})`, games_vs_lbl: 'Comparado com o 2º jogo', games_vs_lbl2: 'Comparado com o 1º jogo', games_behind: (x, n) => `${x} do 1º lugar (${n})`,
-      games_share: 'dos espectadores das 1000 maiores streams da Twitch', games_wait: 'A comparação aparece depois da primeira recolha.',
+      games_share: 'dos espectadores das {n} maiores streams da Twitch', games_wait: 'A comparação aparece depois da primeira recolha.',
       games_insight: (r, x, n) => r === 1 ? `Na Twitch, o GTA VI é agora o <b>jogo mais visto</b>, com <b>${x}</b> o público do 2º lugar, ${n}.` : `Na Twitch, o GTA VI está agora em <b>${r}º lugar</b> entre os jogos. Tem ${x} do público do líder, ${n}.`,
       times: (v) => `${v}×`, more: 'mais que',
       dom_title: 'Quanto pesa o GTA VI em cada plataforma', dom_sub: 'Peso do GTA VI entre as maiores streams de cada plataforma, de todas as categorias',
-      dom_tw_big: 'dos espectadores das 1000 maiores streams da Twitch', dom_kk_big: 'dos espectadores das 100 maiores streams da Kick',
+      dom_tw_big: 'dos espectadores das {n} maiores streams da Twitch', dom_kk_big: 'dos espectadores das 100 maiores streams da Kick',
       dom_top100: (n, of) => `${n} das ${of} maiores streams`, dom_top10: (n) => `${n} das 10 maiores`,
-      dom_chart: 'Quota do GTA VI nas 1000 maiores streams da Twitch', dom_wait: 'A aguardar a primeira recolha horária.',
+      dom_chart: 'Quota do GTA VI nas {n} maiores streams da Twitch', dom_wait: 'A aguardar a primeira recolha horária.',
       conc_title: 'Espectadores por stream', conc_sub: 'Média de espectadores por stream. Quanto mais alta, mais o público está concentrado em poucos canais grandes.',
       conc_avg: 'média por stream', conc_top10: 'nas 10 maiores streams',
       share_t_title: 'A fatia de cada plataforma', share_t_sub: 'Percentagem dos espectadores, hora a hora',
@@ -38,18 +38,18 @@
     },
     en: {
       ad_note: 'affiliate link',
-      ad_title: 'Buy your games cheaper here',
-      ad_text: 'GTA VI and other PS5, Xbox and PC games, discounted on Instant Gaming.', ad_cta: 'See prices',
+      ad_title: 'Buy GTA VI here',
+      ad_text: 'See the price of GTA VI on Instant Gaming and buy your games for less.', ad_cta: 'See prices',
       games_h2: 'GTA VI vs other games', games_tw: 'Twitch: most-watched games right now', games_tw_sub: 'Viewers summed across every stream of each game. Just Chatting and other non-game categories are left out.',
-      games_kk: 'Kick: most-watched games right now', games_kk_sub: "Across Kick's 100 biggest streams (the public API's limit), by game.",
+      games_kk: 'Kick: most-watched games right now', games_kk_sub: "Across Kick's 100 biggest streams (the public API's limit), by game. Smaller streams are not included.",
       games_rank: 'Rank among games on Twitch', games_vs: (x, n) => `${x} the #2 game (${n})`, games_vs_lbl: 'Against the #2 game', games_vs_lbl2: 'Against the #1 game', games_behind: (x, n) => `${x} of the #1 game (${n})`,
-      games_share: "of viewers across Twitch's 1,000 biggest streams", games_wait: 'The comparison appears after the first snapshot.',
+      games_share: "of viewers across Twitch's {n} biggest streams", games_wait: 'The comparison appears after the first snapshot.',
       games_insight: (r, x, n) => r === 1 ? `On Twitch, GTA VI is now the <b>most-watched game</b>, with <b>${x}</b> the audience of #2, ${n}.` : `On Twitch, GTA VI is now <b>#${r}</b> among games, with ${x} of the leader's audience, ${n}.`,
       times: (v) => `${v}×`, more: 'more than',
       dom_title: 'How much GTA VI weighs on each platform', dom_sub: "GTA VI's weight among each platform's biggest streams, across all categories",
-      dom_tw_big: "of viewers across Twitch's 1,000 biggest streams", dom_kk_big: "of viewers across Kick's 100 biggest streams",
+      dom_tw_big: "of viewers across Twitch's {n} biggest streams", dom_kk_big: "of viewers across Kick's 100 biggest streams",
       dom_top100: (n, of) => `${n} of the top ${of} streams`, dom_top10: (n) => `${n} of the top 10`,
-      dom_chart: "GTA VI share of Twitch's 1,000 biggest streams", dom_wait: 'Waiting for the first hourly snapshot.',
+      dom_chart: "GTA VI share of Twitch's {n} biggest streams", dom_wait: 'Waiting for the first hourly snapshot.',
       conc_title: 'Viewers per stream', conc_sub: 'Average viewers per stream. The higher it is, the more the audience is concentrated in a few big channels.',
       conc_avg: 'avg per stream', conc_top10: 'on the 10 biggest streams',
       share_t_title: 'Each platform\'s slice', share_t_sub: 'Share of viewers, hour by hour',
@@ -68,13 +68,15 @@
     },
   };
   const X = (k) => { const v = EX[S.lang][k]; return v && typeof v === 'object' && !Array.isArray(v) ? v[S.scope] : v; };
+  const sampleN = () => fmt(S.latest?.dominance?.twitch?.sample || lastWith('twitch', 'dn')?.dn || 5000);
+  const XN = (k) => String(X(k)).replace('{n}', sampleN());
   const CFG = window.SITE_CONFIG || {};
   const SEQ = ['#0d366b', '#104281', '#1c5cab', '#2a78d6', '#3987e5', '#6da7ec', '#9ec5f4', '#cde2fb']; // rampa sequencial (azul), escuro → claro no fundo escuro
   // hora local de quem está a ver (o servidor guarda tudo em UTC)
   const lisbonHour = (ts) => new Date(ts).getHours();
   const lisbonDay = (ts) => new Intl.DateTimeFormat('en-CA').format(new Date(ts));
   const durFmt = (ms) => { const m = Math.max(0, ms / 60e3); return m >= 60 ? `${Math.floor(m / 60)} h ${String(Math.floor(m % 60)).padStart(2, '0')}` : `${Math.floor(m)} min`; };
-  const scopeFilter = (r) => S.scope === 'global' ? true : S.scope === 'luso' ? r.lang === 'pt' : !!r.portugal;
+  const scopeFilter = (r) => !PLATFORMS.includes(r.platform) ? false : S.scope === 'global' ? true : S.scope === 'luso' ? r.lang === 'pt' : !!r.portugal;
 
   /* ---------------------------------------------------------------- estilos */
   const style = document.createElement('style');
@@ -227,8 +229,8 @@
     if (liveTw) for (const g of tw) if (g.gta) g.viewers = liveTw;
     tw.sort((a, b) => b.viewers - a.viewers);
     const i = tw.findIndex((g) => g.gta), gta = tw[i];
-    document.getElementById('gTwT').textContent = X('games_tw'); document.getElementById('gTwS').textContent = X('games_tw_sub');
-    document.getElementById('gKkT').textContent = X('games_kk'); document.getElementById('gKkS').textContent = X('games_kk_sub');
+    document.getElementById('gTwT').innerHTML = esc(X('games_tw')) + infoBtn('games'); document.getElementById('gTwS').textContent = X('games_tw_sub');
+    document.getElementById('gKkT').innerHTML = esc(X('games_kk')) + infoBtn('kick'); document.getElementById('gKkS').textContent = X('games_kk_sub');
     document.getElementById('gRankL').textContent = X('games_rank');
     document.getElementById('gVsL').textContent = X('games_vs_lbl');
     const nf1 = nf({ maximumFractionDigits: 1 });
@@ -256,9 +258,9 @@
 
     const d = lastWith('twitch', 'dg');
     document.getElementById('domTw').textContent = d && d.dt ? pct(d.dg, d.dt) : '—';
-    document.getElementById('domTwL').textContent = d ? X('games_share') : X('dom_wait');
+    document.getElementById('domTwL').innerHTML = d ? esc(XN('games_share')) + infoBtn('weight') : esc(X('dom_wait'));
 
-    document.getElementById('domChartT').textContent = X('dom_chart');
+    document.getElementById('domChartT').innerHTML = esc(XN('dom_chart')) + infoBtn('weight');
     document.getElementById('domChartS').textContent = S.lang === 'pt' ? 'Percentagem ao longo do tempo' : 'Percentage over time';
     const dp = inRange().filter((p) => p.twitch?.dg != null && p.twitch?.dt);
     mkOrUpdate('domChart', {
@@ -345,7 +347,7 @@
 
     document.getElementById('maraT').textContent = X('mara_title');
     document.getElementById('maraS').textContent = X('mara_sub');
-    const m = (S.latest.marathons || {})[S.scope] || [];
+    const m = ((S.latest.marathons || {})[S.scope] || []).filter((r) => PLATFORMS.includes(r.platform));
     const ref = Date.parse(S.latest.updated || S.latest.ts || Date.now());
     document.getElementById('mara').innerHTML = m.length ? m.map((r, i) => boardRow(r, i, `${durFmt(Date.now() - Date.parse(r.started_at))}<small>${fmt(r.viewers)} ${X('viewers')}</small>`,
       esc(r.title))).join('') : `<div class="empty">${X('mara_empty')}</div>`;
@@ -425,7 +427,7 @@
     document.getElementById('mapInsight').innerHTML = totL && ptRank ? (S.lang === 'pt'
       ? `O português é a <b>${ptRank}.ª língua</b> com mais audiência na Twitch e na Kick: <b>${pct(ptL, totL)}</b> de quem está a ver GTA VI nas duas plataformas.`
       : `Portuguese is the <b>no. ${ptRank} language</b> by audience on Twitch and Kick: <b>${pct(ptL, totL)}</b> of everyone watching GTA VI there.`) : '';
-    document.getElementById('mapT').textContent = X('map_title');
+    document.getElementById('mapT').innerHTML = esc(X('map_title')) + infoBtn('map');
     document.getElementById('mapS').textContent = X('map_sub');
     const box = document.getElementById('map');
     if (mapState !== 'ready') { box.innerHTML = `<div class="empty">${mapState === 'fail' ? X('map_fail') : X('map_loading')}</div>`; return; }

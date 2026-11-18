@@ -77,6 +77,19 @@ A conta Twitch precisa de ter a autenticação de dois fatores ligada (*Settings
 
 A partir daqui a recolha corre sozinha de 10 em 10 minutos. Os dados ficam num branch chamado `data`, que aparece sozinho depois da primeira recolha. Não mexas nele.
 
+
+### Recolha em horas certas (opcional, recomendado)
+O agendamento do GitHub (`cron`) é "o melhor que conseguir": em repositórios novos costuma atrasar e saltar execuções, e só dispara quando o GitHub quer. Para ter uma recolha certinha de 10 em 10 minutos, usa um disparador externo grátis:
+
+1. No GitHub: **Settings (da tua conta, não do repositório) → Developer settings → Personal access tokens → Fine-grained tokens → Generate new token**. Escolhe **Only select repositories** e o teu repositório. Em **Repository permissions**, põe **Actions: Read and write** e mais nada. Validade: 1 ano. Copia o token.
+2. Em https://cron-job.org (grátis), cria uma conta e um **Cronjob**:
+   - URL: `https://api.github.com/repos/TEU-UTILIZADOR/TEU-REPOSITORIO/actions/workflows/collect.yml/dispatches`
+   - Schedule: every 10 minutes
+   - Em **Advanced**: método **POST**; cabeçalhos `Authorization: Bearer O_TEU_TOKEN`, `Accept: application/vnd.github+json`, `X-GitHub-Api-Version: 2022-11-28`; corpo `{"ref":"main"}`.
+3. Guarda e carrega em **Test run**: deve responder `204`. Em **Actions** aparece uma execução nova.
+
+O token só consegue disparar este workflow, nada mais. Se o perderes, apaga-o no GitHub e cria outro. O `cron` do workflow fica como reserva.
+
 ## 3. Publicar no Vercel
 
 1. Abre https://vercel.com/signup e entra com **Continue with GitHub**.
@@ -101,13 +114,11 @@ Não guarda IPs nem cookies, só contadores. Se o plano grátis esgotar num dia 
 - **Estatísticas de visitas:** abre o projeto no Vercel, vai a **Analytics → Enable**. O código já está no site.
 - **Domínio próprio:** em **Settings → Domains**, adiciona por exemplo `gta6.duarterodrigues.pt` e segue as instruções de DNS.
 
-## 4. Pôr o teu link da Instant Gaming
+## 4. O banner "Compra o GTA VI aqui" (Instant Gaming)
 
-1. No GitHub, abre o ficheiro `public/config.js` e clica no lápis (✏️).
-2. Substitui `https://www.instant-gaming.com/?igr=COLOCA_AQUI` pelo teu link de afiliado. Encontras esse link na tua conta Instant Gaming, na secção de parceria/afiliação.
-3. Clica **Commit changes**. O Vercel publica a alteração em cerca de 1 minuto.
+O teu link de afiliado já está em `public/config.js` (`sponsor.url`: `https://www.instant-gaming.com/pt/l/gta6?igr=dragonduarte`). Para o mudar, abre esse ficheiro no GitHub, clica no lápis (✏️), troca o link e faz **Commit changes**. Só aceita links de `instant-gaming.com`.
 
-O anúncio aparece a seguir aos números principais, identificado como "Publicidade, link de afiliado". Enquanto o link tiver `COLOCA_AQUI`, o anúncio fica escondido.
+O banner aparece a seguir aos números principais, com a nota pequena "link de afiliado" (sem a palavra "publicidade"). Se apagares o link, o banner desaparece.
 
 ---
 
@@ -130,9 +141,9 @@ Para afinar a vista **Portugal**, acrescenta os logins dos streamers portugueses
 | Frase principal e números de agora, por plataforma | Twitch, Kick e YouTube | 2 min (Twitch e Kick), 1 h (YouTube) |
 | Gráfico ao longo do tempo, com filtro de 24 h, 48 h, 7 dias, 1 mês ou tudo | histórico | 10 min |
 | GTA VI vs outros jogos (Twitch e Kick) | Twitch e Kick | 30 min |
-| Pessoas no site agora | Upstash (opcional) | 3 min |
+| Pessoas no site agora | Upstash (opcional) | 5 min |
 | Previsão para as próximas 24 h, e "Acertámos?" | histórico | 1 h |
-| Quanto pesa o GTA VI na Twitch (1000 maiores streams) e na Kick (100 maiores) | Twitch e Kick | 1 h |
+| Quanto pesa o GTA VI na Twitch (5000 maiores streams) e na Kick (100 maiores) | Twitch e Kick | 30 min |
 | Espectadores por stream | histórico | 1 h |
 | A que horas se vê mais (mapa de calor) e fatia de cada plataforma | histórico | 1 h |
 | Clips mais vistos nas últimas 24 h | Twitch | 1 h |
@@ -140,10 +151,29 @@ Para afinar a vista **Portugal**, acrescenta os logins dos streamers portugueses
 | As primeiras 24 horas, com imagem própria | histórico | ativa-se no lançamento |
 | Mapa por língua e Google Trends | Twitch, Kick e Google | 1 h / tempo real |
 | Vídeos novos no YouTube | YouTube | 3 h |
+| Secção YouTube (lives, vídeos), separada dos totais | YouTube | 1 h / 3 h |
+| Streams a entrar e a sair (por hora) | Twitch (e Kick com <100 streams) | 10 min |
 
 **Partilhar:** o botão "Descarregar" gera uma imagem 1080×1350 para o LinkedIn, sempre com o teu nome. Também há a opção "Guardar em PDF".
-**Links diretos:** podes partilhar uma vista específica, por exemplo `?lang=en&scope=portugal&range=48`.
+**Links diretos:** podes partilhar uma vista específica, por exemplo `?lang=en&scope=portugal&range=48&src=twitch`.
+**Seletor "Contar":** por defeito o total conta só a Twitch (a única que dá todas as streams). Podes somar a Kick e o YouTube; aí o site passa a escrever "pelo menos".
 **Incorporar:** o botão "Incorporar no teu site" dá um `<iframe>` que mostra os números ao vivo, com crédito.
+
+## Limites das APIs grátis (consumo estimado)
+
+Cada execução escreve no log do GitHub Actions uma linha `Consumo desta execução` com os pedidos feitos.
+
+| Serviço | Limite grátis | O que o projeto gasta | Proteção |
+|---|---|---|---|
+| YouTube Data API | 10 000 unidades/dia (repõe à meia-noite do Pacífico) | cerca de 8 600/dia no máximo (pesquisa = 100 unidades; lives de hora a hora, vídeos de 3 em 3 h) | o coletor conta as unidades do dia e **pára a 9 000**; um 403 de quota bloqueia o YouTube até ao dia seguinte; execuções manuais não furam o limite |
+| Twitch Helix | 800 pontos/minuto por app (1 por pedido) | cerca de 55 pedidos por recolha de 10 min; cerca de 175 nas de 30 min (amostra das 5000 maiores streams) | em 429 espera o tempo indicado (máx. 20 s) e tenta no máximo 2 vezes; páginas sempre limitadas |
+| Kick | não publica limite | 3 pedidos por recolha | em 429 faz o mesmo recuo; nunca insiste |
+| GitHub Actions | repositório público: minutos grátis ilimitados | uma execução de 1 a 2 min por 10 min | `concurrency` evita execuções em paralelo |
+| Vercel (Hobby) | 100 deploys/dia, 1 M execuções de funções/mês, 100 GB/mês | o branch `data` não faz deploy; `/api/live` e `/api/data` têm cache de CDN | sem deploys extra por cada recolha |
+| Upstash (Redis grátis) | 500 000 comandos/mês | 1 comando por visitante a cada 5 min, no máximo 18 por separador (90 min) | em erro o contador esconde-se; `VISITORS_OFF=1` desliga-o |
+
+Se previres muito mais de 600 visitantes-hora por dia, desliga o contador (`VISITORS_OFF=1` no Vercel) ou passa a plano Pay-as-you-go da Upstash (0,20 $ por 100 000 comandos).
+O plano Hobby do Vercel é só para uso pessoal e não comercial; o banner de afiliado é um ponto a ter em conta nos termos deles.
 
 ## Problemas comuns
 

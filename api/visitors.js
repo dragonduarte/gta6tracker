@@ -1,10 +1,10 @@
 // /api/visitors — quantas pessoas estão no site agora + visitas (hoje e total).
 // Guarda só contadores (nada de IPs, cookies ou identificadores) numa base Redis grátis (Upstash, via Vercel).
-//   POST /api/visitors {"first":true}  → batimento do browser (a cada 3 min enquanto a página está aberta)
+//   POST /api/visitors {"first":true}  → batimento do browser (a cada 5 min enquanto a página está aberta)
 //   GET  /api/visitors                  → { online, today, total }  (cache 30 s na CDN)
 // Sem a base configurada, responde 404 e o site esconde o contador.
 
-const SLOT_S = 180;                  // cada visitante envia 1 batimento por janela de 3 min
+const SLOT_S = 300;                  // cada visitante envia 1 batimento por janela de 5 min (poupa comandos do Upstash grátis: 500 000/mês)
 const env = () => ({
   url: process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL || '',
   token: process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN || '',
@@ -47,7 +47,7 @@ export default async function handler(req, res) {
   res.setHeader('X-Robots-Tag', 'noindex');
   res.setHeader('Cross-Origin-Resource-Policy', 'same-origin');
   const { url, token } = env();
-  if (!/^https:\/\//.test(url) || !token) { res.setHeader('Cache-Control', 'public, s-maxage=300'); return res.status(404).send('{"error":"off"}'); }
+  if (process.env.VISITORS_OFF === '1' || !/^https:\/\//.test(url) || !token) { res.setHeader('Cache-Control', 'public, s-maxage=300'); return res.status(404).send('{"error":"off"}'); }
 
   const slot = Math.floor(Date.now() / 1000 / SLOT_S);
   const day = lisbonDay();

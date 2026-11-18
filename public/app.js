@@ -5,8 +5,11 @@ const AUTHOR = String(CFG.author || 'Duarte Rodrigues');
 const AUTHOR_URL = (() => { try { const u = new URL(CFG.authorUrl); if (u.protocol === 'https:') return u.href; } catch { /* usa o padrão */ } return 'https://www.linkedin.com/in/duartenrodrigues26/'; })();
 const PUBLIC_DOWNLOADS = CFG.publicDownloads !== false;
 const LAUNCH = new Date(CFG.launch || '2026-11-19T00:00:00Z');
-const LIVE_EVERY = 120e3, HISTORY_EVERY = 5 * 60e3, VISIT_EVERY = 180e3;
-const PLATFORMS = ['twitch', 'kick', 'youtube'];
+const LIVE_EVERY = 120e3, HISTORY_EVERY = 5 * 60e3, VISIT_EVERY = 300e3;
+const ALL = ['twitch', 'kick', 'youtube'];
+const SRC_SETS = { twitch: ['twitch'], kick: ['twitch', 'kick'], all: ALL };
+const PLATFORMS = ['twitch'];                       // plataformas contadas nos totais (muda com o seletor de fonte)
+const CARDS = ['twitch', 'kick'];                   // cartões da secção "Agora" (o YouTube tem secção própria)
 const NAMES = { twitch: 'Twitch', kick: 'Kick', youtube: 'YouTube' };
 const css = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
 const COLOR = { twitch: css('--twitch'), kick: css('--kick'), youtube: css('--youtube') };
@@ -18,14 +21,14 @@ const I18N = {
     scope_global: 'Mundo', scope_portugal: 'Portugal', scope_luso: 'Em português',
     lead: 'Quantas pessoas estão a ver GTA VI (GTA 6, Grand Theft Auto VI) neste momento? Espectadores, streams e vídeos em tempo real na Twitch, Kick e YouTube.',
     nav_now: 'Agora', nav_time: 'Evolução', nav_games: 'vs outros jogos', nav_streamers: 'Streamers', nav_more: 'Mais dados', skip: 'Saltar para os dados',
-    scope_note: { global: 'Twitch, Kick e YouTube somados. Muda para 🇵🇹 Portugal ou 🗣️ Em português no topo.', portugal: 'Só criadores de Portugal: lista de streamers portugueses + deteção automática (PT-PT no título, país do canal no YouTube). O Brasil fica de fora.', luso: 'Todas as streams faladas em português: Portugal, Brasil e outros países.' },
+    scope_note: { global: 'Soma das plataformas escolhidas em "Contar". Muda para 🇵🇹 Portugal ou 🗣️ Em português no topo.', portugal: 'Só criadores de Portugal: lista de streamers portugueses + deteção automática (PT-PT no título, país do canal no YouTube). O Brasil fica de fora.', luso: 'Todas as streams faladas em português: Portugal, Brasil e outros países.' },
     visitors: (n) => `<b>${n}</b> ${n === 1 ? 'pessoa' : 'pessoas'} neste site agora`, visitors_tip: (d, t) => `${d} visitas hoje, ${t} no total`,
     hero_viewers: { global: 'a ver agora, em todo o mundo', portugal: 'a ver agora, em streams de Portugal', luso: 'a ver agora, em streams em português' },
     hero_streams: 'streams em direto agora',
     hc_title: 'Últimas 24 horas', hc_peak: (v) => `pico ${v}`,
     page_title: 'GTA 6 ao vivo: quantas pessoas estão a ver GTA VI agora? | Twitch, Kick e YouTube', page_desc: 'GTA 6 (GTA VI, Grand Theft Auto VI) ao vivo: espectadores, streams, recordes e vídeos em tempo real na Twitch, Kick e YouTube. No mundo, em Portugal e em português. Por Duarte Rodrigues.',
     now_title: { global: 'Agora, em todo o mundo', portugal: 'Agora, em Portugal', luso: 'Agora, em língua portuguesa' },
-    now_sub: { global: 'Soma das três plataformas.', portugal: 'Streams portuguesas (PT-PT). Vê a metodologia no fim da página.', luso: 'Todas as streams em português: Portugal, Brasil e outros.' },
+    now_sub: { global: 'As plataformas escolhidas em "Contar".', portugal: 'Streams portuguesas (PT-PT). Vê a metodologia no fim da página.', luso: 'Todas as streams em português: Portugal, Brasil e outros.' },
     share_title: 'Fatia de espectadores por plataforma',
     share_btn: 'Descarregar', download: 'Descarregar imagem', pdf: 'Guardar em PDF', embed: 'Incorporar no teu site', close: 'Fechar', downloading: 'A preparar a imagem…',
     by: 'por', author_role: 'Fiz este tracker. Se usares os dados ou as imagens, indica a fonte.', record: '🔥 Novo recorde', credit_line: 'Dados e visualização de', made_by: 'Feito por',
@@ -34,12 +37,12 @@ const I18N = {
     live: 'Ao vivo', live_ago: (m) => m < 1 ? 'Atualizado agora mesmo.' : `Atualizado há ${m} min.`, live_off: (d) => `Última recolha às ${d}.`,
     status_live: 'Ao vivo', status_off: 'Última recolha',
     k_now: 'Espectadores agora', k_peak: 'Pico registado', k_hours: 'Horas assistidas', k_streams: 'Streams agora', k_rank: 'Lugar na Twitch', k_share: 'Fatia do total mundial', k_unique: 'Canais diferentes',
-    k_hours_note: 'estimativa desde o início', k_rank_note: 'entre todas as categorias', k_unique_note: 'já transmitiram GTA VI', k_share_note: 'dos espectadores globais', k_streams_note: 'nas três plataformas',
+    k_hours_note: 'estimativa desde o início', k_rank_note: 'entre todas as categorias', k_unique_note: 'já transmitiram GTA VI', k_share_note: 'dos espectadores globais', k_streams_note: 'nas plataformas contadas',
     streams: 'streams', stream1: 'stream', of_total: 'do total', top100: 'só as 100 maiores', top50: 'só as maiores lives', hourly: 'de hora a hora', live_short: 'ao vivo',
     ts_h2: { v: 'Ao longo do tempo', s: 'Streams ao longo do tempo' },
     ts_insight: (r) => r, m_viewers: 'Espectadores', m_streams: 'Streams', all: 'Tudo', r_month: '1 mês', forecast: 'previsão',
     board_title: { global: 'Quem tem mais gente a ver', portugal: 'Streamers portugueses com mais gente', luso: 'Streamers em português com mais gente' },
-    board_desc: 'Agora, nas três plataformas', board_empty: 'Ninguém a transmitir nesta vista neste momento.',
+    board_desc: 'Agora, nas plataformas escolhidas', board_empty: 'Ninguém a transmitir nesta vista neste momento.',
     viewers: 'espectadores', views: 'visualizações',
     yt_sub: 'Lives e vídeos novos que mencionam "GTA VI", "GTA 6", "GTA6", "Grand Theft Auto VI" ou "Grand Theft Auto 6".',
     yt_new_title: 'Vídeos novos publicados', yt_new_desc: 'Por cada 3 horas. O número é uma estimativa do próprio YouTube.',
@@ -54,7 +57,7 @@ const I18N = {
     fc_insight: (pk, h, d) => `Pelo ritmo dos últimos dias, o próximo pico deve rondar <b>${pk}</b> pessoas, por volta das <b>${h}</b> de ${d}. O modelo é simples: repete o padrão de cada hora dos últimos 3 dias e ajusta pela tendência.`,
     fc_wait: 'A previsão aparece quando houver pelo menos 24 horas de dados (depois do lançamento, conta só a partir dele).', fc_none: 'Ainda não há previsões terminadas para comparar.',
     method_title: 'Como é que isto é medido',
-    method: `<p><b>Fontes.</b> Só APIs oficiais. Na Twitch, todas as streams da categoria "Grand Theft Auto VI" (também conhecido como GTA VI, GTA 6 ou Grand Theft Auto 6). Na Kick, as 100 maiores streams da categoria, que é o limite da API pública. No YouTube, as 50 lives mais vistas que mencionam GTA VI, GTA 6, GTA6, Grand Theft Auto VI ou Grand Theft Auto 6, e uma segunda pesquisa orientada a português; os vídeos novos são contados de 3 em 3 horas e esse número é uma estimativa do YouTube.</p>
+    method: `<p><b>Fontes.</b> Só APIs oficiais. O total mostrado por defeito conta só a Twitch, que é a única que dá todas as streams; podes somar a Kick e o YouTube, mas aí o número passa a ser "pelo menos". Na Twitch, todas as streams da categoria "Grand Theft Auto VI" (também conhecido como GTA VI, GTA 6 ou Grand Theft Auto 6). Na Kick, as 100 maiores streams da categoria, que é o limite da API pública. No YouTube, as 50 lives mais vistas que mencionam GTA VI, GTA 6, GTA6, Grand Theft Auto VI ou Grand Theft Auto 6, e uma segunda pesquisa orientada a português; os vídeos novos são contados de 3 em 3 horas e esse número é uma estimativa do YouTube.</p>
       <p><b>Portugal e português.</b> A Twitch e a Kick dizem a língua de cada stream, não o país. "Em português" junta todas as streams em português, incluindo as do Brasil. "Portugal" junta quatro sinais: uma lista de criadores portugueses (RicFazeres, Wuant, SirKazzio, Zorlak e outros), canais que o tracker já reconheceu como portugueses, títulos com marcas de Portugal ("PT-PT", "🇵🇹", "tuga") ou de português europeu ("a jogar", "connosco", "malta"), e, no YouTube, o país do canal ou o áudio em pt-PT. Os vídeos e as lives dos canais da lista são lidos diretamente, mesmo que não apareçam na pesquisa do YouTube. Ainda assim é uma contagem por baixo.</p>
       <p><b>Espectadores</b> são pessoas a ver ao mesmo tempo, não visualizações acumuladas, e a mesma pessoa pode estar em mais do que uma stream. <b>Horas assistidas</b> é a soma dos espectadores de cada recolha, uma estimativa. A <b>previsão</b> repete o padrão horário dos últimos 3 dias, ajustado pela tendência; serve para dar uma ideia, não é uma promessa.</p>
       <p>Os números ao vivo da Twitch e da Kick atualizam a cada 2 minutos. O histórico guarda um ponto a cada 10 minutos. O YouTube é lido de hora a hora (lives) e de 3 em 3 horas (vídeos novos), por causa da quota diária da API; entre leituras, repete-se o último valor. Este projeto não tem ligação à Rockstar Games nem à Take-Two.</p>`,
@@ -62,20 +65,33 @@ const I18N = {
     sc_eyebrow: { global: 'Live Tracker · Mundo', portugal: 'Live Tracker · Portugal 🇵🇹', luso: 'Live Tracker · Em português' },
     sc_sub: 'Twitch, Kick e YouTube', sc_peak: 'pessoas a ver ao mesmo tempo, o pico até agora', sc_top: 'Quem juntou mais gente',
     cant_render: 'Não foi possível gerar a imagem. Faz uma captura de ecrã ao cartão.',
+    src_label: 'Contar', src_twitch: 'Twitch', src_kick: '+ Kick', src_all: '+ YouTube',
+    src_note: { twitch: 'Só Twitch: a única plataforma que mostra todas as streams da categoria, por isso é o número mais fiável.', kick: 'Twitch + Kick. A Kick só mostra as 100 maiores streams, por isso o total é "pelo menos".', all: 'Twitch + Kick + YouTube. A Kick mostra as 100 maiores streams e o YouTube as 50 maiores lives, por isso o total é "pelo menos".' },
+    at_least: 'pelo menos', not_in_total: 'fora do total', all_streams: 'todas as streams',
+    kick_full: 'lista completa', kick_partial: (n) => `top 100, a mais pequena tem ${n}`, yt_partial: (n) => `top 50, a mais pequena tem ${n}`,
+    sources_of: (names) => names.join(', '),
+    yt_k_viewers: 'A ver lives agora', yt_k_lives: 'Lives agora', yt_k_read: 'Última leitura', yt_k_vids: 'Vídeos novos (3 h)',
+    yt_live_title: 'Espectadores nas lives do YouTube', yt_live_desc: 'Uma leitura por hora',
+    yt_board: 'Lives com mais gente', yt_board_empty: 'Sem lives nesta vista na última leitura.',
+    yt_disc: 'O YouTube só mostra as 50 lives mais vistas e é lido de hora a hora, por isso estes números são um mínimo e não entram no total por defeito. Serve para ver tendência, não para comparar com a Twitch.',
+    flow_title: 'Streams a entrar e a sair', flow_desc: 'Por hora: canais que começaram (acima) e que terminaram (abaixo) de transmitir GTA VI',
+    flow_in: 'Começaram', flow_out: 'Terminaram', flow_wait: 'Aparece depois de duas recolhas seguidas.',
+    flow_insight: (i, o, n) => `Na última hora, <b>${fmt(i)}</b> canais começaram a transmitir GTA VI e <b>${fmt(o)}</b> terminaram: ${n >= 0 ? 'ficaram mais' : 'ficaram menos'} <b>${fmt(Math.abs(n))}</b> em direto.`,
+    info_btn: 'Mais informação',
   },
   en: {
     locale: (/^en/i.test(navigator.language || '') ? navigator.language : 'en-US'),   // formatos do país do visitante
     scope_global: 'World', scope_portugal: 'Portugal', scope_luso: 'In Portuguese',
     lead: 'How many people are watching GTA VI (GTA 6, Grand Theft Auto VI) right now? Live viewers, streams and videos across Twitch, Kick and YouTube.',
     nav_now: 'Now', nav_time: 'Over time', nav_games: 'vs other games', nav_streamers: 'Streamers', nav_more: 'More data', skip: 'Skip to the data',
-    scope_note: { global: 'Twitch, Kick and YouTube combined. Switch to 🇵🇹 Portugal or 🗣️ In Portuguese at the top.', portugal: 'Creators from Portugal only: a list of Portuguese streamers plus automatic detection (European Portuguese in the title, channel country on YouTube). Brazil is left out.', luso: 'Every stream spoken in Portuguese: Portugal, Brazil and other countries.' },
+    scope_note: { global: 'The platforms picked under "Count" added together. Switch to 🇵🇹 Portugal or 🗣️ In Portuguese at the top.', portugal: 'Creators from Portugal only: a list of Portuguese streamers plus automatic detection (European Portuguese in the title, channel country on YouTube). Brazil is left out.', luso: 'Every stream spoken in Portuguese: Portugal, Brazil and other countries.' },
     visitors: (n) => `<b>${n}</b> ${n === 1 ? 'person' : 'people'} on this site now`, visitors_tip: (d, t) => `${d} visits today, ${t} in total`,
     hero_viewers: { global: 'watching right now, worldwide', portugal: 'watching Portuguese streams right now', luso: 'watching Portuguese-language streams' },
     hero_streams: 'live streams right now',
     hc_title: 'Last 24 hours', hc_peak: (v) => `peak ${v}`,
     page_title: 'GTA 6 live: how many people are watching GTA VI right now? | Twitch, Kick and YouTube', page_desc: 'GTA 6 (GTA VI, Grand Theft Auto VI, Grand Theft Auto 6) live: viewers, streams, records and videos in real time on Twitch, Kick and YouTube. Worldwide, in Portugal and in Portuguese. By Duarte Rodrigues.',
     now_title: { global: 'Right now, worldwide', portugal: 'Right now, in Portugal', luso: 'Right now, in Portuguese' },
-    now_sub: { global: 'All three platforms combined.', portugal: 'Portugal-based (PT-PT) streams. See the methodology at the bottom.', luso: 'Every Portuguese-language stream: Portugal, Brazil and others.' },
+    now_sub: { global: 'The platforms picked under "Count".', portugal: 'Portugal-based (PT-PT) streams. See the methodology at the bottom.', luso: 'Every Portuguese-language stream: Portugal, Brazil and others.' },
     share_title: 'Viewer share by platform',
     share_btn: 'Download', download: 'Download image', pdf: 'Save as PDF', embed: 'Embed on your site', close: 'Close', downloading: 'Preparing image…',
     by: 'by', author_role: 'I built this tracker. If you use the data or images, please credit the source.', record: '🔥 New record', credit_line: 'Data and visualisation by', made_by: 'Made by',
@@ -84,12 +100,12 @@ const I18N = {
     live: 'Live', live_ago: (m) => m < 1 ? 'Updated just now.' : `Updated ${m} min ago.`, live_off: (d) => `Last snapshot at ${d}.`,
     status_live: 'Live', status_off: 'Last snapshot',
     k_now: 'Viewers now', k_peak: 'Peak recorded', k_hours: 'Hours watched', k_streams: 'Streams now', k_rank: 'Rank on Twitch', k_share: 'Share of the world total', k_unique: 'Different channels',
-    k_hours_note: 'estimated since tracking began', k_rank_note: 'among all categories', k_unique_note: 'have streamed GTA VI', k_share_note: 'of global viewers', k_streams_note: 'across the three platforms',
+    k_hours_note: 'estimated since tracking began', k_rank_note: 'among all categories', k_unique_note: 'have streamed GTA VI', k_share_note: 'of global viewers', k_streams_note: 'on the counted platforms',
     streams: 'streams', stream1: 'stream', of_total: 'of total', top100: 'top 100 only', top50: 'biggest lives only', hourly: 'hourly', live_short: 'live',
     ts_h2: { v: 'Over time', s: 'Streams over time' },
     ts_insight: (r) => r, m_viewers: 'Viewers', m_streams: 'Streams', all: 'All', r_month: '1 month', forecast: 'forecast',
     board_title: { global: 'Who has the most people watching', portugal: 'Portuguese streamers with the biggest audience', luso: 'Portuguese-language streamers with the biggest audience' },
-    board_desc: 'Right now, across the three platforms', board_empty: 'Nobody is streaming in this view right now.',
+    board_desc: 'Right now, on the chosen platforms', board_empty: 'Nobody is streaming in this view right now.',
     viewers: 'viewers', views: 'views',
     yt_sub: 'Live streams and new videos that mention "GTA VI", "GTA 6", "GTA6", "Grand Theft Auto VI" or "Grand Theft Auto 6".',
     yt_new_title: 'New videos published', yt_new_desc: 'Per 3 hours. The number is YouTube\'s own estimate.',
@@ -104,7 +120,7 @@ const I18N = {
     fc_insight: (pk, h, d) => `Based on the last few days, the next peak should be around <b>${pk}</b> people, at about <b>${h}</b> on ${d}. The model is simple: it repeats each hour's pattern from the last 3 days and adjusts for the trend.`,
     fc_wait: 'The forecast appears once there are at least 24 hours of data (after launch, it only counts from launch).', fc_none: 'No finished forecasts to compare yet.',
     method_title: 'How this is measured',
-    method: `<p><b>Sources.</b> Official APIs only. On Twitch, every stream in the "Grand Theft Auto VI" category (also known as GTA VI, GTA 6 or Grand Theft Auto 6). On Kick, the 100 biggest streams in the category, which is the public API's limit. On YouTube, the 50 most-watched live streams mentioning GTA VI, GTA 6, GTA6, Grand Theft Auto VI or Grand Theft Auto 6, plus a second, Portuguese-targeted search; new videos are counted every 3 hours and that number is YouTube's estimate.</p>
+    method: `<p><b>Sources.</b> Official APIs only. The total shown by default counts Twitch only, the one platform that gives every stream; you can add Kick and YouTube, but then the number becomes "at least". On Twitch, every stream in the "Grand Theft Auto VI" category (also known as GTA VI, GTA 6 or Grand Theft Auto 6). On Kick, the 100 biggest streams in the category, which is the public API's limit. On YouTube, the 50 most-watched live streams mentioning GTA VI, GTA 6, GTA6, Grand Theft Auto VI or Grand Theft Auto 6, plus a second, Portuguese-targeted search; new videos are counted every 3 hours and that number is YouTube's estimate.</p>
       <p><b>Portugal and Portuguese.</b> Twitch and Kick report each stream's language, not its country. "In Portuguese" counts every Portuguese-language stream, including Brazil. "Portugal" combines four signals: a list of Portuguese creators (RicFazeres, Wuant, SirKazzio, Zorlak and others), channels the tracker has already recognised as Portuguese, titles with Portugal markers ("PT-PT", "🇵🇹", "tuga") or European-Portuguese phrasing, and, on YouTube, the channel country or pt-PT audio. Videos and lives from listed channels are read directly, even when they don't show up in YouTube search. It still undercounts.</p>
       <p><b>Viewers</b> means people watching at the same time, not cumulative views, and one person may be on more than one stream. <b>Hours watched</b> is the sum of viewers across snapshots, an estimate. The <b>forecast</b> repeats the hourly pattern of the last 3 days, adjusted for trend; it is a rough guide, not a promise.</p>
       <p>Live Twitch and Kick numbers refresh every 2 minutes. The history stores a point every 10 minutes. YouTube is read hourly (lives) and every 3 hours (new videos) because of the API's daily quota; between reads the last value is repeated. This project is not affiliated with Rockstar Games or Take-Two.</p>`,
@@ -112,8 +128,77 @@ const I18N = {
     sc_eyebrow: { global: 'Live Tracker · World', portugal: 'Live Tracker · Portugal 🇵🇹', luso: 'Live Tracker · In Portuguese' },
     sc_sub: 'Twitch, Kick and YouTube', sc_peak: 'people watching at once, the peak so far', sc_top: 'Who drew the biggest crowd',
     cant_render: 'Could not create the image. Take a screenshot of the card instead.',
+    src_label: 'Count', src_twitch: 'Twitch', src_kick: '+ Kick', src_all: '+ YouTube',
+    src_note: { twitch: 'Twitch only: the one platform that shows every stream in the category, so it is the most reliable number.', kick: 'Twitch + Kick. Kick only shows its 100 biggest streams, so the total is "at least".', all: 'Twitch + Kick + YouTube. Kick shows its 100 biggest streams and YouTube its 50 biggest lives, so the total is "at least".' },
+    at_least: 'at least', not_in_total: 'not in the total', all_streams: 'all streams',
+    kick_full: 'complete list', kick_partial: (n) => `top 100, the smallest has ${n}`, yt_partial: (n) => `top 50, the smallest has ${n}`,
+    sources_of: (names) => names.join(', '),
+    yt_k_viewers: 'Watching lives now', yt_k_lives: 'Lives now', yt_k_read: 'Last read', yt_k_vids: 'New videos (3 h)',
+    yt_live_title: 'Viewers on YouTube lives', yt_live_desc: 'One reading per hour',
+    yt_board: 'Lives with the most people', yt_board_empty: 'No lives in this view in the last reading.',
+    yt_disc: 'YouTube only shows the 50 most-watched lives and is read hourly, so these numbers are a minimum and are left out of the total by default. Use them for trends, not to compare with Twitch.',
+    flow_title: 'Streams starting and ending', flow_desc: 'Per hour: channels that started (up) and stopped (down) streaming GTA VI',
+    flow_in: 'Started', flow_out: 'Ended', flow_wait: 'Shows up after two back-to-back snapshots.',
+    flow_insight: (i, o, n) => `In the last hour, <b>${fmt(i)}</b> channels started streaming GTA VI and <b>${fmt(o)}</b> stopped: there are <b>${fmt(Math.abs(n))}</b> ${n >= 0 ? 'more' : 'fewer'} live.`,
+    info_btn: 'More information',
   },
 };
+
+/* ============================================================ ícones de informação (ⓘ) */
+// Texto mostrado ao passar o rato / tocar / focar no ícone. Funções recebem o estado para usar números reais.
+const sampleOf = () => S.latest?.dominance?.twitch;
+const INFO = {
+  pt: {
+    src: 'A Twitch mostra todas as streams da categoria. A Kick só devolve as 100 maiores e o YouTube as 50 maiores lives, por isso somar as três dá um mínimo, não o total real.',
+    hours: 'Estimativa: soma dos espectadores de cada recolha, ponderada pelo tempo entre recolhas. Não é uma medida oficial das plataformas.',
+    kick: () => { const k = S.latest?.totals?.kick; return `A API pública da Kick devolve no máximo 100 streams por pedido. Com menos de 100, a lista é completa. Com 100 ou mais, vemos só as maiores${k?.min_v ? ` (agora a mais pequena tem ${fmt(k.min_v)} espectadores)` : ''}.`; },
+    yt_live: 'O YouTube só devolve as cerca de 50 lives mais vistas que mencionam GTA VI. Lives pequenas ficam de fora.',
+    yt_hourly: 'O YouTube tem uma quota diária grátis. Por isso as lives são lidas de hora a hora e os vídeos novos de 3 em 3 horas. Entre leituras, o valor repete-se.',
+    yt_new: 'Estimativa do próprio YouTube para os vídeos publicados nas últimas 3 horas. Pode variar bastante de leitura para leitura.',
+    portugal: 'Nenhuma plataforma diz o país do streamer. Usamos uma lista de criadores portugueses, canais já reconhecidos e marcas de Portugal no título. É sempre uma contagem por baixo.',
+    map: 'O mapa mostra a língua da stream, não o país de quem vê. O português pinta Portugal, Brasil e países africanos de língua portuguesa.',
+    weight: () => { const d = sampleOf(); return `Das ${d ? fmt(d.sample) : '5 000'} maiores streams da Twitch (todas as categorias), quantos espectadores são de GTA VI.${d?.min_v ? ` A amostra chega até streams com ${fmt(d.min_v)} espectadores; as mais pequenas ficam de fora.` : ''}`; },
+    flow: 'Compara as streams com as da recolha anterior (10 minutos). Só conta quando as duas listas são completas, por isso na Kick só aparece com menos de 100 streams.',
+    games: 'Soma dos espectadores de cada jogo na Twitch, até 1000 streams por jogo. As restantes têm muito poucos espectadores.',
+  },
+  en: {
+    src: 'Twitch shows every stream in the category. Kick only returns its 100 biggest and YouTube its 50 biggest lives, so adding the three gives a minimum, not the real total.',
+    hours: 'An estimate: the sum of viewers at each snapshot, weighted by the time between snapshots. Not an official platform metric.',
+    kick: () => { const k = S.latest?.totals?.kick; return `Kick's public API returns at most 100 streams per request. With fewer than 100, the list is complete. With 100 or more we only see the biggest${k?.min_v ? ` (right now the smallest has ${fmt(k.min_v)} viewers)` : ''}.`; },
+    yt_live: 'YouTube only returns about the 50 most-watched lives that mention GTA VI. Small lives are left out.',
+    yt_hourly: 'YouTube has a free daily quota. That is why lives are read hourly and new videos every 3 hours. Between readings the value repeats.',
+    yt_new: "YouTube's own estimate for videos published in the last 3 hours. It can swing a lot between readings.",
+    portugal: 'No platform tells us a streamer\'s country. We use a list of Portuguese creators, channels already recognised and Portugal markers in the title. It is always an undercount.',
+    map: "The map shows the stream's language, not where viewers are. Portuguese colours Portugal, Brazil and the Portuguese-speaking African countries.",
+    weight: () => { const d = sampleOf(); return `Of Twitch's ${d ? fmt(d.sample) : '5,000'} biggest streams (all categories), how many viewers are on GTA VI.${d?.min_v ? ` The sample reaches down to streams with ${fmt(d.min_v)} viewers; smaller ones are left out.` : ''}`; },
+    flow: 'Compares streams with the previous snapshot (10 minutes ago). It only counts when both lists are complete, so on Kick it only appears with fewer than 100 streams.',
+    games: 'Viewers summed per game on Twitch, up to 1,000 streams per game. The rest have very few viewers.',
+  },
+};
+const infoText = (k) => { const v = INFO[S.lang][k]; return typeof v === 'function' ? v() : v || ''; };
+const infoBtn = (k) => `<button type="button" class="info" data-info="${esc(k)}" aria-label="${esc(T().info_btn)}">i</button>`;
+window.infoBtn = infoBtn;
+// tooltip único, posicionado junto ao ícone (compatível com a CSP: sem estilos nem handlers inline)
+(function initInfoTip() {
+  const tipEl = document.createElement('div'); tipEl.className = 'itip'; tipEl.setAttribute('role', 'tooltip'); tipEl.hidden = true; document.body.appendChild(tipEl);
+  let cur = null;
+  const hide = () => { tipEl.hidden = true; cur = null; };
+  const show = (btn) => {
+    cur = btn; tipEl.textContent = infoText(btn.dataset.info); tipEl.hidden = false;
+    const r = btn.getBoundingClientRect(), w = tipEl.offsetWidth, h = tipEl.offsetHeight;
+    const x = Math.max(8, Math.min(innerWidth - w - 8, r.left + r.width / 2 - w / 2));
+    const below = r.bottom + 8 + h < innerHeight || r.top - 8 - h < 0;
+    tipEl.style.left = x + 'px'; tipEl.style.top = (below ? r.bottom + 8 : r.top - 8 - h) + 'px';
+  };
+  const target = (e) => e.target.closest?.('.info');
+  document.addEventListener('mouseover', (e) => { const b = target(e); if (b) show(b); });
+  document.addEventListener('mouseout', (e) => { if (target(e)) hide(); });
+  document.addEventListener('focusin', (e) => { const b = target(e); if (b) show(b); });
+  document.addEventListener('focusout', (e) => { if (target(e)) hide(); });
+  document.addEventListener('click', (e) => { const b = target(e); if (b) { e.preventDefault(); cur === b && !tipEl.hidden ? hide() : show(b); } else hide(); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') hide(); });
+  addEventListener('scroll', hide, { passive: true });
+})();
 
 /* ============================================================ estado */
 const KEYS = {
@@ -126,12 +211,16 @@ const params = new URLSearchParams(location.search);
 const browserLang = (navigator.language || 'pt').toLowerCase().startsWith('pt') ? 'pt' : 'en';
 const RANGES = ['24', '48', '168', '720', 'all'];
 const S = {
+  src: [params.get('src'), store.get('src'), 'twitch'].find((x) => Object.prototype.hasOwnProperty.call(SRC_SETS, x || '')),
   lang: [params.get('lang'), store.get('lang'), browserLang].find((l) => l === 'pt' || l === 'en'),
   scope: [params.get('scope'), store.get('scope'), 'global'].find((x) => Object.prototype.hasOwnProperty.call(KEYS, x || '')),
   metric: 'v', range: [params.get('range'), store.get('range'), '168'].find((x) => RANGES.includes(x)),
   history: { points: [] }, latest: {}, live: null, liveOk: false, liveAt: null,
 };
 const T = () => I18N[S.lang];
+function applySrc() { PLATFORMS.length = 0; PLATFORMS.push(...SRC_SETS[S.src]); }
+applySrc();
+const srcAll = () => S.src === 'all';
 const t = (k) => { const v = T()[k]; return v && typeof v === 'object' && !Array.isArray(v) ? (v[S.scope] ?? v[S.metric]) : v; };
 
 /* ============================================================ formatação */
@@ -169,6 +258,7 @@ function animate(el, to, f = fmtC) {
 }
 
 /* ============================================================ dados */
+const FLOW_F = ['si', 'so', 'psi', 'pso', 'ppsi', 'ppso'];
 const points = () => S.history.points || [];
 const lastPoint = () => points()[points().length - 1] || {};
 const rangeStart = () => S.range === 'all' ? -Infinity : Date.now() - Number(S.range) * 3600e3;
@@ -179,11 +269,12 @@ function hourly(pts) {
     const h = Math.floor(Date.parse(p.ts) / 3600e3);
     const cur = out.get(h);
     if (!cur) { out.set(h, { ...p, n: 1 }); continue; }
-    for (const k of PLATFORMS) {
+    for (const k of ALL) {
       if (!p[k]) continue;
       if (!cur[k]) { cur[k] = { ...p[k] }; continue; }
       const m = { ...cur[k] };
       for (const f of ['v', 's', 'pv', 'ps', 'ppv', 'pps', 'dg', 'dt']) if (p[k][f] != null) m[f] = cur[k][f] != null ? Math.max(cur[k][f], p[k][f]) : p[k][f];
+      for (const f of FLOW_F) if (p[k][f] != null) m[f] = (cur[k][f] || 0) + p[k][f];
       cur[k] = m;
     }
   }
@@ -215,8 +306,8 @@ function hoursWatched(key) {
 function leaderboard() {
   const k = KEYS[S.scope];
   const rows = [], liveSet = new Set();
-  if (S.liveOk) for (const p of ['twitch', 'kick']) if (S.live[p]) { rows.push(...(S.live[p][k.liveTop] || [])); liveSet.add(p); }
-  rows.push(...(S.latest[k.top] || []).filter((r) => !liveSet.has(r.platform)));
+  if (S.liveOk) for (const p of ['twitch', 'kick']) if (S.live[p] && PLATFORMS.includes(p)) { rows.push(...(S.live[p][k.liveTop] || [])); liveSet.add(p); }
+  rows.push(...(S.latest[k.top] || []).filter((r) => !liveSet.has(r.platform) && PLATFORMS.includes(r.platform)));
   return rows.sort((a, b) => b.viewers - a.viewers).slice(0, 10);
 }
 function videoList() {
@@ -243,6 +334,8 @@ function applyI18n() {
   document.querySelectorAll('[data-i]').forEach((el) => { const v = t(el.dataset.i); if (typeof v === 'string') el.textContent = v; });
   document.querySelectorAll('#scopeSeg button').forEach((b) => b.setAttribute('aria-pressed', b.dataset.scope === S.scope));
   document.querySelectorAll('#langSeg button').forEach((b) => b.setAttribute('aria-pressed', b.dataset.lang === S.lang));
+  document.querySelectorAll('#srcSeg button').forEach((b) => { b.textContent = t('src_' + b.dataset.src); b.setAttribute('aria-pressed', b.dataset.src === S.src); });
+  document.querySelectorAll('.info-slot').forEach((el) => { el.innerHTML = infoBtn(el.dataset.info); });
   document.querySelectorAll('#metricSeg button').forEach((b) => b.setAttribute('aria-pressed', b.dataset.metric === S.metric));
   document.querySelectorAll('#rangeSeg button').forEach((b) => b.setAttribute('aria-pressed', b.dataset.range === String(S.range)));
   document.getElementById('method').innerHTML = T().method;
@@ -259,11 +352,12 @@ function renderHero() {
   const now = totalNow('V');
   document.getElementById('livePulse').className = 'pulse' + (S.liveOk ? '' : ' off');
   const lastTs = points().length ? lastPoint().ts : null;
-  document.getElementById('liveLabel').textContent = S.liveOk ? `${t('status_live')} · Twitch · Kick · YouTube` : `${t('status_off')}${lastTs ? ' · ' + dt(lastTs, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : ''}`;
+  document.getElementById('liveLabel').textContent = S.liveOk ? `${t('status_live')} · ${PLATFORMS.map((p) => NAMES[p]).join(' · ')}` : `${t('status_off')}${lastTs ? ' · ' + dt(lastTs, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : ''}`;
   animate(document.getElementById('heroViewers'), now);
   animate(document.getElementById('heroStreams'), totalNow('S'));
-  document.getElementById('heroViewersLbl').textContent = t('hero_viewers');
-  document.getElementById('scopeNote').textContent = t('scope_note');
+  document.getElementById('heroViewersLbl').textContent = (S.src === 'twitch' ? '' : t('at_least') + ' ') + t('hero_viewers');
+  document.getElementById('scopeNote').innerHTML = esc(t('scope_note')) + (S.scope !== 'global' ? ' ' + infoBtn('portugal') : '');
+  document.getElementById('srcNote').textContent = T().src_note[S.src];
   document.getElementById('heroSub').textContent = S.liveOk && S.liveAt ? T().live_ago(Math.floor((Date.now() - S.liveAt) / 60e3)) : lastTs ? T().live_off(hhmm(lastTs)) : '';
   // mini gráfico das últimas 24 horas
   const since = Date.now() - 24 * 3600e3;
@@ -278,7 +372,7 @@ function renderHero() {
     mkOrUpdate('heroChart', { type: 'line', data: { datasets: [{ label: t('viewers'), data: p24.map((p, i) => ({ x: xs[i], y: ys[i] })), borderColor: css('--sun-1'), backgroundColor: css('--sun-1') + '26', fill: true }] }, options: o });
   } else document.getElementById('hcPeak').textContent = '';
   const hist = seriesTotal(k.v);
-  const best = Math.max(0, ...hist, S.history.peaks?.[S.scope]?.v || 0);
+  const best = Math.max(0, ...hist, (srcAll() && S.history.peaks?.[S.scope]?.v) || 0);
   const rec = document.getElementById('recordChip');
   rec.textContent = t('record'); rec.classList.toggle('on', S.liveOk && hist.length > 12 && now > best);
 }
@@ -288,7 +382,7 @@ function renderNow() {
   document.getElementById('nowTitle').textContent = t('now_title');
   document.getElementById('nowSub').textContent = t('now_sub');
   const tot = seriesTotal(k.v), now = totalNow('V');
-  const stored = S.history.peaks?.[S.scope];
+  const stored = srcAll() ? S.history.peaks?.[S.scope] : null;
   let peak = Math.max(0, ...tot, now || 0), peakTs = points()[tot.indexOf(peak)]?.ts;
   if (stored && stored.v > peak) { peak = stored.v; peakTs = stored.ts; }
   const peakWhen = peakTs ? dt(peakTs, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : t('live');
@@ -297,41 +391,45 @@ function renderNow() {
     const rank = (S.liveOk && S.live.twitch?.rank) || [...points()].reverse().find((p) => p.twitch?.rank)?.twitch.rank;
     fourth = rank ? [t('k_rank'), rank, t('k_rank_note'), (n) => (S.lang === 'pt' ? 'nº ' : '#') + Math.max(1, Math.round(n))] : null;
   } else {
-    const g = PLATFORMS.reduce((sum, p) => {
+    const g = ALL.reduce((sum, p) => {
       if (S.liveOk && S.live?.[p] && p !== 'youtube') return sum + (S.live[p].viewers || 0);
       const lp = [...points()].reverse().find((x) => x[p]);
       return sum + (lp ? lp[p].v || 0 : 0);
     }, 0);
     fourth = [t('k_share'), now != null && g ? (now / g) : null, t('k_share_note'), (n) => pct(n, 1)];
   }
-  const uniq = Object.values(S.latest.unique_channels || {}).reduce((a, b) => a + b, 0);
+  const uniq = PLATFORMS.reduce((a, p) => a + (S.latest.unique_channels?.[p] || 0), 0);
   const tiles = [
     [t('k_peak'), peak || null, peakWhen],
-    [t('k_hours'), hoursWatched(k.v) || null, t('k_hours_note')],
+    [t('k_hours'), hoursWatched(k.v) || null, t('k_hours_note'), null, 'hours'],
     [t('k_unique'), uniq || null, t('k_unique_note')],
     fourth || [t('k_streams'), totalNow('S'), t('k_streams_note')],
   ];
   const box = document.getElementById('kpis');
   if (box.children.length !== tiles.length) box.innerHTML = tiles.map(() => `<div class="kpi"><div class="label"></div><div class="value tnum"></div><div class="note"></div></div>`).join('');
-  tiles.forEach(([l, v, n, f], i) => {
+  tiles.forEach(([l, v, n, f, info], i) => {
     const el = box.children[i];
-    el.querySelector('.label').textContent = l; el.querySelector('.note').textContent = n || '';
+    el.querySelector('.label').innerHTML = esc(l) + (info ? infoBtn(info) : ''); el.querySelector('.note').textContent = n || '';
     animate(el.querySelector('.value'), v, f || fmtC);
   });
 
   const pbox = document.getElementById('platforms');
-  if (!pbox.children.length) pbox.innerHTML = PLATFORMS.map((p) => `<div class="plat" data-p="${p}"><div class="top"><div class="name"><i class="dot" style="background:${COLOR[p]}"></i>${NAMES[p]}</div><span class="when"></span></div>
+  if (!pbox.children.length) pbox.innerHTML = CARDS.map((p) => `<div class="plat" data-p="${p}"><div class="top"><div class="name"><i class="dot" style="background:${COLOR[p]}"></i>${NAMES[p]}</div><span class="when"></span></div>
     <div><span class="value tnum"></span><span class="pct tnum"></span></div><div class="meta"></div><div class="spark"><canvas></canvas></div></div>`).join('');
   const sum = PLATFORMS.reduce((acc, p) => acc + (nowFor(p, 'V') || 0), 0);
-  for (const p of PLATFORMS) {
+  for (const p of CARDS) {
     const el = pbox.querySelector(`[data-p="${p}"]`);
     const v = nowFor(p, 'V'), st = nowFor(p, 'S');
     const isLive = S.liveOk && S.live[p] && p !== 'youtube';
     const w = el.querySelector('.when'); w.className = 'when' + (isLive ? ' live' : ''); w.textContent = isLive ? '● ' + t('live') : t('hourly');
     animate(el.querySelector('.value'), v);
-    el.querySelector('.pct').textContent = sum ? `${pct(v || 0, sum)} ${t('of_total')}` : '';
-    const lim = p === 'kick' ? ` (${t('top100')})` : p === 'youtube' ? ` (${t('top50')})` : '';
-    el.querySelector('.meta').textContent = `${fmt(st)} ${st === 1 ? t('stream1') : t('streams')}${lim}`;
+    const counted = PLATFORMS.includes(p);
+    el.classList.toggle('off', !counted);
+    el.querySelector('.pct').textContent = counted ? (sum ? `${pct(v || 0, sum)} ${t('of_total')}` : '') : t('not_in_total');
+    const tk = S.latest?.totals?.[p];
+    const partial = p === 'kick' && tk && tk.complete === false;
+    const lim = p === 'kick' ? (partial ? `${t('kick_partial')(fmt(tk.min_v || 0))}` : t('kick_full')) : t('all_streams');
+    el.querySelector('.meta').innerHTML = `${esc(fmt(st))} ${st === 1 ? t('stream1') : t('streams')} · ${esc(lim)}${p === 'kick' ? infoBtn('kick') : ''}`;
     spark(el.querySelector('canvas'), p, inRange().map((pt) => pt[p]?.[k.v] ?? null));
   }
 
@@ -480,7 +578,6 @@ function renderBoard() {
       <span class="viewers">${fmt(r.viewers)}<small>${dur || t('viewers')}</small></span></a>`;
   }).join('') : `<div class="empty">${t('board_empty')}</div>`;
 
-  document.getElementById('ytSub').textContent = t('yt_sub');
   document.getElementById('vidTitle').textContent = t('vid_title');
   document.getElementById('vidDesc').textContent = t('vid_desc');
   const vids = videoList().slice(0, 8);
@@ -488,6 +585,79 @@ function renderBoard() {
       <div class="th" style="${safeImg(v.thumb) ? `background-image:url(&quot;${esc(safeImg(v.thumb))}&quot;)` : ''}"><b class="tnum">${fmtC(v.views)}</b></div>
       <div class="vt">${esc(v.title)}</div><div class="vc">${esc(v.channel)}${v.country === 'PT' ? ' <span class="tag pt">PT</span>' : ''}, ${fmt(v.views)} ${t('views')}</div></a>`).join('')
     : `<div class="empty" style="grid-column:1/-1">${t('no_videos')}</div>`;
+}
+
+/* ============================================================ YouTube (secção própria) */
+function liveRow(r, i) {
+  const mins = r.started_at ? Math.max(0, (Date.now() - Date.parse(r.started_at)) / 60e3) : null;
+  const dur = mins == null ? '' : mins >= 60 ? `${Math.floor(mins / 60)} h ${String(Math.floor(mins % 60)).padStart(2, '0')}` : `${Math.floor(mins)} min`;
+  return `<a class="row" href="${esc(safeUrl(r.url))}" target="_blank" rel="noopener">
+      <span class="rank">${i + 1}</span>
+      <span class="avatar" style="border-color:${COLOR[r.platform] || 'var(--border)'}">${safeImg(r.avatar) ? `<img src="${esc(safeImg(r.avatar))}" alt="" loading="lazy" referrerpolicy="no-referrer">` : initials(r.name)}</span>
+      <span class="who"><span class="n">${esc(r.name)} ${r.portugal ? '<span class="tag pt">PT</span>' : ''}</span><span class="t" title="${esc(r.title)}">${esc(r.title)}</span></span>
+      <span class="viewers">${fmt(r.viewers)}<small>${dur || t('viewers')}</small></span></a>`;
+}
+function renderYoutube() {
+  const k = KEYS[S.scope];
+  document.getElementById('ytSub').textContent = t('yt_sub');
+  document.getElementById('ytLiveT').textContent = t('yt_live_title');
+  document.getElementById('ytLiveD').textContent = t('yt_live_desc');
+  document.getElementById('ytBoardT').textContent = t('yt_board');
+  const reads = points().filter((p) => p.youtube && !p.youtube.c);
+  const last = reads[reads.length - 1];
+  const nvPt = [...points()].reverse().find((p) => p.youtube?.[k.nv] != null && !p.youtube.c);
+  const tiles = [
+    [t('yt_k_viewers'), last ? fmt(last.youtube[k.v]) : '—', last && S.latest?.totals?.youtube?.min_v ? t('yt_partial')(fmt(S.latest.totals.youtube.min_v)) : (last ? t('top50') : ''), 'yt_live'],
+    [t('yt_k_lives'), last ? fmt(last.youtube[k.s]) : '—', S.scope === 'global' ? t('top50') : '', null],
+    [t('yt_k_read'), last ? hhmm(last.ts) : '—', t('hourly'), 'yt_hourly'],
+    [t('yt_k_vids'), nvPt ? fmt(nvPt.youtube[k.nv]) : '—', t('yt_new_desc').split('.')[0], 'yt_new'],
+  ];
+  document.getElementById('ytKpis').innerHTML = tiles.map(([l, v, n, info]) => `<div class="kpi"><div class="label">${esc(l)}${info ? infoBtn(info) : ''}</div><div class="value tnum">${esc(v)}</div><div class="note">${esc(n || '')}</div></div>`).join('');
+  const yp = reads.filter((p) => Date.parse(p.ts) >= rangeStart());
+  mkOrUpdate('ytLive', {
+    type: 'line', plugins: [launchLine],
+    data: { datasets: [{ label: t('viewers'), data: yp.map((p) => ({ x: Date.parse(p.ts), y: p.youtube[k.v] })), borderColor: COLOR.youtube, backgroundColor: COLOR.youtube + '22', fill: true, pointRadius: 3, pointHoverRadius: 6 }] },
+    options: { ...baseLine(yp.length ? [Date.parse(yp[0].ts), Date.parse(yp[yp.length - 1].ts)] : [0, 1]), spanGaps: true },
+  });
+  const rows = (S.latest.youtube_live || []).filter((r) => S.scope === 'global' || (S.scope === 'luso' ? r.lang === 'pt' : r.portugal)).slice(0, 8);
+  document.getElementById('ytBoard').innerHTML = rows.length ? rows.map(liveRow).join('') : `<div class="empty">${t('yt_board_empty')}</div>`;
+  document.getElementById('ytDisc').textContent = t('yt_disc');
+}
+
+/* ============================================================ entradas e saídas de streams */
+function renderFlow() {
+  const keys = { global: ['si', 'so'], luso: ['psi', 'pso'], portugal: ['ppsi', 'ppso'] }[S.scope];
+  document.getElementById('flowT').textContent = t('flow_title');
+  document.getElementById('flowD').textContent = t('flow_desc');
+  const pts = points().filter((p) => Date.parse(p.ts) >= rangeStart());
+  const byH = new Map();
+  for (const p of pts) {
+    let has = false, i = 0, o = 0;
+    for (const pl of ['twitch', 'kick']) if (PLATFORMS.includes(pl) && p[pl]?.[keys[0]] != null) { has = true; i += p[pl][keys[0]]; o += p[pl][keys[1]] || 0; }
+    if (!has) continue;
+    const h = Math.floor(Date.parse(p.ts) / 3600e3) * 3600e3, e = byH.get(h) || { i: 0, o: 0 };
+    e.i += i; e.o += o; byH.set(h, e);
+  }
+  const hs = [...byH.keys()].sort((a, b) => a - b);
+  // última hora (as 6 recolhas mais recentes com dados)
+  const refTs = points().length ? Date.parse(lastPoint().ts) : Date.now();
+  const recent = points().filter((p) => refTs - Date.parse(p.ts) <= 65 * 60e3);
+  let ri = 0, ro = 0, rn = 0;
+  for (const p of recent) for (const pl of ['twitch', 'kick']) if (PLATFORMS.includes(pl) && p[pl]?.[keys[0]] != null) { ri += p[pl][keys[0]]; ro += p[pl][keys[1]] || 0; rn++; }
+  document.getElementById('flowInsight').innerHTML = rn ? T().flow_insight(ri, ro, ri - ro) : esc(t('flow_wait'));
+  const UP = '#3987e5', DOWN = '#e8864a';
+  document.getElementById('flowLegend').innerHTML = `<span><i class="dot" style="background:${UP}"></i>${esc(t('flow_in'))}</span><span><i class="dot" style="background:${DOWN}"></i>${esc(t('flow_out'))}</span>`;
+  mkOrUpdate('flowChart', {
+    type: 'bar', plugins: [launchLine],
+    data: { datasets: [
+      { label: t('flow_in'), data: hs.map((h) => ({ x: h, y: byH.get(h).i })), backgroundColor: UP, borderRadius: 3, borderSkipped: false, maxBarThickness: 18, stack: 'f' },
+      { label: t('flow_out'), data: hs.map((h) => ({ x: h, y: -byH.get(h).o })), backgroundColor: DOWN, borderRadius: 3, borderSkipped: false, maxBarThickness: 18, stack: 'f' },
+    ] },
+    options: { responsive: true, maintainAspectRatio: false, parsing: false, animation: false,
+      plugins: { tooltip: { callbacks: { title: (it) => dt(it[0].parsed.x, { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }), label: (c) => ` ${c.dataset.label}: ${fmt(Math.abs(c.parsed.y))}` } } },
+      scales: { x: { type: 'linear', stacked: true, offset: true, min: hs.length ? hs[0] - 1800e3 : undefined, max: hs.length ? hs[hs.length - 1] + 1800e3 : undefined, grid: { display: false }, ticks: { maxTicksLimit: 7, maxRotation: 0, callback: timeTick } },
+                y: { stacked: true, border: { display: false }, ticks: { callback: (v) => fmtC(Math.abs(v)) } } } },
+  });
 }
 
 /* ============================================================ contagem decrescente */
@@ -516,7 +686,7 @@ function buildCard() {
   const tot = seriesTotal(k.v), now = totalNow('V') || 0;
   const peak = Math.max(0, ...tot, now);
   const rows = leaderboard().slice(0, 3);
-  const uniq = Object.values(S.latest.unique_channels || {}).reduce((a, b) => a + b, 0);
+  const uniq = PLATFORMS.reduce((a, p) => a + (S.latest.unique_channels?.[p] || 0), 0);
   const tiles = [
     [fmtC(hoursWatched(k.v)), t('k_hours')],
     [fmtC(totalNow('S')), t('k_streams')],
@@ -526,7 +696,7 @@ function buildCard() {
   document.getElementById('shareCard').innerHTML = `
     <div class="sc-eyebrow"><i class="pulse"></i>${esc(t('sc_eyebrow'))}</div>
     <div class="sc-title"><span class="grad">GTA VI</span></div>
-    <div class="sc-sub">${esc(t('sc_sub'))}</div>
+    <div class="sc-sub">${esc(PLATFORMS.map((p) => NAMES[p]).join(', '))}${S.src === 'twitch' ? '' : ' (' + esc(t('at_least')) + ')'}</div>
     <div class="sc-hero"><div class="n tnum">${fmt(peak)}</div><div class="l">${esc(t('sc_peak'))}</div></div>
     <div class="sc-grid">${tiles.map(([n, l]) => `<div class="sc-tile"><div class="n tnum">${n}</div><div class="l">${esc(l)}</div></div>`).join('')}</div>
     ${cardSpark(tot)}
@@ -572,19 +742,20 @@ function renderAll() {
   document.querySelector('main').classList.toggle('nodata', empty);
   if (empty) { document.getElementById('kpis').innerHTML = `<div class="empty" style="grid-column:1/-1">${t('no_data')}</div>`; return; }
   renderNow();
-  renderCharts(); renderForecast(); renderBoard();
+  renderCharts(); renderForecast(); renderBoard(); renderYoutube(); renderFlow();
   try { window.renderExtras?.(); } catch (e) { console.error('extras', e); }
   if (document.getElementById('modal').classList.contains('open')) { buildCard(); fitCard(); }
 }
 function setState(patch) {
   Object.assign(S, patch);
-  store.set('lang', S.lang); store.set('scope', S.scope); store.set('range', S.range);
-  const u = new URL(location.href); u.searchParams.set('lang', S.lang); u.searchParams.set('scope', S.scope); u.searchParams.set('range', S.range); history.replaceState(null, '', u);
-  if ('scope' in patch || 'lang' in patch) document.getElementById('kpis').innerHTML = '';
+  store.set('lang', S.lang); store.set('scope', S.scope); store.set('range', S.range); store.set('src', S.src); applySrc();
+  const u = new URL(location.href); u.searchParams.set('lang', S.lang); u.searchParams.set('scope', S.scope); u.searchParams.set('range', S.range); u.searchParams.set('src', S.src); history.replaceState(null, '', u);
+  if ('scope' in patch || 'lang' in patch || 'src' in patch) document.getElementById('kpis').innerHTML = '';
   renderAll();
 }
 const onSeg = (id, fn) => document.getElementById(id).onclick = (e) => { const b = e.target.closest('button'); if (b) fn(b); };
 onSeg('scopeSeg', (b) => KEYS[b.dataset.scope] && setState({ scope: b.dataset.scope }));
+onSeg('srcSeg', (b) => SRC_SETS[b.dataset.src] && setState({ src: b.dataset.src }));
 onSeg('langSeg', (b) => I18N[b.dataset.lang] && setState({ lang: b.dataset.lang }));
 onSeg('metricSeg', (b) => ['v', 's'].includes(b.dataset.metric) && setState({ metric: b.dataset.metric }));
 onSeg('rangeSeg', (b) => RANGES.includes(b.dataset.range) && setState({ range: b.dataset.range }));
@@ -603,13 +774,16 @@ addEventListener('resize', fitCard);
 document.addEventListener('error', (e) => { const img = e.target; if (img && img.tagName === 'IMG' && img.closest('.avatar')) img.remove(); }, true);
 
 /* ============================================================ pessoas no site */
-const vis = { first: true, data: null };
+const vis = { first: true, data: null, n: 0 };
+const VIS_MAX_BEATS = 18;   // no máximo 18 batimentos (90 min) por separador aberto — poupa a quota grátis do Upstash
 async function visitorsTick() {
-  if (document.hidden || vis.off || Date.now() - (vis.at || 0) < 60e3) return;
+  if (document.hidden || vis.off || vis.stop || Date.now() - (vis.at || 0) < 60e3) return;
+  if (vis.n >= VIS_MAX_BEATS) { vis.stop = true; return; }
+  vis.n++;
   vis.at = Date.now();
   try {
     const r = await fetch('api/visitors', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ first: vis.first }), credentials: 'same-origin', keepalive: true });
-    if (r.status === 404) { vis.off = true; return; }
+    if (r.status === 404 || r.status === 429 || r.status >= 500) { vis.off = true; return; }
     vis.first = false;
     vis.data = await getJSON('api/visitors');
   } catch { /* opcional */ }

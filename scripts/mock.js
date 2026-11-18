@@ -17,7 +17,7 @@ function fakeList(platform, base, n, t = Date.now()) {
   return Array.from({ length: n }, (_, i) => {
     const pt = i % 3 === 1;
     const name = names[(i + platform.length) % names.length] + (i > 14 ? i : '');
-    return { platform, id: `${platform}-${i}`, login: name.toLowerCase(), name, title: pt ? 'GTA VI DIA 1 🇵🇹 a explorar Leonida' : 'GTA 6 FIRST DAY — full playthrough',
+    return { platform, id: i % 3 === 0 ? `${platform}-${i}-${Math.floor((t / 600e3 + i) / 5)}` : `${platform}-${i}`, login: name.toLowerCase(), name, title: pt ? 'GTA VI DIA 1 🇵🇹 a explorar Leonida' : 'GTA 6 FIRST DAY — full playthrough',
       viewers: Math.round(base / (i + 1.4) * (0.6 + ((i * 7919 + Math.floor(t / 3600e3) * 31) % 100) / 100)), lang: pt ? 'pt' : ['en', 'es', 'de', 'fr'][i % 4], portugal: pt && i % 2 === 0, url: '#',
       avatar: null, started_at: new Date(Date.now() - (i * 97 % 40 + 1) * 3600e3 * 0.8).toISOString() };
   });
@@ -31,7 +31,7 @@ export function mockSnapshots(now, withVideos) {
     const scale = n * k;
     return Promise.resolve({ viewers: Math.round(base * k), streams: Math.round(scale),
       pt_viewers: Math.round(base * k * 0.16), pt_streams: Math.round(scale * 0.14),
-      ptpt_viewers: Math.round(base * k * 0.022), ptpt_streams: Math.round(scale * 0.018), list, complete: true,
+      ptpt_viewers: Math.round(base * k * 0.022), ptpt_streams: Math.round(scale * 0.018), list, complete: platform !== 'kick', min_v: platform === 'kick' ? 38 : 0,
       top10: Math.round(base * k * 0.35), ...(platform === 'kick' ? { dominance: { sample: 100, sample_viewers: Math.round(base * k * 4), gta_viewers: Math.round(base * k), gta_in_top100: Math.round(10 + k * 4), gta_in_top10: Math.min(10, Math.round(k)), games: [['Grand Theft Auto VI', base * k, 20, true], ['Just Chatting', 30000, 30], ['Counter-Strike', 9000, 8], ['Grand Theft Auto V', 7000, 12], ['Fortnite', 4000, 6], ['Call of Duty: Warzone', 3000, 5]].filter(([n]) => n !== 'Just Chatting').map(([name, v, n, gta]) => ({ id: name, name, viewers: Math.round(v), streams: n, gta: !!gta })).sort((a, b) => b.viewers - a.viewers) } } : {}),
       ...(platform === 'twitch' ? { game_id: '999', rank: k > 3 ? 1 : 2, languages: { en: 50, pt: 16, es: 14, de: 6, fr: 5, ru: 4, ja: 2, it: 2 } } : {}), ...extra });
   };
@@ -51,7 +51,7 @@ export function mockExtras(now) {
   const k = curve(now.getTime());
   return {
     clips: Array.from({ length: 12 }, (_, i) => ({ title: ['Perseguição épica em Vice City', 'O primeiro assalto 😂', 'Lucia & Jason — cena incrível', 'Bug mais estranho de sempre'][i % 4], views: Math.round(250000 / (i + 1)), creator: names[i], url: '#', thumb: null, lang: i % 3 ? 'en' : 'pt', created_at: now.toISOString(), duration: 28 })),
-    dominance: { sample: 1000, sample_viewers: Math.round(2.4e6 * (0.8 + k / 12)), gta_viewers: Math.round(60000 * k), gta_in_top100: Math.min(100, Math.round(6 * k)), gta_in_top10: Math.min(10, Math.round(k / 1.5)) },
+    dominance: { sample: 5000, min_v: 31, sample_viewers: Math.round(2.9e6 * (0.8 + k / 12)), gta_viewers: Math.round(60000 * k), gta_in_top100: Math.min(100, Math.round(6 * k)), gta_in_top10: Math.min(10, Math.round(k / 1.5)) },
     games: [['Grand Theft Auto VI', 60000 * k, 900 * k, true], ['Counter-Strike', 190000, 2600], ['League of Legends', 150000, 3100], ['Grand Theft Auto V', 95000, 2900], ['Fortnite', 70000, 4200],
       ['VALORANT', 64000, 2100], ['Minecraft', 52000, 3800], ['EA Sports FC 27', 41000, 1500], ['Call of Duty: Black Ops 7', 38000, 1900], ['Dota 2', 36000, 900]]
       .map(([name, v, n, gta]) => ({ id: name, name, viewers: Math.round(v * (gta ? 1 : 0.9 + Math.random() * 0.2)), streams: Math.round(n), gta: !!gta })).sort((a, b) => b.viewers - a.viewers),
