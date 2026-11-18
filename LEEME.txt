@@ -1,0 +1,7 @@
+Logótipos (opcional). Põe aqui os ficheiros oficiais, com EXATAMENTE estes nomes:
+
+  twitch.svg   youtube.svg   kick.svg     -> aparecem ao lado do nome de cada plataforma
+  instant-gaming.png   gta6.png           -> aparecem no banner "Compra o GTA VI aqui"
+
+Se um ficheiro não existir, o site usa um ponto de cor / texto no lugar. (.svg para as plataformas, .png para o banner)
+Usa os ficheiros dos kits de imprensa oficiais de cada marca.
