@@ -2,8 +2,13 @@ name: Recolha GTA VI
 
 on:
   schedule:
-    - cron: "*/10 * * * *"
-  workflow_dispatch:
+    - cron: "*/10 * * * *"   # de 10 em 10 minutos (UTC); o GitHub pode atrasar alguns minutos
+  workflow_dispatch:          # botão "Run workflow" (e disparo externo, ver README)
+    inputs:
+      force:
+        description: "Forçar também a leitura de vídeos novos do YouTube (gasta quota)"
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -23,12 +28,15 @@ jobs:
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 22
+
+      # Os dados vivem no branch "data" (não no main), para não gastar deploys do Vercel a cada recolha.
       - name: Buscar dados anteriores
         run: |
           if git fetch --depth=1 origin data 2>/dev/null; then
             git checkout FETCH_HEAD -- public/data data 2>/dev/null || true
             git reset -q
           fi
+
       - name: Recolher
         env:
           TWITCH_CLIENT_ID: ${{ secrets.TWITCH_CLIENT_ID }}
@@ -37,14 +45,17 @@ jobs:
           KICK_CLIENT_SECRET: ${{ secrets.KICK_CLIENT_SECRET }}
           KICK_CATEGORY_ID: ${{ secrets.KICK_CATEGORY_ID }}
           YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
-          FORCE_YT_VIDEOS: ${{ github.event_name == 'workflow_dispatch' && '1' || '' }}
+          FORCE_YT_VIDEOS: ${{ inputs.force && '1' || '' }}
         run: node scripts/collect.js
+
+      # Um único commit no branch "data", sempre substituído: o repositório não cresce.
       - name: Guardar no branch data
         run: |
           git config user.name "gta6-bot"
           git config user.email "actions@users.noreply.github.com"
           git checkout -q --orphan data-tmp
           git rm -rfq --cached . > /dev/null
-          git add -f public/data data
+          echo '{"git":{"deploymentEnabled":false},"ignoreCommand":"exit 0"}' > vercel.json   # o Vercel salta este branch
+          git add -f public/data data vercel.json
           git commit -qm "dados $(date -u +%Y-%m-%dT%H:%MZ)"
           for i in 1 2 3; do git push -qf origin HEAD:data && break; sleep 5; done
