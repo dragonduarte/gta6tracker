@@ -11,28 +11,35 @@ const BRANCH = 'data';
 const memo = new Map();             // ficheiro -> { at, body }
 const FRESH_MS = 45e3;
 
+const DEFAULT_REPO = 'dragonduarte/gta6tracker';   // usado se o Vercel não indicar o repositório
 function repo(env = process.env) {
-  const r = env.DATA_REPO || (env.VERCEL_GIT_REPO_OWNER && env.VERCEL_GIT_REPO_SLUG ? `${env.VERCEL_GIT_REPO_OWNER}/${env.VERCEL_GIT_REPO_SLUG}` : '');
-  return /^[\w.-]+\/[\w.-]+$/.test(r) ? r : null;
+  const r = env.DATA_REPO || (env.VERCEL_GIT_REPO_OWNER && env.VERCEL_GIT_REPO_SLUG ? `${env.VERCEL_GIT_REPO_OWNER}/${env.VERCEL_GIT_REPO_SLUG}` : '') || DEFAULT_REPO;
+  return /^[\w.-]+\/[\w.-]+$/.test(r) ? r : DEFAULT_REPO;
 }
 
-async function fetchFile(name, env = process.env) {
-  const r = repo(env);
-  if (!r) throw new Error('repo');
+async function get(url, headers) {
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), 8000);
   try {
-    const token = env.GITHUB_TOKEN;
-    const url = token
-      ? `https://api.github.com/repos/${r}/contents/public/data/${name}.json?ref=${BRANCH}`
-      : `https://raw.githubusercontent.com/${r}/${BRANCH}/public/data/${name}.json`;
-    const headers = token ? { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github.raw+json', 'User-Agent': 'gta6-tracker' } : { 'User-Agent': 'gta6-tracker' };
     const res = await fetch(url, { headers, signal: ctrl.signal });
-    if (!res.ok) throw new Error(String(res.status));
+    if (!res.ok) throw new Error(`http ${res.status}`);
     const text = await res.text();
     JSON.parse(text);               // só serve JSON válido
     return text;
   } finally { clearTimeout(timer); }
+}
+
+// Tenta primeiro o link público (raw). Se houver GITHUB_TOKEN e o raw falhar, tenta pela API com o token.
+// Um token errado nunca bloqueia o site.
+async function fetchFile(name, env = process.env) {
+  const r = repo(env);
+  const ua = { 'User-Agent': 'gta6-tracker' };
+  try { return await get(`https://raw.githubusercontent.com/${r}/${BRANCH}/public/data/${name}.json?t=${Math.floor(Date.now() / 60e3)}`, ua); }
+  catch (e) {
+    if (!env.GITHUB_TOKEN) throw e;
+    return get(`https://api.github.com/repos/${r}/contents/public/data/${name}.json?ref=${BRANCH}`,
+      { ...ua, Authorization: `Bearer ${env.GITHUB_TOKEN}`, Accept: 'application/vnd.github.raw+json' });
+  }
 }
 
 export default async function handler(req, res) {
@@ -57,11 +64,11 @@ export default async function handler(req, res) {
     memo.set(name, { at: Date.now(), body });
     res.setHeader('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=600');
     return res.status(200).send(body);
-  } catch {
+  } catch (e) {
     if (m) { res.setHeader('Cache-Control', 'public, s-maxage=30'); return res.status(200).send(m.body); }
-    // sem branch "data" ainda: o site usa os ficheiros estáticos em /data/
+    // diz porquê (sem segredos), para ser fácil de diagnosticar abrindo /api/data?f=latest no browser
     res.setHeader('Cache-Control', 'no-store');
-    return res.status(404).send('{"error":"unavailable"}');
+    return res.status(404).send(JSON.stringify({ error: 'unavailable', repo: repo(), why: String(e?.message || e).slice(0, 60) }));
   }
 }
 

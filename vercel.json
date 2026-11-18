@@ -35,7 +35,7 @@
         },
         {
           "key": "Content-Security-Policy",
-          "value": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://static-cdn.jtvnw.net https://clips-media-assets2.twitch.tv https://i.ytimg.com https://yt3.ggpht.com https://yt3.googleusercontent.com https://files.kick.com https://images.kick.com; font-src 'self' data:; connect-src 'self'; frame-src https://trends.google.com; frame-ancestors 'self'; base-uri 'self'; form-action 'none'; object-src 'none'; upgrade-insecure-requests"
+          "value": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://static-cdn.jtvnw.net https://clips-media-assets2.twitch.tv https://i.ytimg.com https://yt3.ggpht.com https://yt3.googleusercontent.com https://files.kick.com https://images.kick.com; font-src 'self' data:; connect-src 'self' https://raw.githubusercontent.com; frame-src https://trends.google.com; frame-ancestors 'self'; base-uri 'self'; form-action 'none'; object-src 'none'; upgrade-insecure-requests"
         },
         {
           "key": "X-Frame-Options",
@@ -68,7 +68,7 @@
         },
         {
           "key": "Content-Security-Policy",
-          "value": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://static-cdn.jtvnw.net https://clips-media-assets2.twitch.tv https://i.ytimg.com https://yt3.ggpht.com https://yt3.googleusercontent.com https://files.kick.com https://images.kick.com; font-src 'self' data:; connect-src 'self'; frame-src https://trends.google.com; frame-ancestors *; base-uri 'self'; form-action 'none'; object-src 'none'; upgrade-insecure-requests"
+          "value": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://static-cdn.jtvnw.net https://clips-media-assets2.twitch.tv https://i.ytimg.com https://yt3.ggpht.com https://yt3.googleusercontent.com https://files.kick.com https://images.kick.com; font-src 'self' data:; connect-src 'self' https://raw.githubusercontent.com; frame-src https://trends.google.com; frame-ancestors *; base-uri 'self'; form-action 'none'; object-src 'none'; upgrade-insecure-requests"
         }
       ]
     },

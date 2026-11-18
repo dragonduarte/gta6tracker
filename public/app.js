@@ -645,6 +645,8 @@ function renderFlow() {
   let ri = 0, ro = 0, rn = 0;
   for (const p of recent) for (const pl of ['twitch', 'kick']) if (PLATFORMS.includes(pl) && p[pl]?.[keys[0]] != null) { ri += p[pl][keys[0]]; ro += p[pl][keys[1]] || 0; rn++; }
   document.getElementById('flowInsight').innerHTML = rn ? T().flow_insight(ri, ro, ri - ro) : esc(t('flow_wait'));
+  document.getElementById('flowChart').parentElement.hidden = !hs.length;
+  if (!hs.length) return;
   const UP = '#3987e5', DOWN = '#e8864a';
   document.getElementById('flowLegend').innerHTML = `<span><i class="dot" style="background:${UP}"></i>${esc(t('flow_in'))}</span><span><i class="dot" style="background:${DOWN}"></i>${esc(t('flow_out'))}</span>`;
   mkOrUpdate('flowChart', {
@@ -720,15 +722,20 @@ async function downloadCard() {
 /* ============================================================ carregamento */
 async function getJSON(url) { const r = await fetch(url, { cache: 'no-cache', credentials: 'same-origin' }); if (!r.ok) throw new Error(r.status); return r.json(); }
 // Os dados vêm de /api/data (branch "data" do GitHub); se não existir, usa os ficheiros estáticos em /data/
-let dataApi = true;
+// Cada ficheiro é tratado à parte: um ficheiro que ainda não existe (ex.: previsões nas primeiras 24 h) não pode
+// fazer o site trocar os dados ao vivo pela cópia estática antiga. Nunca se substitui o que já está carregado por algo mais velho.
+// 3 caminhos, por ordem: /api/data (Vercel) → branch "data" diretamente no GitHub → ficheiro estático.
+const DATA_REPO = /^[\w.-]+\/[\w.-]+$/.test(CFG.dataRepo || '') ? CFG.dataRepo : 'dragonduarte/gta6tracker';
 async function getData(name) {
-  if (dataApi) { try { return await getJSON(`api/data?f=${name}`); } catch { dataApi = false; } }
+  try { return await getJSON(`api/data?f=${name}`); } catch { /* tenta o próximo */ }
+  try { const r = await fetch(`https://raw.githubusercontent.com/${DATA_REPO}/data/public/data/${name}.json?t=${Math.floor(Date.now() / 60e3)}`, { credentials: 'omit' }); if (r.ok) return await r.json(); } catch { /* tenta o próximo */ }
   return getJSON(`data/${name}.json`);
 }
+const newer = (a, b) => !b || !b.updated || (a && a.updated && Date.parse(a.updated) >= Date.parse(b.updated));
 async function loadHistory() {
   const [h, l, f, p] = await Promise.allSettled([getData('history'), getData('latest'), getData('hall'), getData('predictions')]);
-  if (h.status === 'fulfilled') S.history = h.value;
-  if (l.status === 'fulfilled') S.latest = l.value;
+  if (h.status === 'fulfilled' && (h.value.points || []).length && newer(h.value, S.history)) S.history = h.value;
+  if (l.status === 'fulfilled' && newer(l.value, S.latest)) S.latest = l.value;
   if (f.status === 'fulfilled') S.hall = f.value;
   if (p.status === 'fulfilled') S.predictions = p.value;
 }

@@ -42,15 +42,23 @@ export default {
     '@MoveMind', '@zorlaKOKA', '@MoraisHD', '@JOliveira10', '@RTPArena', '@ClipsdoWuant', '@godmota', '@FraggerSandro',
     '@Rayderzaoo', '@jottapdrr', '@oRuiPinto', '@impaKt', '@CesarVSC', '@imHugoLeandro', '@MikeCherry',
   ],
-  // Marcas explícitas de Portugal
+  // Marcas explícitas de Portugal no TÍTULO (nas tags não contam como fortes: há brasileiros que põem a tag "Portugal")
   keywords: [
     'portugal', 'pt-pt', 'ptpt', 'pt_pt', '[pt]', '(pt)', 'português de portugal', 'portugues de portugal',
-    'tuga', 'tugas', '🇵🇹', 'lisboa',
+    'tuga', 'tugas', '🇵🇹', 'lisboa', 'mbway', 'mb way',
   ],
-  // Expressões típicas de português europeu (Brasil diz "jogando", "conosco", "galera"...)
+  // Expressões só de português europeu: uma chega
   ptpt: [
-    'a jogar', 'a explorar', 'a fazer', 'a testar', 'a tentar', 'a ver ', 'a conduzir', 'a roubar', 'a correr',
-    'connosco', 'malta', 'bué', 'bue fixe', 'fixe', 'directo', 'em direto', 'telemóvel', 'ecrã', 'equipa',
-    'miúdos', 'pá', 'carago', 'vamos lá malta', 'subscrever', 'sub ao canal',
+    'connosco', 'malta', 'bué', 'bue', 'fixe', 'directo', 'em direto', 'telemóvel', 'ecrã', 'miúdos', 'pá', 'carago',
+    'vamos lá malta', 'subscrever', 'sub ao canal', 'giro', 'porreiro', 'gajo', 'gajos', 'gaja', 'até a barraca abana',
+  ],
+  // Expressões comuns em Portugal mas que também aparecem no Brasil ("primeiro a jogar"): precisam de 2 diferentes
+  ptpt_soft: [
+    'a jogar', 'a explorar', 'a fazer', 'a testar', 'a tentar', 'a ver', 'a conduzir', 'a roubar', 'a correr', 'equipa', 'pequeno-almoço',
+  ],
+  // Marcas do Brasil: anulam os sinais fracos (e uma bandeira 🇧🇷 junto de 🇵🇹 deixa a stream de fora)
+  brazil: [
+    'brasil', 'brazil', '🇧🇷', 'br', 'ptbr', 'pt-br', 'pt_br', '(br)', '[br]', 'pix', 'galera', 'mano', 'você', 'voce', 'vc', 'pra', 'tá',
+    'cara', 'nóis', 'nois', 'parça', 'massa', 'ao vivão', 'livepix',
   ],
 };

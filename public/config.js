@@ -19,6 +19,9 @@ window.SITE_CONFIG = {
     name: 'Instant Gaming',
   },
 
+  // Repositório do GitHub onde está o branch "data" (utilizador/repositorio)
+  dataRepo: 'dragonduarte/gta6tracker',
+
   // Google Trends: termo a comparar
   trendsKeyword: 'GTA 6',
 };

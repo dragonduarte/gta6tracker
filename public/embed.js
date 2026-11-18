@@ -22,8 +22,8 @@ function tick() {
   document.getElementById('cdl').textContent = d > 0 ? L.until : L.since;
 }
 async function load() {
-  const j = (u) => fetch(u, { cache: 'no-cache', credentials: 'same-origin' }).then((r) => r.ok ? r.json() : null).catch(() => null);
-  const [h, live] = await Promise.all([j('data/history.json'), j('api/live')]);
+  const j = (u) => fetch(u, { cache: 'no-cache', credentials: u.startsWith('http') ? 'omit' : 'same-origin' }).then((r) => r.ok ? r.json() : null).catch(() => null);
+  const [h, live] = await Promise.all([j('api/data?f=history').then((x) => x || j(`https://raw.githubusercontent.com/${/^[\w.-]+\/[\w.-]+$/.test(C.dataRepo || '') ? C.dataRepo : 'dragonduarte/gta6tracker'}/data/public/data/history.json`)).then((x) => x || j('data/history.json')), j('api/live')]);
   const pts = h?.points || [];
   const tot = pts.map((p) => ['twitch', 'kick', 'youtube'].reduce((s, k) => s + (p[k]?.[K[0]] || 0), 0));
   let now = tot.length ? tot[tot.length - 1] : null;
