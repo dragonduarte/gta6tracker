@@ -44,7 +44,7 @@ jobs:
           git config user.name "gta6-bot"
           git config user.email "actions@users.noreply.github.com"
           git checkout -q --orphan data-tmp
-          git rm -rq --cached . > /dev/null
+          git rm -rfq --cached . > /dev/null
           git add -f public/data data
           git commit -qm "dados $(date -u +%Y-%m-%dT%H:%MZ)"
           for i in 1 2 3; do git push -qf origin HEAD:data && break; sleep 5; done
