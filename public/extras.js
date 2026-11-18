@@ -9,7 +9,9 @@
     pt: {
       ad_note: 'link de afiliado',
       ad_title: 'Compra o GTA VI aqui',
-      ad_text: 'Vê o preço do GTA VI na Instant Gaming e compra os teus jogos mais baratos.', ad_cta: 'Ver preços',
+      ad_text: 'Vê o preço do GTA VI na Instant Gaming.', ad_cta: 'Comprar agora',
+      clips_hidden: 'Os clips podem ter spoilers do jogo.', clips_show: 'Mostrar clips', clips_hide: 'Esconder clips',
+      le_title: 'Evolução por língua', le_sub: 'Espectadores de cada língua ao longo do tempo', le_wait: 'Aparece quando houver pelo menos duas recolhas com este dado.', le_other: 'Outras',
       games_h2: 'GTA VI vs outros jogos', games_tw: 'Twitch: os jogos mais vistos agora', games_tw_sub: 'Espectadores somados de todas as streams de cada jogo. Sem Just Chatting e outras categorias que não são jogos.',
       games_kk: 'Kick: os jogos mais vistos agora', games_kk_sub: 'Nas 100 maiores streams da Kick (limite da API pública), por jogo. Não inclui as mais pequenas.',
       games_rank: 'Lugar entre os jogos na Twitch', games_vs: (x, n) => `${x} o 2º lugar (${n})`, games_vs_lbl: 'Comparado com o 2º jogo', games_vs_lbl2: 'Comparado com o 1º jogo', games_behind: (x, n) => `${x} do 1º lugar (${n})`,
@@ -39,7 +41,9 @@
     en: {
       ad_note: 'affiliate link',
       ad_title: 'Buy GTA VI here',
-      ad_text: 'See the price of GTA VI on Instant Gaming and buy your games for less.', ad_cta: 'See prices',
+      ad_text: 'See the price of GTA VI on Instant Gaming.', ad_cta: 'Buy now',
+      clips_hidden: 'Clips may contain game spoilers.', clips_show: 'Show clips', clips_hide: 'Hide clips',
+      le_title: 'Evolution by language', le_sub: 'Viewers of each language over time', le_wait: 'Shows up once there are at least two snapshots with this data.', le_other: 'Other',
       games_h2: 'GTA VI vs other games', games_tw: 'Twitch: most-watched games right now', games_tw_sub: 'Viewers summed across every stream of each game. Just Chatting and other non-game categories are left out.',
       games_kk: 'Kick: most-watched games right now', games_kk_sub: "Across Kick's 100 biggest streams (the public API's limit), by game. Smaller streams are not included.",
       games_rank: 'Rank among games on Twitch', games_vs: (x, n) => `${x} the #2 game (${n})`, games_vs_lbl: 'Against the #2 game', games_vs_lbl2: 'Against the #1 game', games_behind: (x, n) => `${x} of the #1 game (${n})`,
@@ -81,13 +85,25 @@
   /* ---------------------------------------------------------------- estilos */
   const style = document.createElement('style');
   style.textContent = `
-  .ad { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 18px; padding: 16px 20px; border-radius: var(--radius); text-decoration: none; color: inherit; margin-top: 8px;
-    background: linear-gradient(var(--surface-1), var(--surface-1)) padding-box, linear-gradient(110deg, var(--sun-1), var(--sun-2), var(--sun-3)) border-box; border: 1px solid transparent; }
-  .ad:hover { filter: brightness(1.06); }
-  .ad .ad-ico { width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center; background: #ff5400; color: #fff; font-weight: 800; font-size: 15px; font-stretch: 75%; }
-  .ad .ad-t { font-weight: 650; font-size: 17px; } .ad .ad-s { color: var(--text-secondary); font-size: 14.5px; }
-  .ad .ad-tag { font-size: 11px; color: var(--text-muted); display: block; text-align: center; margin-top: 5px; }
-  .ad .ad-end { display: flex; flex-direction: column; align-items: center; }
+  .gtabuy { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 20px; padding: 20px 24px; border-radius: var(--radius); text-decoration: none; color: inherit; margin-top: 8px; cursor: pointer;
+    background: linear-gradient(110deg, rgba(108,75,255,.22), rgba(255,79,154,.2) 55%, rgba(255,201,92,.2)), var(--surface-1); border: 1px solid rgba(255,79,154,.45); transition: transform .15s, border-color .15s; }
+  .gtabuy:hover { transform: translateY(-2px); border-color: var(--sun-2); }
+  .gtabuy:focus-visible { outline: 2px solid var(--sun-1); outline-offset: 3px; }
+  .gtabuy .logos { display: flex; align-items: center; gap: 14px; }
+  .gtabuy .bl { position: relative; display: grid; place-items: center; min-width: 56px; height: 56px; }
+  .gtabuy .bl img { height: 56px; width: auto; max-width: 150px; object-fit: contain; }
+  .gtabuy .bl .fb { font-weight: 800; font-size: 18px; letter-spacing: -.02em; padding: 0 14px; height: 56px; display: grid; place-items: center; border-radius: 14px; background: #ff5400; color: #fff; }
+  .gtabuy .bl.gta .fb { background: transparent; border: 1px solid var(--border); color: var(--text-primary); font-family: var(--font-display); }
+  .gtabuy .bl.has .fb { display: none; }
+  .gtabuy .gx { color: var(--text-muted); font-size: 18px; }
+  .gtabuy .by-t { font-family: var(--font-display); font-weight: 700; font-size: 22px; letter-spacing: -.02em; }
+  .gtabuy .by-s { color: var(--text-secondary); font-size: 14.5px; margin-top: 2px; }
+  .gtabuy .by-end { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  .gtabuy .by-btn { background: linear-gradient(110deg, var(--sun-1), var(--sun-2)); color: #1a0b14; font-weight: 700; padding: 12px 22px; border-radius: 12px; font-size: 15px; white-space: nowrap; }
+  .gtabuy .by-tag { font-size: 11px; color: var(--text-muted); }
+  .clips-gate { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 34px 18px; border: 1px dashed var(--border); border-radius: var(--radius); color: var(--text-secondary); text-align: center; }
+  .lg-leg { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12.5px; color: var(--text-secondary); margin-bottom: 8px; }
+  .lg-leg span { display: inline-flex; align-items: center; gap: 6px; }
   .grid2.even { grid-template-columns: 1fr 1fr; }
   .chart.games { height: 340px; }
   .stats3 .big-stat { font-size: 44px; margin-top: 10px; }
@@ -120,9 +136,9 @@
   .trends { width: 100%; height: 380px; border: 0; border-radius: 10px; background: #fff; }
   .embed-code { width: 100%; min-height: 96px; background: var(--surface-2); color: var(--text-primary); border: 1px solid var(--border); border-radius: 6px; padding: 12px; font: 13px/1.5 ui-monospace, Menlo, monospace; resize: vertical; }
   .embed-box { background: var(--surface-1); border: 1px solid var(--border); border-radius: 18px; padding: 22px; width: min(720px, 92vw); display: flex; flex-direction: column; gap: 12px; }
-  @media (max-width: 1000px) { .grid3 { grid-template-columns: 1fr; } .grid2.even { grid-template-columns: 1fr; } .stats3 { grid-template-columns: repeat(3, 1fr); } .stats3 .big-stat { font-size: 30px; } .f24 { grid-template-columns: repeat(2, 1fr); } .clips { grid-template-columns: repeat(2, 1fr); } .ad { grid-template-columns: auto 1fr; } .ad .btn { grid-column: 1 / -1; } }
+  @media (max-width: 1000px) { .gtabuy { grid-template-columns: 1fr; text-align: center; } .gtabuy .logos { justify-content: center; } .grid3 { grid-template-columns: 1fr; } .grid2.even { grid-template-columns: 1fr; } .stats3 { grid-template-columns: repeat(3, 1fr); } .stats3 .big-stat { font-size: 30px; } .f24 { grid-template-columns: repeat(2, 1fr); } .clips { grid-template-columns: repeat(2, 1fr); }  }
   @media (max-width: 560px) { .stats3 { grid-template-columns: 1fr; } .clips { grid-template-columns: 1fr; } .heat { font-size: 10px; } }
-  @media print { .ad, #trendsCard { display: none !important; } .grid3 { grid-template-columns: repeat(3, 1fr) !important; } .f24 { grid-template-columns: repeat(5, 1fr) !important; } .clips { grid-template-columns: repeat(4, 1fr) !important; } }
+  @media print { .gtabuy, #buyTop, #trendsCard { display: none !important; } .grid3 { grid-template-columns: repeat(3, 1fr) !important; } .f24 { grid-template-columns: repeat(5, 1fr) !important; } .clips { grid-template-columns: repeat(4, 1fr) !important; } }
   `;
   document.head.appendChild(style);
 
@@ -176,6 +192,11 @@
       <div class="panel"><h3 id="heatS2"></h3><div class="desc" id="heatS"></div><div class="heat" id="heat"></div><div class="heat-legend" id="heatLegend"></div></div>
       <div class="panel"><h3 id="langT"></h3><div class="desc" id="langS"></div><div class="chart sm"><canvas id="langChart"></canvas></div></div>
     </div>
+    <div class="panel" style="margin-top:12px">
+      <div class="card-head"><div><h3 id="leT"></h3><div class="desc" id="leS"></div></div><div class="seg" id="leSeg"><button data-lp="twitch">Twitch</button><button data-lp="kick">Kick</button></div></div>
+      <div class="lg-leg" id="leLeg"></div>
+      <div class="chart sm"><canvas id="langEvo"></canvas></div>
+    </div>
     <p class="insight" id="mapInsight" style="margin-top:18px"></p>
     <div class="grid2">
       <div class="panel"><h3 id="mapT"></h3><div class="desc" id="mapS"></div><div class="map-wrap" id="map"></div><div class="heat-legend" id="mapLegend"></div></div>
@@ -191,12 +212,13 @@
     const sp = CFG.sponsor || {};
     const spUrl = (() => { try { const u = new URL(sp.url); return u.protocol === 'https:' && /(^|\.)instant-gaming\.com$/.test(u.hostname) ? u.href : null; } catch { return null; } })();
     const ok = spUrl && !/COLOCA_AQUI/.test(spUrl);
-    const box = document.getElementById('sponsorTop');
+    const box = document.getElementById('buyTop');
     if (!ok) { box.innerHTML = ''; return; }
-    box.innerHTML = `<a class="ad" href="${esc(spUrl)}" target="_blank" rel="sponsored noopener noreferrer">
-      <span class="ad-ico">IG</span>
-      <span><span class="ad-t">${X('ad_title')}</span><br><span class="ad-s">${X('ad_text')}</span></span>
-      <span class="ad-end"><span class="btn">${X('ad_cta')}</span><span class="ad-tag">${X('ad_note')}</span></span></a>`;
+    const logo = (cls, file, fb) => `<span class="bl ${cls}"><span class="fb">${fb}</span><img src="img/${file}" alt="" data-plogo="1"></span>`;
+    box.innerHTML = `<a class="gtabuy" href="${esc(spUrl)}" target="_blank" rel="noopener noreferrer" aria-label="${esc(X('ad_title'))}">
+      <span class="logos">${logo('ig', 'instant-gaming.png', 'Instant Gaming')}<span class="gx">+</span>${logo('gta', 'gta6.png', 'GTA VI')}</span>
+      <span><div class="by-t">${X('ad_title')}</div><div class="by-s">${X('ad_text')}</div></span>
+      <span class="by-end"><span class="by-btn">${X('ad_cta')}</span><span class="by-tag">${X('ad_note')}</span></span></a>`;
   }
 
   /* --------------------------------------------- GTA VI vs outros jogos */
@@ -313,15 +335,43 @@
     document.getElementById('heatLegend').innerHTML = `${X('heat_less')} ${SEQ.map((c) => `<i style="background:${c}"></i>`).join('')} ${X('heat_more')}`;
   }
 
+  /* ------------------------------------------------- evolução por língua */
+  const LCOL = { en: '#3987e5', pt: '#2bb673', es: '#e8864a', de: '#d06bd6', fr: '#e5c13d', ru: '#e0566a', ja: '#4cc3d9', other: '#8a8fa3' };
+  const LORDER = ['en', 'pt', 'es', 'de', 'fr', 'ru', 'ja'];
+  S.langPlat = S.langPlat || 'twitch';
+  document.getElementById('leSeg').onclick = (e) => { const b = e.target.closest('button'); if (b) { S.langPlat = b.dataset.lp; renderLangEvo(); } };
+  function renderLangEvo() {
+    document.getElementById('leT').textContent = X('le_title'); document.getElementById('leS').textContent = X('le_sub') + (S.langPlat === 'kick' ? (S.lang === 'pt' ? ' (top 100 da Kick)' : ' (Kick top 100)') : '');
+    document.querySelectorAll('#leSeg button').forEach((b) => b.setAttribute('aria-pressed', b.dataset.lp === S.langPlat));
+    const pts = inRange().filter((p) => p[S.langPlat]?.lg);
+    const tot = {}; for (const p of pts) for (const [l, v] of Object.entries(p[S.langPlat].lg)) tot[l] = Math.max(tot[l] || 0, v);
+    const top = Object.keys(tot).sort((a, b) => tot[b] - tot[a]).slice(0, 6);
+    top.sort((a, b) => (LORDER.indexOf(a) < 0 ? 99 : LORDER.indexOf(a)) - (LORDER.indexOf(b) < 0 ? 99 : LORDER.indexOf(b)));
+    const dn = (() => { try { return new Intl.DisplayNames([T().locale], { type: 'language' }); } catch { return null; } })();
+    const lname = (c) => { try { const n = dn?.of(c); return n ? n[0].toUpperCase() + n.slice(1) : c; } catch { return c; } };
+    const col = (l) => LCOL[l] || LCOL.other;
+    document.getElementById('leLeg').innerHTML = pts.length > 1 ? top.map((l) => `<span><i class="dot" style="background:${col(l)}"></i>${esc(lname(l))}</span>`).join('') : `<span>${esc(X('le_wait'))}</span>`;
+    const ds = pts.length > 1 ? top.map((l) => ({ label: lname(l), data: pts.map((p) => ({ x: Date.parse(p.ts), y: p[S.langPlat].lg[l] || 0 })), borderColor: col(l), backgroundColor: col(l) })) : [];
+    const xs = pts.map((p) => Date.parse(p.ts));
+    mkOrUpdate('langEvo', { type: 'line', plugins: [launchLine], data: { datasets: ds }, options: baseLine(xs.length ? xs : [0, 1]) });
+  }
+
   /* ------------------------------------------------------------------ clips */
   function renderClips() {
     document.getElementById('clipsT').textContent = X('clips_title');
     document.getElementById('clipsS').textContent = S.scope === 'global' ? X('clips_sub') : X('clips_sub_pt');
     const clips = (S.latest.clips || []).filter((c) => S.scope === 'global' || c.lang === 'pt').slice(0, 8);
-    document.getElementById('clips').innerHTML = clips.length ? clips.map((c) => `<a class="clip" href="${esc(safeUrl(c.url))}" target="_blank" rel="noopener">
+    const gate = document.getElementById('clips');
+    if (!S.clipsOpen && clips.length) {
+      gate.innerHTML = `<div class="clips-gate" style="grid-column:1/-1"><div>🙈 ${X('clips_hidden')}</div><button class="btn" id="clipsShow">${X('clips_show')}</button></div>`;
+      document.getElementById('clipsShow').onclick = () => { S.clipsOpen = true; renderClips(); };
+      return;
+    }
+    document.getElementById('clips').innerHTML = (clips.length ? `<div style="grid-column:1/-1"><button class="btn ghost" id="clipsHide">${X('clips_hide')}</button></div>` : '') + (clips.length ? clips.map((c) => `<a class="clip" href="${esc(safeUrl(c.url))}" target="_blank" rel="noopener">
       <div class="th" style="${safeImg(c.thumb) ? `background-image:url(&quot;${esc(safeImg(c.thumb))}&quot;)` : ''}">${safeImg(c.thumb) ? '' : '🎬'}<b class="tnum">▶ ${fmtC(c.views)}</b>${c.duration ? `<em>${Math.round(c.duration)}s</em>` : ''}</div>
       <div class="vt">${esc(c.title)}</div><div class="vc">${esc(c.creator)}, ${fmt(c.views)} ${X('views')}</div></a>`).join('')
-      : `<div class="empty" style="grid-column:1/-1">${X('clips_empty')}</div>`;
+      : `<div class="empty" style="grid-column:1/-1">${X('clips_empty')}</div>`);
+    const hb = document.getElementById('clipsHide'); if (hb) hb.onclick = () => { S.clipsOpen = false; renderClips(); };
   }
 
   /* ------------------------------------------------------- hall + maratonas */
@@ -329,7 +379,7 @@
     return `<a class="row" href="${esc(safeUrl(r.url))}" target="_blank" rel="noopener">
       <span class="rank">${i + 1}</span>
       <span class="avatar" style="border-color:${COLOR[r.platform] || 'var(--border)'}">${safeImg(r.avatar) ? `<img src="${esc(safeImg(r.avatar))}" alt="" loading="lazy" referrerpolicy="no-referrer">` : initials(r.name)}</span>
-      <span class="who"><span class="n">${esc(r.name)} ${r.portugal ? '<span class="tag pt">PT</span>' : ''}<span class="tag">${NAMES[r.platform]}</span></span><span class="t">${sub}</span></span>
+      <span class="who"><span class="n">${esc(r.name)} ${r.portugal ? '<span class="tag pt">PT</span>' : ''}<span class="tag">${platHtml(r.platform)}</span></span><span class="t">${sub}</span></span>
       <span class="viewers">${right}</span></a>`;
   }
   function renderHall() {
@@ -503,7 +553,7 @@
   /* ------------------------------------------------------------------ main */
   window.renderExtras = function () {
     const run = (f) => { try { f(); } catch (e) { console.error(f.name, e); } };
-    [renderSponsor, renderGames, renderHeat, renderClips, renderHall, renderF24, renderMap, renderTrends].forEach(run);
+    [renderSponsor, renderGames, renderHeat, renderLangEvo, renderClips, renderHall, renderF24, renderMap, renderTrends].forEach(run);
   };
   if (points().length || S.liveOk) window.renderExtras();
 })();

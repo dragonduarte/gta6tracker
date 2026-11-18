@@ -143,6 +143,10 @@ async function run() {
   }
   for (const [k, r] of Object.entries(res)) {
     point[k] = { v: r.viewers, s: r.streams, pv: r.pt_viewers, ps: r.pt_streams, ppv: r.ptpt_viewers, pps: r.ptpt_streams };
+    if (k !== 'youtube') {   // espectadores por língua (8 maiores), para o gráfico de evolução por língua
+      const lgm = {}; for (const st of r.list) lgm[st.lang || '?'] = (lgm[st.lang || '?'] || 0) + st.viewers;
+      point[k].lg = Object.fromEntries(Object.entries(lgm).sort((a, b) => b[1] - a[1]).slice(0, 8));
+    }
     if (r.rank != null) point[k].rank = r.rank;
     if (flow[k]) Object.assign(point[k], { si: flow[k].g.i, so: flow[k].g.o, psi: flow[k].p.i, pso: flow[k].p.o, ppsi: flow[k].q.i, ppso: flow[k].q.o });
     if (r.top10 != null) point[k].t10 = r.top10;

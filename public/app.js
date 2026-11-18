@@ -73,11 +73,14 @@ const I18N = {
     yt_k_viewers: 'A ver lives agora', yt_k_lives: 'Lives agora', yt_k_read: 'Última leitura', yt_k_vids: 'Vídeos novos (3 h)',
     yt_live_title: 'Espectadores nas lives do YouTube', yt_live_desc: 'Uma leitura por hora',
     yt_board: 'Lives com mais gente', yt_board_empty: 'Sem lives nesta vista na última leitura.',
-    yt_disc: 'O YouTube só mostra as 50 lives mais vistas e é lido de hora a hora, por isso estes números são um mínimo e não entram no total por defeito. Serve para ver tendência, não para comparar com a Twitch.',
+    yt_disc: 'O YouTube só mostra as 50 lives mais vistas e é lido de hora a hora, por isso estes números são um mínimo e não entram no total por defeito. ',
     flow_title: 'Streams a entrar e a sair', flow_desc: 'Por hora: canais que começaram (acima) e que terminaram (abaixo) de transmitir GTA VI',
     flow_in: 'Começaram', flow_out: 'Terminaram', flow_wait: 'Aparece depois de duas recolhas seguidas.',
     flow_insight: (i, o, n) => `Na última hora, <b>${fmt(i)}</b> canais começaram a transmitir GTA VI e <b>${fmt(o)}</b> terminaram: ${n >= 0 ? 'ficaram mais' : 'ficaram menos'} <b>${fmt(Math.abs(n))}</b> em direto.`,
     info_btn: 'Mais informação',
+    notice_title: 'Antes de começares',
+    notice_text: 'Este site foi feito com "vibe coding", com ajuda de IA, por uma pessoa e não por uma empresa. Os dados da <b>Twitch</b> vêm da API oficial e são fiáveis. Os da <b>Kick</b> (só as 100 maiores streams) e do <b>YouTube</b> (só as 50 maiores lives, lidas de hora a hora) são limitados e podem ter discrepâncias.',
+    notice_ok: 'Percebi', notice_link: 'Sobre estes dados',
   },
   en: {
     locale: (/^en/i.test(navigator.language || '') ? navigator.language : 'en-US'),   // formatos do país do visitante
@@ -136,11 +139,14 @@ const I18N = {
     yt_k_viewers: 'Watching lives now', yt_k_lives: 'Lives now', yt_k_read: 'Last read', yt_k_vids: 'New videos (3 h)',
     yt_live_title: 'Viewers on YouTube lives', yt_live_desc: 'One reading per hour',
     yt_board: 'Lives with the most people', yt_board_empty: 'No lives in this view in the last reading.',
-    yt_disc: 'YouTube only shows the 50 most-watched lives and is read hourly, so these numbers are a minimum and are left out of the total by default. Use them for trends, not to compare with Twitch.',
+    yt_disc: 'YouTube only shows the 50 most-watched lives and is read hourly, so these numbers are a minimum and are left out of the total by default.',
     flow_title: 'Streams starting and ending', flow_desc: 'Per hour: channels that started (up) and stopped (down) streaming GTA VI',
     flow_in: 'Started', flow_out: 'Ended', flow_wait: 'Shows up after two back-to-back snapshots.',
     flow_insight: (i, o, n) => `In the last hour, <b>${fmt(i)}</b> channels started streaming GTA VI and <b>${fmt(o)}</b> stopped: there are <b>${fmt(Math.abs(n))}</b> ${n >= 0 ? 'more' : 'fewer'} live.`,
     info_btn: 'More information',
+    notice_title: 'Before you start',
+    notice_text: 'This site was built with "vibe coding", with AI help, by one person and not a company. <b>Twitch</b> data comes from the official API and is reliable. <b>Kick</b> (only its 100 biggest streams) and <b>YouTube</b> (only its 50 biggest lives, read hourly) are limited and may show discrepancies.',
+    notice_ok: 'Got it', notice_link: 'About this data',
   },
 };
 
@@ -178,6 +184,14 @@ const INFO = {
 const infoText = (k) => { const v = INFO[S.lang][k]; return typeof v === 'function' ? v() : v || ''; };
 const infoBtn = (k) => `<button type="button" class="info" data-info="${esc(k)}" aria-label="${esc(T().info_btn)}">i</button>`;
 window.infoBtn = infoBtn;
+// Logótipo da plataforma: usa public/img/<plataforma>.svg (ou .png) se existir; senão, o ponto de cor. Sem estilos nem handlers inline.
+const LOGO = {};
+for (const p of ['twitch', 'kick', 'youtube']) { LOGO[p] = null; }
+const plat = (p, withName = true) => `<span class="pl"><span class="pi" data-p="${esc(p)}"><i class="dot" style="background:${COLOR[p] || 'var(--text-muted)'}"></i><img src="img/${esc(p)}.svg" alt="" width="16" height="16" data-logo="${esc(p)}"></span>${withName ? esc(NAMES[p] || p) : ''}</span>`;
+window.platHtml = plat;
+// se o ficheiro do logótipo não existir, a imagem desaparece e fica o ponto de cor
+document.addEventListener('error', (e) => { const i = e.target; if (i?.tagName === 'IMG' && i.dataset?.logo) i.remove(); else if (i?.tagName === 'IMG' && i.dataset?.plogo) i.remove(); }, true);
+document.addEventListener('load', (e) => { const i = e.target; if (i?.tagName !== 'IMG') return; if (i.dataset?.logo) i.closest('.pi')?.classList.add('has'); else if (i.dataset?.plogo) i.closest('.bl')?.classList.add('has'); }, true);
 // tooltip único, posicionado junto ao ícone (compatível com a CSP: sem estilos nem handlers inline)
 (function initInfoTip() {
   const tipEl = document.createElement('div'); tipEl.className = 'itip'; tipEl.setAttribute('role', 'tooltip'); tipEl.hidden = true; document.body.appendChild(tipEl);
@@ -274,6 +288,7 @@ function hourly(pts) {
       if (!cur[k]) { cur[k] = { ...p[k] }; continue; }
       const m = { ...cur[k] };
       for (const f of ['v', 's', 'pv', 'ps', 'ppv', 'pps', 'dg', 'dt']) if (p[k][f] != null) m[f] = cur[k][f] != null ? Math.max(cur[k][f], p[k][f]) : p[k][f];
+      if (p[k].lg) m.lg = p[k].lg;
       for (const f of FLOW_F) if (p[k][f] != null) m[f] = (cur[k][f] || 0) + p[k][f];
       cur[k] = m;
     }
@@ -340,7 +355,8 @@ function applyI18n() {
   document.querySelectorAll('#rangeSeg button').forEach((b) => b.setAttribute('aria-pressed', b.dataset.range === String(S.range)));
   document.getElementById('method').innerHTML = T().method;
   const host = location.host || 'gta6-tracker';
-  document.getElementById('footer').innerHTML = `${esc(t('made_by'))} <a href="${esc(AUTHOR_URL)}" target="_blank" rel="noopener">${esc(AUTHOR)}</a>. ${esc(T().footer)}`;
+  document.getElementById('footer').innerHTML = `${esc(t('made_by'))} <a href="${esc(AUTHOR_URL)}" target="_blank" rel="noopener">${esc(AUTHOR)}</a>. ${esc(T().footer)} <button type="button" class="linklike" id="noticeBtn">${esc(t('notice_link'))}</button>`;
+  document.getElementById('noticeTitle').textContent = t('notice_title'); document.getElementById('noticeText').innerHTML = T().notice_text; document.getElementById('noticeOk').textContent = t('notice_ok');
   document.getElementById('byline').textContent = `${t('by')} ${AUTHOR}`;
   document.getElementById('authorName').textContent = AUTHOR; document.getElementById('authorLink').href = AUTHOR_URL;
   document.getElementById('printCredit').innerHTML = `<span>GTA VI Tracker. ${esc(t('credit_line'))} <b>${esc(AUTHOR)}</b>, ${esc(AUTHOR_URL.replace('https://www.', ''))}</span><span>${esc(host)}, ${esc(dt(Date.now(), { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }))}</span>`;
@@ -414,7 +430,7 @@ function renderNow() {
   });
 
   const pbox = document.getElementById('platforms');
-  if (!pbox.children.length) pbox.innerHTML = CARDS.map((p) => `<div class="plat" data-p="${p}"><div class="top"><div class="name"><i class="dot" style="background:${COLOR[p]}"></i>${NAMES[p]}</div><span class="when"></span></div>
+  if (!pbox.children.length) pbox.innerHTML = CARDS.map((p) => `<div class="plat" data-p="${p}"><div class="top"><div class="name">${plat(p)}</div><span class="when"></span></div>
     <div><span class="value tnum"></span><span class="pct tnum"></span></div><div class="meta"></div><div class="spark"><canvas></canvas></div></div>`).join('');
   const sum = PLATFORMS.reduce((acc, p) => acc + (nowFor(p, 'V') || 0), 0);
   for (const p of CARDS) {
@@ -487,7 +503,7 @@ function renderCharts() {
   const fcs = showFc ? Object.fromEntries(PLATFORMS.map((p) => [p, forecastPlatform(p, key)])) : {};
   const anyFc = Object.values(fcs).some(Boolean);
   const fcEnd = anyFc ? Math.max(...Object.values(fcs).filter(Boolean).map((f) => f[f.length - 1].ts)) : null;
-  document.getElementById('tsLegend').innerHTML = PLATFORMS.map((p) => `<span><i class="dot" style="background:${COLOR[p]}"></i>${NAMES[p]}</span>`).join('') + (anyFc ? `<span><i class="fc"></i>${t('forecast')}</span>` : '');
+  document.getElementById('tsLegend').innerHTML = PLATFORMS.map((p) => `<span>${plat(p)}</span>`).join('') + (anyFc ? `<span><i class="fc"></i>${t('forecast')}</span>` : '');
   const ds = PLATFORMS.map((p) => ({ label: NAMES[p], data: pts.map((pt, i) => ({ x: xs[i], y: pt[p]?.[key] ?? null })), borderColor: COLOR[p], backgroundColor: COLOR[p] }));
   for (const p of PLATFORMS) if (fcs[p]) {
     const lastReal = pts.length && pts[pts.length - 1][p]?.[key];
@@ -574,7 +590,7 @@ function renderBoard() {
     return `<a class="row" href="${esc(safeUrl(r.url))}" target="_blank" rel="noopener">
       <span class="rank">${i + 1}</span>
       <span class="avatar" style="border-color:${COLOR[r.platform] || 'var(--border)'}">${safeImg(r.avatar) ? `<img src="${esc(safeImg(r.avatar))}" alt="" loading="lazy" referrerpolicy="no-referrer">` : initials(r.name)}</span>
-      <span class="who"><span class="n">${esc(r.name)} ${r.portugal ? '<span class="tag pt">PT</span>' : ''}<span class="tag">${NAMES[r.platform]}</span></span><span class="t" title="${esc(r.title)}">${esc(r.title)}</span></span>
+      <span class="who"><span class="n">${esc(r.name)} ${r.portugal ? '<span class="tag pt">PT</span>' : ''}<span class="tag">${plat(r.platform)}</span></span><span class="t" title="${esc(r.title)}">${esc(r.title)}</span></span>
       <span class="viewers">${fmt(r.viewers)}<small>${dur || t('viewers')}</small></span></a>`;
   }).join('') : `<div class="empty">${t('board_empty')}</div>`;
 
@@ -599,6 +615,7 @@ function liveRow(r, i) {
 }
 function renderYoutube() {
   const k = KEYS[S.scope];
+  document.getElementById('ytH2').innerHTML = `<span style="display:inline-flex;align-items:center;gap:10px">${plat('youtube', false).replace('width="16" height="16"', 'width="16" height="16"')}YouTube</span>`;
   document.getElementById('ytSub').textContent = t('yt_sub');
   document.getElementById('ytLiveT').textContent = t('yt_live_title');
   document.getElementById('ytLiveD').textContent = t('yt_live_desc');
@@ -814,6 +831,17 @@ function initSecnav() {
   }, { rootMargin: '-120px 0px -65% 0px' });
   for (const a of links) { const sec = document.querySelector(a.getAttribute('href')); if (sec) io.observe(sec); }
 }
+
+/* ============================================================ aviso inicial */
+(function initNotice() {
+  const m = document.getElementById('noticeModal');
+  const close = () => { m.classList.remove('open'); store.set('notice_v1', '1'); };
+  document.getElementById('noticeOk').onclick = close;
+  m.onclick = (e) => { if (e.target === m) close(); };
+  document.addEventListener('click', (e) => { if (e.target.closest?.('#noticeBtn')) m.classList.add('open'); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && m.classList.contains('open')) close(); });
+  if (!store.get('notice_v1') && !params.get('card') && !params.get('nonotice')) setTimeout(() => m.classList.add('open'), 600);
+})();
 
 (async function boot() {
   renderAll();

@@ -126,6 +126,17 @@ h2 { font-family: var(--font-display); font-size: 26px; margin: 0; letter-spacin
 .info:hover, .info:focus-visible { color: var(--text-primary); border-color: var(--text-primary); background: var(--surface-2); }
 .info:focus-visible { outline: 2px solid var(--sun-1); outline-offset: 2px; }
 .itip { position: fixed; z-index: 80; max-width: min(300px, calc(100vw - 16px)); background: #0a0910; border: 1px solid var(--border); color: var(--text-primary); border-radius: 10px; padding: 10px 12px; font-size: 13px; line-height: 1.45; font-weight: 400; box-shadow: 0 8px 24px rgba(0,0,0,.5); pointer-events: none; }
+.pl { display: inline-flex; align-items: center; gap: 6px; }
+.pi { position: relative; display: inline-grid; place-items: center; width: 16px; height: 16px; flex: none; }
+.pi img { position: absolute; inset: 0; width: 16px; height: 16px; object-fit: contain; }
+.pi.has .dot { visibility: hidden; }
+.tag .pl { gap: 4px; } .tag .pi, .tag .pi img { width: 12px; height: 12px; }
+.linklike { all: unset; cursor: pointer; color: var(--text-secondary); text-decoration: underline; margin-left: 6px; }
+.linklike:hover, .linklike:focus-visible { color: var(--text-primary); }
+.notice-box { background: var(--surface-1); border: 1px solid var(--border); border-radius: 18px; padding: 24px; width: min(480px, 92vw); display: flex; flex-direction: column; gap: 12px; }
+.notice-box h3 { margin: 0; font-size: 20px; font-family: var(--font-display); }
+.notice-box p { margin: 0; color: var(--text-secondary); font-size: 15px; line-height: 1.55; }
+.notice-box b { color: var(--text-primary); }
 .kpis.four { grid-template-columns: repeat(4, 1fr); }
 .disc { color: var(--text-muted); font-size: 13px; margin: 12px 0 0; max-width: 80ch; }
 .grid2.even { grid-template-columns: 1fr 1fr; }
@@ -247,6 +258,7 @@ footer a { color: var(--text-secondary); }
 main.nodata > section:not(:first-child), main.nodata > div, main.nodata #platforms { display: none; }
 .print-credit { display: none; }
 @media print {
+  #noticeModal { display: none !important; }
   @page { size: A4 landscape; margin: 8mm 8mm 14mm; }
   html { zoom: .72; }
   html, body { background: var(--bg) !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
@@ -339,7 +351,7 @@ main.nodata > section:not(:first-child), main.nodata > div, main.nodata #platfor
     <div class="kpis" id="kpis"></div>
   </section>
 
-  <div id="sponsorTop"></div>
+  <div id="buyTop"></div>
   <div id="mountF24"></div>
 
   <section id="evolucao">
@@ -376,7 +388,7 @@ main.nodata > section:not(:first-child), main.nodata > div, main.nodata #platfor
   <div id="mountStreamers"></div>
 
   <section id="youtube">
-    <h2>YouTube</h2>
+    <h2 id="ytH2">YouTube</h2>
     <p class="insight" id="ytSub"></p>
     <div class="kpis four" id="ytKpis"></div>
     <div class="grid2 even" style="margin-top:12px">
@@ -408,6 +420,8 @@ main.nodata > section:not(:first-child), main.nodata > div, main.nodata #platfor
   </section>
 </main>
 <footer><div class="wrap" id="footer"></div></footer>
+
+<div class="modal" id="noticeModal" role="dialog" aria-modal="true" aria-labelledby="noticeTitle"><div class="notice-box"><h3 id="noticeTitle"></h3><p id="noticeText"></p><div class="modal-actions" style="justify-content:flex-end"><button class="btn" id="noticeOk"></button></div></div></div>
 
 <div class="modal" id="modal" role="dialog" aria-modal="true" aria-label="Imagem para partilhar">
   <div class="modal-inner">
