@@ -89,21 +89,31 @@
   /* ---------------------------------------------------------------- estilos */
   const style = document.createElement('style');
   style.textContent = `
-  .gtabuy { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 20px; padding: 20px 24px; border-radius: var(--radius); text-decoration: none; color: inherit; margin-top: 8px; cursor: pointer;
-    background: linear-gradient(110deg, rgba(108,75,255,.22), rgba(255,79,154,.2) 55%, rgba(255,201,92,.2)), var(--surface-1); border: 1px solid rgba(255,79,154,.45); transition: transform .15s, border-color .15s; }
-  .gtabuy:hover { transform: translateY(-2px); border-color: var(--sun-2); }
+  .gtabuy { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 24px; padding: 24px 28px; border-radius: 18px; text-decoration: none; color: inherit; margin-top: 8px; cursor: pointer; position: relative; overflow: hidden;
+    background: radial-gradient(120% 140% at 100% 0%, rgba(255,201,92,.22), transparent 55%), linear-gradient(110deg, rgba(108,75,255,.28), rgba(255,79,154,.24) 60%), var(--surface-1); border: 1px solid rgba(255,79,154,.55); transition: transform .15s, border-color .15s, box-shadow .15s; }
+  .gtabuy:hover { transform: translateY(-2px); border-color: var(--sun-3); box-shadow: 0 18px 50px -20px rgba(255,79,154,.6); }
   .gtabuy:focus-visible { outline: 2px solid var(--sun-1); outline-offset: 3px; }
-  .gtabuy .logos { display: flex; align-items: center; gap: 14px; }
-  .gtabuy .bl { position: relative; display: grid; place-items: center; min-width: 56px; height: 56px; }
-  .gtabuy .bl img { height: 56px; width: auto; max-width: 150px; object-fit: contain; }
-  .gtabuy .bl .fb { font-weight: 800; font-size: 26px; letter-spacing: -.03em; padding: 0 18px; height: 56px; display: grid; place-items: center; border-radius: 14px; background: linear-gradient(110deg, var(--sun-1), var(--sun-3)); color: #1a0b14; font-family: var(--font-display); }
-  .gtabuy .bl.has .fb { display: none; }
-  .gtabuy .gx { color: var(--text-muted); font-size: 18px; }
-  .gtabuy .by-t { font-family: var(--font-display); font-weight: 700; font-size: 22px; letter-spacing: -.02em; }
-  .gtabuy .by-s { color: var(--text-secondary); font-size: 14.5px; margin-top: 2px; }
+  .gtabuy .by-main { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+  .gtabuy .by-k { display: inline-flex; align-items: center; gap: 8px; align-self: flex-start; font-weight: 700; font-size: 13px; color: #1a0b14; background: var(--sun-3); padding: 4px 10px; border-radius: 999px; }
+  .gtabuy .by-dot { width: 7px; height: 7px; border-radius: 50%; background: #e0245e; animation: byp 1.6s infinite; }
+  @keyframes byp { 50% { opacity: .25; } }
+  @media (prefers-reduced-motion: reduce) { .gtabuy .by-dot { animation: none; } }
+  .gtabuy .by-t { font-family: var(--font-display); font-weight: 700; font-size: 28px; line-height: 1.1; letter-spacing: -.02em; color: var(--text-primary); }
+  .gtabuy .by-s { color: var(--text-secondary); font-size: 15px; } .gtabuy .by-s b { color: var(--text-primary); }
+  .gtabuy .by-pts { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 4px; font-size: 13.5px; color: var(--text-secondary); }
+  .gtabuy .by-pts span::first-letter { color: #3ccf8e; }
   .gtabuy .by-end { display: flex; flex-direction: column; align-items: center; gap: 6px; }
-  .gtabuy .by-btn { background: #fff; color: #1a0b14; font-weight: 800; padding: 14px 28px; border-radius: 12px; font-size: 16px; white-space: nowrap; box-shadow: 0 6px 20px rgba(255,79,154,.35); }
-  .gtabuy:hover .by-btn { background: var(--sun-3); }
+  .gtabuy .by-btn { background: linear-gradient(110deg, var(--sun-1), var(--sun-2)); color: #fff; font-weight: 800; padding: 16px 30px; border-radius: 14px; font-size: 17px; white-space: nowrap; box-shadow: 0 10px 30px -6px rgba(255,79,154,.7); }
+  .gtabuy:hover .by-btn { filter: brightness(1.08); }
+  .gtabuy .by-store { font-size: 13px; color: var(--text-secondary); font-weight: 600; }
+  #buySticky { position: fixed; left: 10px; right: 10px; bottom: 10px; z-index: 60; display: none; align-items: center; gap: 6px; padding: 8px 8px 8px 14px; border-radius: 14px; background: rgba(23,21,31,.96); border: 1px solid rgba(255,79,154,.55); box-shadow: 0 12px 40px rgba(0,0,0,.6); transform: translateY(140%); transition: transform .25s; }
+  #buySticky.show { transform: none; }
+  #buySticky .bs-a { flex: 1; display: flex; align-items: center; justify-content: space-between; gap: 10px; color: var(--text-primary); text-decoration: none; min-width: 0; }
+  #buySticky .bs-t { font-size: 13.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #buySticky .bs-btn { background: linear-gradient(110deg, var(--sun-1), var(--sun-2)); color: #fff; font-weight: 800; font-size: 14px; padding: 10px 14px; border-radius: 10px; white-space: nowrap; }
+  #buySticky .bs-x { background: none; border: 0; color: var(--text-muted); font-size: 22px; line-height: 1; padding: 6px 8px; cursor: pointer; }
+  @media (max-width: 760px) { #buySticky { display: flex; } body { padding-bottom: 76px; } }
+  @media print { #buySticky { display: none !important; } }
   .ins { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 12px; }
   .ins .kpi .value { font-size: 30px; }
   .ins .note { font-size: 13.5px; color: var(--text-secondary); line-height: 1.45; }
@@ -156,7 +166,7 @@
   .trends { width: 100%; height: 380px; border: 0; border-radius: 10px; background: #fff; }
   .embed-code { width: 100%; min-height: 96px; background: var(--surface-2); color: var(--text-primary); border: 1px solid var(--border); border-radius: 6px; padding: 12px; font: 13px/1.5 ui-monospace, Menlo, monospace; resize: vertical; }
   .embed-box { background: var(--surface-1); border: 1px solid var(--border); border-radius: 18px; padding: 22px; width: min(720px, 92vw); display: flex; flex-direction: column; gap: 12px; }
-  @media (max-width: 1000px) { .gtabuy { grid-template-columns: 1fr; text-align: center; } .gtabuy .logos { justify-content: center; } .grid3 { grid-template-columns: 1fr; } .grid2.even { grid-template-columns: 1fr; } .stats3 { grid-template-columns: repeat(3, 1fr); } .stats3 .big-stat { font-size: 30px; } .f24 { grid-template-columns: repeat(2, 1fr); } .clips { grid-template-columns: repeat(2, 1fr); }  }
+  @media (max-width: 1000px) { .gtabuy { grid-template-columns: 1fr; } .gtabuy .by-end { align-items: stretch; text-align: center; } .gtabuy .by-t { font-size: 23px; } .grid3 { grid-template-columns: 1fr; } .grid2.even { grid-template-columns: 1fr; } .stats3 { grid-template-columns: repeat(3, 1fr); } .stats3 .big-stat { font-size: 30px; } .f24 { grid-template-columns: repeat(2, 1fr); } .clips { grid-template-columns: repeat(2, 1fr); }  }
   @media (max-width: 560px) { .stats3 { grid-template-columns: 1fr; } .clips { grid-template-columns: 1fr; } .heat { font-size: 10px; } }
   @media print { .gtabuy, #buyTop, #trendsCard { display: none !important; } .grid3 { grid-template-columns: repeat(3, 1fr) !important; } .f24 { grid-template-columns: repeat(5, 1fr) !important; } .clips { grid-template-columns: repeat(4, 1fr) !important; } }
   `;
@@ -235,19 +245,55 @@
   S.hallMode = S.hallMode || 'all';
 
   /* ------------------------------------------------------------ patrocínio */
-  function renderSponsor() {
-    const sp = CFG.sponsor || {};
-    const spUrl = (() => { try { const u = new URL(sp.url); return u.protocol === 'https:' && /(^|\.)instant-gaming\.com$/.test(u.hostname) ? u.href : null; } catch { return null; } })();
-    const ok = spUrl && !/COLOCA_AQUI/.test(spUrl);
-    const box = document.getElementById('buyTop');
-    if (!ok) { box.innerHTML = ''; return; }
-    const n = (S.liveOk && S.live?.twitch?.viewers) || lastWith('twitch', 'v')?.v || 0;
-    const sub = n ? (S.lang === 'pt' ? `${fmt(n)} pessoas estão a ver GTA VI na Twitch agora. Compra a tua cópia na Instant Gaming.` : `${fmt(n)} people are watching GTA VI on Twitch right now. Get your copy on Instant Gaming.`) : X('ad_text');
-    box.innerHTML = `<a class="gtabuy" href="${esc(spUrl)}" target="_blank" rel="noopener noreferrer" aria-label="${esc(X('ad_title'))}">
-      <span class="logos"><span class="bl gta"><span class="fb">GTA VI</span><img src="img/gta6.png" alt="" data-plogo="1"></span></span>
-      <span><div class="by-t">${X('ad_title')}</div><div class="by-s">${esc(sub)}</div></span>
-      <span class="by-end"><span class="by-btn">${X('ad_cta')}</span><span class="by-tag">${X('ad_note')}</span></span></a>`;
+  // Bloco de compra (afiliado). Texto muda com a fase: antes do lançamento, nas primeiras 48 h e depois.
+  const spLink = () => { const sp = CFG.sponsor || {}; try { const u = new URL(sp.url); return u.protocol === 'https:' && /(^|\.)instant-gaming\.com$/.test(u.hostname) && !/COLOCA_AQUI/.test(u.href) ? u.href : null; } catch { return null; } };
+  function buyCopy() {
+    const pt = S.lang === 'pt', ms = LAUNCH.getTime() - Date.now();
+    const left = (() => { const m = Math.max(1, Math.ceil(ms / 60e3)), h = Math.floor(m / 60), d = Math.floor(h / 24);
+      return d >= 2 ? (pt ? `${d} dias` : `${d} days`) : h ? `${h} h ${String(m % 60).padStart(2, '0')} min` : `${m} min`; })();
+    if (ms > 0) return pt
+      ? { kicker: `Faltam ${left}`, title: 'Garante já a tua cópia para a meia-noite', cta: 'Ver preço e garantir' }
+      : { kicker: `${left} to go`, title: 'Get your copy ready for launch', cta: 'See price & pre-order' };
+    if (-ms < 48 * 3600e3) return pt
+      ? { kicker: 'Já saiu', title: 'Começa a jogar GTA VI ainda hoje', cta: 'Ver preço e comprar' }
+      : { kicker: 'Out now', title: 'Start playing GTA VI today', cta: 'See price & buy' };
+    return pt
+      ? { kicker: 'Disponível agora', title: 'Ainda não tens GTA VI?', cta: 'Ver preço e comprar' }
+      : { kicker: 'Available now', title: "Don't have GTA VI yet?", cta: 'See price & buy' };
   }
+  function renderSponsor() {
+    const spUrl = spLink(), box = document.getElementById('buyTop');
+    if (!spUrl) { box.innerHTML = ''; renderSticky(null); return; }
+    const pt = S.lang === 'pt', c = buyCopy();
+    const n = (S.liveOk && S.live?.twitch?.viewers) || lastWith('twitch', 'v')?.v || 0;
+    const proof = n ? (pt ? `<b>${fmt(n)}</b> pessoas estão a ver GTA VI na Twitch neste momento.` : `<b>${fmt(n)}</b> people are watching GTA VI on Twitch right now.`) : '';
+    const pts = pt ? ['Chave digital para PS5 e Xbox Series X|S', 'Sem esperar pelo correio', 'Vês o preço antes de comprar']
+                   : ['Digital key for PS5 and Xbox Series X|S', 'No waiting for shipping', 'See the price before you buy'];
+    box.innerHTML = `<a class="gtabuy" href="${esc(spUrl)}" target="_blank" rel="noopener noreferrer sponsored" aria-label="${esc(c.title)}: ${esc(c.cta)}">
+      <span class="by-main">
+        <span class="by-k"><i class="by-dot"></i>${esc(c.kicker)}</span>
+        <span class="by-t">${esc(c.title)}</span>
+        ${proof ? `<span class="by-s">${proof}</span>` : ''}
+        <span class="by-pts">${pts.map((x) => `<span>✓ ${esc(x)}</span>`).join('')}</span>
+      </span>
+      <span class="by-end"><span class="by-btn">${esc(c.cta)}</span><span class="by-store">${pt ? 'na Instant Gaming' : 'on Instant Gaming'}</span><span class="by-tag">${pt ? 'Link de afiliado: apoias este site sem pagares mais.' : 'Affiliate link: you support this site at no extra cost.'}</span></span></a>`;
+    renderSticky(spUrl, c);
+  }
+  // barra fixa no telemóvel, depois de passar o topo; pode ser fechada (fica fechada nesta sessão)
+  function renderSticky(url, c) {
+    let bar = document.getElementById('buySticky');
+    if (!url) { bar?.remove(); return; }
+    let closed = false; try { closed = sessionStorage.getItem('buy_x') === '1'; } catch {}
+    if (closed) { bar?.remove(); return; }
+    if (!bar) {
+      bar = document.createElement('div'); bar.id = 'buySticky'; document.body.appendChild(bar);
+      bar.addEventListener('click', (e) => { if (e.target.closest('.bs-x')) { e.preventDefault(); try { sessionStorage.setItem('buy_x', '1'); } catch {} bar.remove(); } });
+      const onScroll = () => bar.classList.toggle('show', window.scrollY > 900 && !document.getElementById('buyTop')?.matches(':hover'));
+      window.addEventListener('scroll', onScroll, { passive: true }); onScroll();
+    }
+    bar.innerHTML = `<a href="${esc(url)}" target="_blank" rel="noopener noreferrer sponsored" class="bs-a"><span class="bs-t"><b>GTA VI</b> · ${esc(c.kicker)}</span><span class="bs-btn">${esc(c.cta)}</span></a><button type="button" class="bs-x" aria-label="${S.lang === 'pt' ? 'Fechar' : 'Close'}">×</button>`;
+  }
+  setInterval(() => { if (document.getElementById('buyTop')?.firstChild) renderSponsor(); }, 60e3);
 
   /* --------------------------------------------- GTA VI vs outros jogos */
   const lastWith = (p, f) => [...points()].reverse().find((x) => x[p]?.[f] != null)?.[p];
