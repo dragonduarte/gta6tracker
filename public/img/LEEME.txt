@@ -1,0 +1,7 @@
+Logótipos (opcional). Põe aqui os ficheiros oficiais, com EXATAMENTE estes nomes:
+
+  twitch.png   youtube.png   kick.png     -> aparecem ao lado do nome de cada plataforma
+  gta6.png                                -> aparece no banner de compra (opcional)
+
+Se um ficheiro não existir, o site usa um ponto de cor / texto no lugar. (tudo em .png)
+Usa os ficheiros dos kits de imprensa oficiais de cada marca.

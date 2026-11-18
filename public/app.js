@@ -187,7 +187,7 @@ window.infoBtn = infoBtn;
 // Logótipo da plataforma: usa public/img/<plataforma>.svg (ou .png) se existir; senão, o ponto de cor. Sem estilos nem handlers inline.
 const LOGO = {};
 for (const p of ['twitch', 'kick', 'youtube']) { LOGO[p] = null; }
-const plat = (p, withName = true) => `<span class="pl"><span class="pi" data-p="${esc(p)}"><i class="dot" style="background:${COLOR[p] || 'var(--text-muted)'}"></i><img src="img/${esc(p)}.svg" alt="" width="16" height="16" data-logo="${esc(p)}"></span>${withName ? esc(NAMES[p] || p) : ''}</span>`;
+const plat = (p, withName = true) => `<span class="pl"><span class="pi" data-p="${esc(p)}"><i class="dot" style="background:${COLOR[p] || 'var(--text-muted)'}"></i><img src="img/${esc(p)}.png" alt="" width="16" height="16" data-logo="${esc(p)}"></span>${withName ? esc(NAMES[p] || p) : ''}</span>`;
 window.platHtml = plat;
 // se o ficheiro do logótipo não existir, a imagem desaparece e fica o ponto de cor
 document.addEventListener('error', (e) => { const i = e.target; if (i?.tagName === 'IMG' && i.dataset?.logo) i.remove(); else if (i?.tagName === 'IMG' && i.dataset?.plogo) i.remove(); }, true);
@@ -349,7 +349,7 @@ function applyI18n() {
   document.querySelectorAll('[data-i]').forEach((el) => { const v = t(el.dataset.i); if (typeof v === 'string') el.textContent = v; });
   document.querySelectorAll('#scopeSeg button').forEach((b) => b.setAttribute('aria-pressed', b.dataset.scope === S.scope));
   document.querySelectorAll('#langSeg button').forEach((b) => b.setAttribute('aria-pressed', b.dataset.lang === S.lang));
-  document.querySelectorAll('#srcSeg button').forEach((b) => { b.textContent = t('src_' + b.dataset.src); b.setAttribute('aria-pressed', b.dataset.src === S.src); });
+  document.querySelectorAll('#srcSeg button').forEach((b) => { const p = { twitch: 'twitch', kick: 'kick', all: 'youtube' }[b.dataset.src]; b.innerHTML = (b.dataset.src === 'twitch' ? '' : '+ ') + plat(p); b.setAttribute('aria-pressed', b.dataset.src === S.src); });
   document.querySelectorAll('.info-slot').forEach((el) => { el.innerHTML = infoBtn(el.dataset.info); });
   document.querySelectorAll('#metricSeg button').forEach((b) => b.setAttribute('aria-pressed', b.dataset.metric === S.metric));
   document.querySelectorAll('#rangeSeg button').forEach((b) => b.setAttribute('aria-pressed', b.dataset.range === String(S.range)));
@@ -472,7 +472,9 @@ const launchLine = { id: 'launch', afterDatasetsDraw(ch) {
   if (px < left || px > right) return;
   const g = ch.ctx; g.save(); g.strokeStyle = css('--text-muted'); g.setLineDash([4, 4]); g.lineWidth = 1;
   g.beginPath(); g.moveTo(px, top); g.lineTo(px, bottom); g.stroke(); g.setLineDash([]);
-  g.fillStyle = css('--text-secondary'); g.font = `600 12px ${css('--sans')}`; g.fillText(S.lang === 'pt' ? 'Lançamento' : 'Launch', px + 6, top + 12); g.restore();
+  g.fillStyle = css('--text-secondary'); g.font = `600 12px ${css('--sans')}`;
+  const lbl = `${S.lang === 'pt' ? 'Lançamento' : 'Launch'} ${dt(LAUNCH, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}`;
+  const w = g.measureText(lbl).width, flip = px + 6 + w > right; g.textAlign = flip ? 'right' : 'left'; g.fillText(lbl, flip ? px - 6 : px + 6, top + 12); g.restore();
 } };
 const timeTick = (v) => { const span = (Number(S.range) || 999) <= 48; return dt(v, span ? { hour: '2-digit', minute: '2-digit' } : { day: 'numeric', month: 'short' }); };
 const charts = {};

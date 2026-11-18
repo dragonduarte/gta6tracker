@@ -8,8 +8,8 @@
   const EX = {
     pt: {
       ad_note: 'link de afiliado',
-      ad_title: 'Compra o GTA VI aqui',
-      ad_text: 'Vê o preço do GTA VI na Instant Gaming.', ad_cta: 'Comprar agora',
+      ad_title: 'Já queres jogar GTA VI?',
+      ad_text: 'Compra a tua cópia na Instant Gaming.', ad_cta: 'Comprar GTA VI',
       clips_hidden: 'Os clips podem ter spoilers do jogo.', clips_show: 'Mostrar clips', clips_hide: 'Esconder clips',
       le_title: 'Evolução por língua', le_sub: 'Espectadores de cada língua ao longo do tempo', le_wait: 'Aparece quando houver pelo menos duas recolhas com este dado.', le_other: 'Outras',
       games_h2: 'GTA VI vs outros jogos', games_tw: 'Twitch: os jogos mais vistos agora', games_tw_sub: 'Espectadores somados de todas as streams de cada jogo. Sem Just Chatting e outras categorias que não são jogos.',
@@ -40,8 +40,8 @@
     },
     en: {
       ad_note: 'affiliate link',
-      ad_title: 'Buy GTA VI here',
-      ad_text: 'See the price of GTA VI on Instant Gaming.', ad_cta: 'Buy now',
+      ad_title: 'Ready to play GTA VI?',
+      ad_text: 'Get your copy on Instant Gaming.', ad_cta: 'Buy GTA VI',
       clips_hidden: 'Clips may contain game spoilers.', clips_show: 'Show clips', clips_hide: 'Hide clips',
       le_title: 'Evolution by language', le_sub: 'Viewers of each language over time', le_wait: 'Shows up once there are at least two snapshots with this data.', le_other: 'Other',
       games_h2: 'GTA VI vs other games', games_tw: 'Twitch: most-watched games right now', games_tw_sub: 'Viewers summed across every stream of each game. Just Chatting and other non-game categories are left out.',
@@ -92,14 +92,18 @@
   .gtabuy .logos { display: flex; align-items: center; gap: 14px; }
   .gtabuy .bl { position: relative; display: grid; place-items: center; min-width: 56px; height: 56px; }
   .gtabuy .bl img { height: 56px; width: auto; max-width: 150px; object-fit: contain; }
-  .gtabuy .bl .fb { font-weight: 800; font-size: 18px; letter-spacing: -.02em; padding: 0 14px; height: 56px; display: grid; place-items: center; border-radius: 14px; background: #ff5400; color: #fff; }
-  .gtabuy .bl.gta .fb { background: transparent; border: 1px solid var(--border); color: var(--text-primary); font-family: var(--font-display); }
+  .gtabuy .bl .fb { font-weight: 800; font-size: 26px; letter-spacing: -.03em; padding: 0 18px; height: 56px; display: grid; place-items: center; border-radius: 14px; background: linear-gradient(110deg, var(--sun-1), var(--sun-3)); color: #1a0b14; font-family: var(--font-display); }
   .gtabuy .bl.has .fb { display: none; }
   .gtabuy .gx { color: var(--text-muted); font-size: 18px; }
   .gtabuy .by-t { font-family: var(--font-display); font-weight: 700; font-size: 22px; letter-spacing: -.02em; }
   .gtabuy .by-s { color: var(--text-secondary); font-size: 14.5px; margin-top: 2px; }
   .gtabuy .by-end { display: flex; flex-direction: column; align-items: center; gap: 6px; }
-  .gtabuy .by-btn { background: linear-gradient(110deg, var(--sun-1), var(--sun-2)); color: #1a0b14; font-weight: 700; padding: 12px 22px; border-radius: 12px; font-size: 15px; white-space: nowrap; }
+  .gtabuy .by-btn { background: #fff; color: #1a0b14; font-weight: 800; padding: 14px 28px; border-radius: 12px; font-size: 16px; white-space: nowrap; box-shadow: 0 6px 20px rgba(255,79,154,.35); }
+  .gtabuy:hover .by-btn { background: var(--sun-3); }
+  .ins { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 12px; }
+  .ins .kpi .value { font-size: 30px; }
+  .ins .note { font-size: 13.5px; color: var(--text-secondary); line-height: 1.45; }
+  .ins .note b { color: var(--text-primary); }
   .gtabuy .by-tag { font-size: 11px; color: var(--text-muted); }
   .clips-gate { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 34px 18px; border: 1px dashed var(--border); border-radius: var(--radius); color: var(--text-secondary); text-align: center; }
   .lg-leg { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12.5px; color: var(--text-secondary); margin-bottom: 8px; }
@@ -204,6 +208,8 @@
     </div>
   </section>`);
 
+  mount('mountInsights', `<section id="resumo"><h2 id="insT"></h2><p class="insight" id="insS"></p><div class="ins" id="ins"></div></section>`);
+
   document.getElementById('hallSeg').onclick = (e) => { const b = e.target.closest('button'); if (b) { S.hallMode = b.dataset.h; renderHall(); } };
   S.hallMode = S.hallMode || 'all';
 
@@ -214,10 +220,11 @@
     const ok = spUrl && !/COLOCA_AQUI/.test(spUrl);
     const box = document.getElementById('buyTop');
     if (!ok) { box.innerHTML = ''; return; }
-    const logo = (cls, file, fb) => `<span class="bl ${cls}"><span class="fb">${fb}</span><img src="img/${file}" alt="" data-plogo="1"></span>`;
+    const n = (S.liveOk && S.live?.twitch?.viewers) || lastWith('twitch', 'v')?.v || 0;
+    const sub = n ? (S.lang === 'pt' ? `${fmt(n)} pessoas estão a ver GTA VI na Twitch agora. Compra a tua cópia na Instant Gaming.` : `${fmt(n)} people are watching GTA VI on Twitch right now. Get your copy on Instant Gaming.`) : X('ad_text');
     box.innerHTML = `<a class="gtabuy" href="${esc(spUrl)}" target="_blank" rel="noopener noreferrer" aria-label="${esc(X('ad_title'))}">
-      <span class="logos">${logo('ig', 'instant-gaming.png', 'Instant Gaming')}<span class="gx">+</span>${logo('gta', 'gta6.png', 'GTA VI')}</span>
-      <span><div class="by-t">${X('ad_title')}</div><div class="by-s">${X('ad_text')}</div></span>
+      <span class="logos"><span class="bl gta"><span class="fb">GTA VI</span><img src="img/gta6.png" alt="" data-plogo="1"></span></span>
+      <span><div class="by-t">${X('ad_title')}</div><div class="by-s">${esc(sub)}</div></span>
       <span class="by-end"><span class="by-btn">${X('ad_cta')}</span><span class="by-tag">${X('ad_note')}</span></span></a>`;
   }
 
@@ -354,6 +361,56 @@
     const ds = pts.length > 1 ? top.map((l) => ({ label: lname(l), data: pts.map((p) => ({ x: Date.parse(p.ts), y: p[S.langPlat].lg[l] || 0 })), borderColor: col(l), backgroundColor: col(l) })) : [];
     const xs = pts.map((p) => Date.parse(p.ts));
     mkOrUpdate('langEvo', { type: 'line', plugins: [launchLine], data: { datasets: ds }, options: baseLine(xs.length ? xs : [0, 1]) });
+  }
+
+  /* ------------------------------------------------------- principais conclusões */
+  function renderInsights() {
+    const pt = S.lang === 'pt', L = (a, b) => (pt ? a : b), k = KEYS[S.scope];
+    document.getElementById('insT').textContent = L('Principais conclusões', 'Key takeaways');
+    document.getElementById('insS').textContent = L('Resumo automático desta vista, atualizado a cada recolha.', 'Automatic summary of this view, updated with every snapshot.');
+    const pts = points(), tot = pts.map((p) => totalOf(p, k.v) || 0), now = totalNow('V');
+    const cards = [];
+    const when = (ts) => dt(ts, { weekday: 'long', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+    if (tot.length > 1 && now) {
+      const peak = Math.max(...tot, now), i = tot.indexOf(peak);
+      cards.push([L('Pico registado', 'Peak recorded'), fmtC(peak), L(`Foi em <b>${esc(when(pts[i]?.ts))}</b>. Agora há <b>${pct(now, peak)}</b> do pico.`, `It happened on <b>${esc(when(pts[i]?.ts))}</b>. Right now it is at <b>${pct(now, peak)}</b> of the peak.`)]);
+      const t24 = Date.parse(lastPoint().ts) - 24 * 3600e3, ref = pts.reduce((b, p, j) => (Math.abs(Date.parse(p.ts) - t24) < Math.abs(Date.parse(pts[b].ts) - t24) ? j : b), 0);
+      if (Math.abs(Date.parse(pts[ref].ts) - t24) < 2 * 3600e3 && tot[ref] > 0) {
+        const ch = (now - tot[ref]) / tot[ref];
+        cards.push([L('Há 24 horas', '24 hours ago'), (ch >= 0 ? '+' : '−') + pct(Math.abs(ch), 1), L(`Face às mesmas horas de ontem: eram <b>${fmtC(tot[ref])}</b>, agora <b>${fmtC(now)}</b>.`, `Against the same time yesterday: it was <b>${fmtC(tot[ref])}</b>, now <b>${fmtC(now)}</b>.`)]);
+      }
+    }
+    // hora do dia com mais gente (média dos últimos 7 dias, hora local)
+    const sums = Array(24).fill(0), cnt = Array(24).fill(0), since = Date.now() - 7 * 864e5;
+    pts.forEach((p, j) => { if (Date.parse(p.ts) >= since) { const h = lisbonHour(p.ts); sums[h] += tot[j]; cnt[h]++; } });
+    const avg = sums.map((x, h) => (cnt[h] ? x / cnt[h] : -1)), bh = avg.indexOf(Math.max(...avg));
+    if (bh >= 0 && avg[bh] > 0 && cnt.filter(Boolean).length > 6) cards.push([L('Hora mais forte', 'Busiest hour'), `${bh}h`, L(`Em média, é quando há mais gente a ver (hora local), com cerca de <b>${fmtC(avg[bh])}</b> pessoas.`, `On average, this is when most people watch (your local time), around <b>${fmtC(avg[bh])}</b> people.`)]);
+    const top = leaderboard();
+    if (top[0] && now) {
+      const t10 = top.slice(0, 10).reduce((a, r) => a + r.viewers, 0);
+      cards.push([L('Maior stream agora', 'Biggest stream now'), fmtC(top[0].viewers), L(`<b>${esc(top[0].name)}</b> (${NAMES[top[0].platform]}) tem <b>${pct(top[0].viewers, now)}</b> de todos os espectadores. As 10 maiores juntam <b>${pct(t10, now)}</b>.`, `<b>${esc(top[0].name)}</b> (${NAMES[top[0].platform]}) has <b>${pct(top[0].viewers, now)}</b> of all viewers. The 10 biggest add up to <b>${pct(t10, now)}</b>.`)]);
+    }
+    const lp = [...pts].reverse().find((p) => PLATFORMS.some((x) => p[x]));
+    if (lp && S.scope === 'global') {
+      const v = PLATFORMS.reduce((a, x) => a + (lp[x]?.v || 0), 0), pv = PLATFORMS.reduce((a, x) => a + (lp[x]?.pv || 0), 0), pp = PLATFORMS.reduce((a, x) => a + (lp[x]?.ppv || 0), 0);
+      if (v) cards.push([L('Em português', 'In Portuguese'), pct(pv, v), L(`Das pessoas a ver, <b>${fmtC(pv)}</b> estão em streams em português. Só de Portugal: <b>${fmtC(pp)}</b> (por baixo).`, `<b>${fmtC(pv)}</b> viewers are on Portuguese-language streams. Portugal alone: <b>${fmtC(pp)}</b> (a floor).`)]);
+    }
+    const g = (S.latest.games?.twitch || []).slice().sort((a, b) => b.viewers - a.viewers), gi = g.findIndex((x) => x.gta);
+    if (gi >= 0 && g.length > 1) {
+      const gv = S.liveOk && S.live?.twitch?.viewers ? S.live.twitch.viewers : g[gi].viewers, other = gi === 0 ? g[1] : g[0];
+      cards.push([L('GTA VI vs outros jogos', 'GTA VI vs other games'), pt ? `${gi + 1}º` : `#${gi + 1}`, gi === 0 ? L(`Na Twitch, tem <b>${nf({ maximumFractionDigits: 1 }).format(gv / other.viewers)}×</b> o público do 2º jogo, ${esc(other.name)}.`, `On Twitch it has <b>${nf({ maximumFractionDigits: 1 }).format(gv / other.viewers)}×</b> the audience of the #2 game, ${esc(other.name)}.`) : L(`Na Twitch, tem <b>${pct(gv, other.viewers)}</b> do público do líder, ${esc(other.name)}.`, `On Twitch it has <b>${pct(gv, other.viewers)}</b> of the leader's audience, ${esc(other.name)}.`)]);
+    }
+    const d = lastWith('twitch', 'dg');
+    if (d?.dt) cards.push([L('Peso na Twitch', 'Weight on Twitch'), pct(d.dg, d.dt), L(`De cada 100 espectadores nas ${fmt(d.dn || 0)} maiores streams da Twitch, <b>${Math.round(d.dg / d.dt * 100)}</b> estão a ver GTA VI.`, `Out of every 100 viewers on Twitch's ${fmt(d.dn || 0)} biggest streams, <b>${Math.round(d.dg / d.dt * 100)}</b> are watching GTA VI.`)]);
+    const fk = { global: ['si', 'so'], luso: ['psi', 'pso'], portugal: ['ppsi', 'ppso'] }[S.scope], ref2 = pts.length ? Date.parse(lastPoint().ts) : 0;
+    let fi = 0, fo = 0, fn = 0;
+    for (const p of pts) if (ref2 - Date.parse(p.ts) <= 65 * 60e3 && p.twitch?.[fk[0]] != null && PLATFORMS.includes('twitch')) { fi += p.twitch[fk[0]]; fo += p.twitch[fk[1]] || 0; fn++; }
+    if (fn) cards.push([L('Última hora', 'Last hour'), (fi - fo >= 0 ? '+' : '−') + fmt(Math.abs(fi - fo)), L(`Começaram <b>${fmt(fi)}</b> streams e terminaram <b>${fmt(fo)}</b> (Twitch).`, `<b>${fmt(fi)}</b> streams started and <b>${fmt(fo)}</b> ended (Twitch).`)]);
+    const best = Object.values(S.hall?.all || {}).filter(scopeFilter).sort((a, b) => b.peak - a.peak)[0];
+    if (best) cards.push([L('Recorde individual', 'Individual record'), fmtC(best.peak), L(`<b>${esc(best.name)}</b> na ${NAMES[best.platform]}, a ${esc(dt(best.at, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }))}.`, `<b>${esc(best.name)}</b> on ${NAMES[best.platform]}, on ${esc(dt(best.at, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }))}.`)]);
+    const st = totalNow('S');
+    if (st && now) cards.push([L('Média por stream', 'Average per stream'), fmtC(now / st), L(`<b>${fmt(st)}</b> streams em direto. Quanto mais alta a média, mais concentrado está o público.`, `<b>${fmt(st)}</b> live streams. The higher the average, the more concentrated the audience.`)]);
+    document.getElementById('ins').innerHTML = cards.map(([l, v, n]) => `<div class="kpi"><div class="label">${esc(l)}</div><div class="value tnum">${esc(v)}</div><div class="note">${n}</div></div>`).join('');
   }
 
   /* ------------------------------------------------------------------ clips */
@@ -553,7 +610,7 @@
   /* ------------------------------------------------------------------ main */
   window.renderExtras = function () {
     const run = (f) => { try { f(); } catch (e) { console.error(f.name, e); } };
-    [renderSponsor, renderGames, renderHeat, renderLangEvo, renderClips, renderHall, renderF24, renderMap, renderTrends].forEach(run);
+    [renderSponsor, renderGames, renderHeat, renderLangEvo, renderInsights, renderClips, renderHall, renderF24, renderMap, renderTrends].forEach(run);
   };
   if (points().length || S.liveOk) window.renderExtras();
 })();
