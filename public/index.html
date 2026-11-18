@@ -93,6 +93,26 @@ h1 { font-family: var(--font-display); font-size: clamp(56px, 9vw, 112px); line-
 .hero-now { margin-top: 26px; display: flex; gap: 32px; flex-wrap: wrap; }
 .hero-now .big { font-family: var(--font-display); font-size: 48px; font-weight: 700; letter-spacing: -.03em; line-height: 1; }
 .hero-now .lbl { color: var(--text-muted); font-size: 13px; margin-top: 6px; }
+.delta { display: inline-flex; gap: 6px; align-items: center; margin-top: 10px; padding: 3px 10px; border-radius: 999px; font-size: 12.5px; font-weight: 600; background: var(--surface-2); color: var(--text-secondary); border: 1px solid var(--border); }
+.delta.up span { color: #3ccf8e; } .delta.down span { color: #ff6b6b; }
+.hero-top { margin-top: 22px; display: flex; flex-direction: column; gap: 8px; }
+.ht-lbl { color: var(--text-muted); font-size: 12.5px; }
+.ht-list { display: flex; flex-wrap: wrap; gap: 8px; }
+.ht-item { display: inline-flex; align-items: center; gap: 7px; padding: 4px 10px 4px 4px; border-radius: 999px; background: rgba(31,28,41,.75); border: 1px solid var(--border); color: var(--text-primary); text-decoration: none; font-size: 13px; max-width: 100%; }
+.ht-item:hover, .ht-item:focus-visible { border-color: var(--sun-1); }
+.ht-n { font-weight: 600; max-width: 130px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ht-v { color: var(--text-muted); font-size: 12px; }
+.avatar.sm { width: 26px; height: 26px; font-size: 10px; border-width: 2px; flex: none; }
+.hero-pt { margin-top: 14px; }
+.hp { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 14px; background: linear-gradient(90deg, rgba(0,102,0,.16), rgba(255,0,0,.10)); border: 1px solid var(--border); color: var(--text-primary); text-decoration: none; max-width: 560px; }
+a.hp:hover, a.hp:focus-visible { border-color: var(--sun-3); }
+.hp.empty { color: var(--text-muted); font-size: 13px; }
+.hp .avatar { flex: none; }
+.hp-txt { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+.hp-lbl { font-size: 12px; color: var(--text-muted); }
+.hp-n { font-weight: 700; display: flex; gap: 6px; align-items: center; }
+.hp-t { font-size: 12.5px; color: var(--text-secondary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hp-v { text-align: right; flex: none; } .hp-v b { display: block; font-size: 18px; } .hp-v small { color: var(--text-muted); font-size: 11.5px; }
 .hero-upd { color: var(--text-muted); font-size: 12.5px; margin-top: 14px; }
 
 .hero-chart { background: rgba(23,21,31,.78); border-radius: 20px; padding: 22px; box-shadow: 0 30px 80px -30px rgba(255,79,154,.35); }
@@ -328,9 +348,11 @@ main.nodata > section:not(:first-child), main.nodata > div, main.nodata #platfor
       <h1><span class="grad">GTA&nbsp;VI</span></h1>
       <p class="lead" data-i="lead"></p>
       <div class="hero-now">
-        <div><div class="big tnum" id="heroViewers">—</div><div class="lbl" id="heroViewersLbl"></div></div>
+        <div><div class="big tnum" id="heroViewers">—</div><div class="lbl" id="heroViewersLbl"></div><div class="delta" id="heroDelta" hidden></div></div>
         <div><div class="big tnum" id="heroStreams">—</div><div class="lbl" data-i="hero_streams"></div></div>
       </div>
+      <div class="hero-top" id="heroTop" hidden></div>
+      <div class="hero-pt" id="heroPt"></div>
       <p class="scope-note" id="scopeNote"></p>
       <div class="src"><span data-i="src_label"></span><div class="seg" role="group" aria-label="Fonte" id="srcSeg"><button data-src="twitch"></button><button data-src="kick"></button><button data-src="all"></button></div><span class="info-slot" data-info="src"></span></div>
       <p class="src-note" id="srcNote"></p>

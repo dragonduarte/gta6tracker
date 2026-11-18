@@ -25,6 +25,8 @@ const I18N = {
     visitors: (n) => `<b>${n}</b> ${n === 1 ? 'pessoa' : 'pessoas'} neste site agora`, visitors_tip: (d, t) => `${d} visitas hoje, ${t} no total`,
     hero_viewers: { global: 'a ver agora, em todo o mundo', portugal: 'a ver agora, em streams de Portugal', luso: 'a ver agora, em streams em português' },
     hero_streams: 'streams em direto agora',
+    d1h: (pct) => `${pct} na última hora`, d1h_flat: 'estável na última hora',
+    top_now: 'Mais vistos agora', pt_top: 'Mais visto em Portugal agora', pt_none: 'Nenhum streamer de Portugal em direto agora.', viewers_s: 'espectadores',
     hc_title: 'Últimas 24 horas', hc_peak: (v) => `pico ${v}`,
     page_title: 'GTA 6 ao vivo: quantas pessoas estão a ver GTA VI agora? | Twitch, Kick e YouTube', page_desc: 'GTA 6 (GTA VI, Grand Theft Auto VI) ao vivo: espectadores, streams, recordes e vídeos em tempo real na Twitch, Kick e YouTube. No mundo, em Portugal e em português. Por Duarte Rodrigues.',
     now_title: { global: 'Agora, em todo o mundo', portugal: 'Agora, em Portugal', luso: 'Agora, em língua portuguesa' },
@@ -91,6 +93,8 @@ const I18N = {
     visitors: (n) => `<b>${n}</b> ${n === 1 ? 'person' : 'people'} on this site now`, visitors_tip: (d, t) => `${d} visits today, ${t} in total`,
     hero_viewers: { global: 'watching right now, worldwide', portugal: 'watching Portuguese streams right now', luso: 'watching Portuguese-language streams' },
     hero_streams: 'live streams right now',
+    d1h: (pct) => `${pct} in the last hour`, d1h_flat: 'steady in the last hour',
+    top_now: 'Most watched now', pt_top: 'Most watched in Portugal now', pt_none: 'No streamer from Portugal is live right now.', viewers_s: 'viewers',
     hc_title: 'Last 24 hours', hc_peak: (v) => `peak ${v}`,
     page_title: 'GTA 6 live: how many people are watching GTA VI right now? | Twitch, Kick and YouTube', page_desc: 'GTA 6 (GTA VI, Grand Theft Auto VI, Grand Theft Auto 6) live: viewers, streams, records and videos in real time on Twitch, Kick and YouTube. Worldwide, in Portugal and in Portuguese. By Duarte Rodrigues.',
     now_title: { global: 'Right now, worldwide', portugal: 'Right now, in Portugal', luso: 'Right now, in Portuguese' },
@@ -375,6 +379,7 @@ function renderHero() {
   document.getElementById('scopeNote').innerHTML = esc(t('scope_note')) + (S.scope !== 'global' ? ' ' + infoBtn('portugal') : '');
   document.getElementById('srcNote').textContent = T().src_note[S.src];
   document.getElementById('heroSub').textContent = S.liveOk && S.liveAt ? T().live_ago(Math.floor((Date.now() - S.liveAt) / 60e3)) : lastTs ? T().live_off(hhmm(lastTs)) : '';
+  renderHeroExtras(now);
   // mini gráfico das últimas 24 horas
   const since = Date.now() - 24 * 3600e3;
   const p24 = points().filter((p) => Date.parse(p.ts) >= since && totalOf(p, k.v) != null);
@@ -391,6 +396,46 @@ function renderHero() {
   const best = Math.max(0, ...hist, (srcAll() && S.history.peaks?.[S.scope]?.v) || 0);
   const rec = document.getElementById('recordChip');
   rec.textContent = t('record'); rec.classList.toggle('on', S.liveOk && hist.length > 12 && now > best);
+}
+
+// variação face a ~1 hora atrás, fila dos maiores streamers e destaque de Portugal
+function valueAgo(key, mins, from = Date.now()) {
+  const target = from - mins * 60e3;
+  let best = null, bd = Infinity;
+  for (const p of points()) { const d = Math.abs(Date.parse(p.ts) - target); const v = totalOf(p, key); if (v != null && d < bd) { bd = d; best = v; } }
+  return bd <= 25 * 60e3 ? best : null;
+}
+function liveRows(top) {
+  const rows = [], liveSet = new Set(), k = KEYS[top];
+  if (S.liveOk) for (const p of ['twitch', 'kick']) if (S.live[p] && PLATFORMS.includes(p)) { rows.push(...(S.live[p][k.liveTop] || [])); liveSet.add(p); }
+  rows.push(...(S.latest[k.top] || []).filter((r) => !liveSet.has(r.platform) && PLATFORMS.includes(r.platform)));
+  return rows.sort((a, b) => b.viewers - a.viewers);
+}
+const avHtml = (r, cls = '') => `<span class="avatar ${cls}" style="border-color:${COLOR[r.platform] || 'var(--border)'}">${safeImg(r.avatar) ? `<img src="${esc(safeImg(r.avatar))}" alt="" loading="lazy" referrerpolicy="no-referrer">` : initials(r.name)}</span>`;
+function renderHeroExtras(now) {
+  const k = KEYS[S.scope];
+  const d = document.getElementById('heroDelta');
+  // compara pontos do histórico entre si (mesma fonte), para a variação ser coerente
+  const lp = [...points()].reverse().find((p) => totalOf(p, k.v) != null);
+  const lastTs = lp ? Date.parse(lp.ts) : null;
+  const ago = lp && Date.now() - lastTs < 3 * 3600e3 ? valueAgo(k.v, 60, lastTs) : null;
+  now = lp ? totalOf(lp, k.v) : null;
+  if (now != null && ago) {
+    const pct = (now - ago) / ago * 100, abs = Math.abs(pct);
+    const txt = abs < 1 ? t('d1h_flat') : T().d1h(`${pct > 0 ? '+' : '−'}${nf({ maximumFractionDigits: abs < 10 ? 1 : 0 }).format(abs)}%`);
+    d.className = 'delta ' + (abs < 1 ? 'flat' : pct > 0 ? 'up' : 'down');
+    d.innerHTML = `<span aria-hidden="true">${abs < 1 ? '→' : pct > 0 ? '▲' : '▼'}</span> ${esc(txt)}`;
+    d.title = `${fmt(ago)} → ${fmt(now)}`; d.hidden = false;
+  } else d.hidden = true;
+  const top = leaderboard().slice(0, 5);
+  const tr = document.getElementById('heroTop');
+  tr.hidden = !top.length;
+  tr.innerHTML = top.length ? `<span class="ht-lbl">${esc(t('top_now'))}</span><span class="ht-list">${top.map((r) => `<a href="${esc(safeUrl(r.url))}" target="_blank" rel="noopener" class="ht-item" title="${esc(r.name)} · ${esc(fmt(r.viewers))} ${esc(t('viewers_s'))} · ${esc(NAMES[r.platform] || '')}">${avHtml(r, 'sm')}<span class="ht-n">${esc(r.name)}</span><span class="ht-v tnum">${fmtC(r.viewers)}</span></a>`).join('')}</span>` : '';
+  const pt = liveRows('portugal')[0];
+  const box = document.getElementById('heroPt');
+  box.innerHTML = pt
+    ? `<a class="hp" href="${esc(safeUrl(pt.url))}" target="_blank" rel="noopener">${avHtml(pt)}<span class="hp-txt"><span class="hp-lbl">🇵🇹 ${esc(t('pt_top'))}</span><span class="hp-n">${esc(pt.name)} <span class="tag">${plat(pt.platform)}</span></span><span class="hp-t" title="${esc(pt.title)}">${esc(pt.title)}</span></span><span class="hp-v"><b class="tnum">${fmt(pt.viewers)}</b><small>${esc(t('viewers_s'))}</small></span></a>`
+    : `<div class="hp empty">🇵🇹 ${esc(t('pt_none'))}</div>`;
 }
 
 function renderNow() {
