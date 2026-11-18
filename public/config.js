@@ -15,7 +15,7 @@ window.SITE_CONFIG = {
   // 💸 ANÚNCIO / AFILIADO — cola aqui o TEU link de afiliado da Instant Gaming
   // (algo como https://www.instant-gaming.com/?igr=oteunome). Enquanto tiver "COLOCA_AQUI", o anúncio fica escondido.
   sponsor: {
-    url: 'https://www.instant-gaming.com/?igr=COLOCA_AQUI',
+    url: 'https://www.instant-gaming.com/?igr=dragonduarte',
     name: 'Instant Gaming',
   },
 
