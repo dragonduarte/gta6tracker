@@ -77,7 +77,7 @@ const I18N = {
     flow_title: 'Streams a entrar e a sair', flow_desc: 'Por hora: canais que começaram (acima) e que terminaram (abaixo) de transmitir GTA VI',
     flow_in: 'Começaram', flow_out: 'Terminaram', flow_wait: 'Aparece depois de duas recolhas seguidas.',
     flow_insight: (i, o, n) => `Na última hora, <b>${fmt(i)}</b> canais começaram a transmitir GTA VI e <b>${fmt(o)}</b> terminaram: ${n >= 0 ? 'ficaram mais' : 'ficaram menos'} <b>${fmt(Math.abs(n))}</b> em direto.`,
-    info_btn: 'Mais informação',
+    info_btn: 'Mais informação', snap: 'Recolha das',
     notice_title: 'Antes de começares',
     notice_text: 'Este site foi feito com "vibe coding", com ajuda de IA, por uma pessoa e não por uma empresa. Os dados da <b>Twitch</b> vêm da API oficial e são fiáveis. Os da <b>Kick</b> (só as 100 maiores streams) e do <b>YouTube</b> (só as 50 maiores lives, lidas de hora a hora) são limitados e podem ter discrepâncias.',
     notice_ok: 'Percebi', notice_link: 'Sobre estes dados',
@@ -143,7 +143,7 @@ const I18N = {
     flow_title: 'Streams starting and ending', flow_desc: 'Per hour: channels that started (up) and stopped (down) streaming GTA VI',
     flow_in: 'Started', flow_out: 'Ended', flow_wait: 'Shows up after two back-to-back snapshots.',
     flow_insight: (i, o, n) => `In the last hour, <b>${fmt(i)}</b> channels started streaming GTA VI and <b>${fmt(o)}</b> stopped: there are <b>${fmt(Math.abs(n))}</b> ${n >= 0 ? 'more' : 'fewer'} live.`,
-    info_btn: 'More information',
+    info_btn: 'More information', snap: 'Snapshot at',
     notice_title: 'Before you start',
     notice_text: 'This site was built with "vibe coding", with AI help, by one person and not a company. <b>Twitch</b> data comes from the official API and is reliable. <b>Kick</b> (only its 100 biggest streams) and <b>YouTube</b> (only its 50 biggest lives, read hourly) are limited and may show discrepancies.',
     notice_ok: 'Got it', notice_link: 'About this data',
@@ -288,7 +288,7 @@ function hourly(pts) {
       if (!cur[k]) { cur[k] = { ...p[k] }; continue; }
       const m = { ...cur[k] };
       for (const f of ['v', 's', 'pv', 'ps', 'ppv', 'pps', 'dg', 'dt']) if (p[k][f] != null) m[f] = cur[k][f] != null ? Math.max(cur[k][f], p[k][f]) : p[k][f];
-      if (p[k].lg) m.lg = p[k].lg;
+      for (const f of ['lg', 'sz', 'sv', 'psz', 'psv', 'ppsz', 'ppsv', 'ad', 'md', 'pad', 'pmd', 'ppad', 'ppmd']) if (p[k][f] != null) m[f] = p[k][f];
       for (const f of FLOW_F) if (p[k][f] != null) m[f] = (cur[k][f] || 0) + p[k][f];
       cur[k] = m;
     }
@@ -437,7 +437,7 @@ function renderNow() {
     const el = pbox.querySelector(`[data-p="${p}"]`);
     const v = nowFor(p, 'V'), st = nowFor(p, 'S');
     const isLive = S.liveOk && S.live[p] && p !== 'youtube';
-    const w = el.querySelector('.when'); w.className = 'when' + (isLive ? ' live' : ''); w.textContent = isLive ? '● ' + t('live') : t('hourly');
+    const w = el.querySelector('.when'); const lpp = [...points()].reverse().find((x) => x[p]); w.className = 'when' + (isLive ? ' live' : ''); w.textContent = isLive ? '● ' + t('live') : (lpp ? `${t('snap')} ${hhmm(lpp.ts)}` : '—');
     animate(el.querySelector('.value'), v);
     const counted = PLATFORMS.includes(p);
     el.classList.toggle('off', !counted);
@@ -473,7 +473,7 @@ const launchLine = { id: 'launch', afterDatasetsDraw(ch) {
   const g = ch.ctx; g.save(); g.strokeStyle = css('--text-muted'); g.setLineDash([4, 4]); g.lineWidth = 1;
   g.beginPath(); g.moveTo(px, top); g.lineTo(px, bottom); g.stroke(); g.setLineDash([]);
   g.fillStyle = css('--text-secondary'); g.font = `600 12px ${css('--sans')}`;
-  const lbl = `${S.lang === 'pt' ? 'Lançamento' : 'Launch'} ${dt(LAUNCH, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}`;
+  const lbl = S.lang === 'pt' ? `Lançamento em Portugal ${new Date(LAUNCH).toLocaleString(T().locale, { timeZone: 'Europe/Lisbon', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}` : `Launch ${dt(LAUNCH, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}`;
   const w = g.measureText(lbl).width, flip = px + 6 + w > right; g.textAlign = flip ? 'right' : 'left'; g.fillText(lbl, flip ? px - 6 : px + 6, top + 12); g.restore();
 } };
 const timeTick = (v) => { const span = (Number(S.range) || 999) <= 48; return dt(v, span ? { hour: '2-digit', minute: '2-digit' } : { day: 'numeric', month: 'short' }); };

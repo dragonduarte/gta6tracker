@@ -28,17 +28,32 @@ const ts = now.toISOString().replace('.000Z', 'Z');
 // Twitch e Kick são consultados em todas as recolhas.
 const state = readJSON(path.join(PRIV, 'state.json'), {});
 const ago = (k) => (state[k] ? now.getTime() - Date.parse(state[k]) : Infinity);
-const force = process.env.FORCE_YT_VIDEOS === '1';
+const force = process.env.FORCE_YT_VIDEOS === '1';   // já não salta intervalos nem quota (ver abaixo)
 // Quota do YouTube: 10 000 unidades/dia, repõe à meia-noite do Pacífico. Guardamos o gasto do dia
 // e paramos a 9 000 (margem de 10%) — mesmo com execuções manuais ou forçadas.
 const YT_DAILY_CAP = 9000, YT_RUN_COST = 300, YT_VIDEOS_COST = 600;
 const ptDay = (d) => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Los_Angeles' }).format(d);
 const quota = state.yt_quota && state.yt_quota.day === ptDay(now) ? state.yt_quota : { day: ptDay(now), units: 0 };
 const ytAfford = (cost) => quota.units + cost <= YT_DAILY_CAP;
+// Os intervalos são SEMPRE respeitados (lives de hora a hora, vídeos de 3 em 3 h), mesmo com "force":
+// um disparo externo (cron-job.org) conta como manual e nunca pode gastar a quota do YouTube.
 const dueYoutube = ago('youtube') >= 55 * 60e3;
-const withYoutube = (force || dueYoutube) && ytAfford(YT_RUN_COST);
-const withVideos = withYoutube && (force || ago('youtube_videos') >= 175 * 60e3) && ytAfford(YT_RUN_COST + YT_VIDEOS_COST);
-if ((force || dueYoutube) && !withYoutube) console.log(`YouTube: quota do dia (${quota.units}/${YT_DAILY_CAP}) — a saltar esta recolha`);
+const withYoutube = dueYoutube && ytAfford(YT_RUN_COST);
+const withVideos = withYoutube && ago('youtube_videos') >= 175 * 60e3 && ytAfford(YT_RUN_COST + YT_VIDEOS_COST);
+if (dueYoutube && !withYoutube) console.log(`YouTube: quota do dia (${quota.units}/${YT_DAILY_CAP}) — a saltar esta recolha`);
+
+// Canais por tamanho (<10, 10–99, 100–999, 1000+ espectadores) e minutos que as streams em direto já levam no ar
+function sizeStats(list) {
+  const sz = [0, 0, 0, 0], sv = [0, 0, 0, 0], ages = [];
+  for (const s of list) {
+    const i = s.viewers >= 1000 ? 3 : s.viewers >= 100 ? 2 : s.viewers >= 10 ? 1 : 0;
+    sz[i]++; sv[i] += s.viewers;
+    const m = s.started_at ? (now.getTime() - Date.parse(s.started_at)) / 60e3 : NaN;
+    if (m >= 0 && m < 7 * 1440) ages.push(m);
+  }
+  ages.sort((a, b) => a - b);
+  return { sz, sv, ad: ages.length ? Math.round(ages.reduce((a, b) => a + b, 0) / ages.length) : null, md: ages.length ? Math.round(ages[Math.floor(ages.length / 2)]) : null };
+}
 
 async function run() {
   const c = creds();
@@ -88,7 +103,7 @@ async function run() {
   // ---- extras da Twitch (clips, peso no top 1000, comparação com outros jogos) — a cada 30 min chega
   let extras = {};
   const prevLatest = readJSON(path.join(PUB, 'latest.json'), {});
-  const extrasDue = force || process.env.MOCK || ago('extras') >= 25 * 60e3;
+  const extrasDue = process.env.MOCK || ago('extras') >= 25 * 60e3;
   if (res.twitch?.game_id && (c.twitch || process.env.MOCK) && extrasDue) {
     try {
       extras = process.env.MOCK ? (await import('./mock.js')).mockExtras(now) : await twitchExtras({ ...c.twitch, gameId: res.twitch.game_id, gta: res.twitch, now });
@@ -146,6 +161,13 @@ async function run() {
     if (k !== 'youtube') {   // espectadores por língua (8 maiores), para o gráfico de evolução por língua
       const lgm = {}; for (const st of r.list) lgm[st.lang || '?'] = (lgm[st.lang || '?'] || 0) + st.viewers;
       point[k].lg = Object.fromEntries(Object.entries(lgm).sort((a, b) => b[1] - a[1]).slice(0, 8));
+    }
+    if (k === 'twitch') {   // tamanho dos canais e há quanto tempo estão no ar (a Twitch é a única com lista completa)
+      for (const [pre, filt] of [['', () => true], ['p', (x) => x.lang === 'pt'], ['pp', (x) => x.portugal]]) {
+        const st = sizeStats(r.list.filter(filt));
+        point[k][pre + 'sz'] = st.sz; point[k][pre + 'sv'] = st.sv;
+        if (st.ad != null) { point[k][pre + 'ad'] = st.ad; point[k][pre + 'md'] = st.md; }
+      }
     }
     if (r.rank != null) point[k].rank = r.rank;
     if (flow[k]) Object.assign(point[k], { si: flow[k].g.i, so: flow[k].g.o, psi: flow[k].p.i, pso: flow[k].p.o, ppsi: flow[k].q.i, ppso: flow[k].q.o });

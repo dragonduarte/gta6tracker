@@ -11,6 +11,8 @@
       ad_title: 'Já queres jogar GTA VI?',
       ad_text: 'Compra a tua cópia na Instant Gaming.', ad_cta: 'Comprar GTA VI',
       clips_hidden: 'Os clips podem ter spoilers do jogo.', clips_show: 'Mostrar clips', clips_hide: 'Esconder clips',
+      sz_title: 'Tamanho dos canais', sz_sub: 'Onde está o público: espectadores por tamanho do canal (só Twitch, lista completa)', sz_b: ['Menos de 10', '10 a 99', '100 a 999', '1000 ou mais'], sz_ch: 'canais',
+      du_title: 'Há quanto tempo estão no ar', du_sub: 'Tempo médio e mediano das streams em direto (só Twitch)', du_avg: 'Média', du_med: 'Mediana', du_unit: 'h',
       le_title: 'Evolução por língua', le_sub: 'Espectadores de cada língua ao longo do tempo', le_wait: 'Aparece quando houver pelo menos duas recolhas com este dado.', le_other: 'Outras',
       games_h2: 'GTA VI vs outros jogos', games_tw: 'Twitch: os jogos mais vistos agora', games_tw_sub: 'Espectadores somados de todas as streams de cada jogo. Sem Just Chatting e outras categorias que não são jogos.',
       games_kk: 'Kick: os jogos mais vistos agora', games_kk_sub: 'Nas 100 maiores streams da Kick (limite da API pública), por jogo. Não inclui as mais pequenas.',
@@ -43,6 +45,8 @@
       ad_title: 'Ready to play GTA VI?',
       ad_text: 'Get your copy on Instant Gaming.', ad_cta: 'Buy GTA VI',
       clips_hidden: 'Clips may contain game spoilers.', clips_show: 'Show clips', clips_hide: 'Hide clips',
+      sz_title: 'Channel size', sz_sub: 'Where the audience is: viewers by channel size (Twitch only, complete list)', sz_b: ['Under 10', '10 to 99', '100 to 999', '1,000 or more'], sz_ch: 'channels',
+      du_title: 'How long they have been live', du_sub: 'Average and median time the live streams have been on (Twitch only)', du_avg: 'Average', du_med: 'Median', du_unit: 'h',
       le_title: 'Evolution by language', le_sub: 'Viewers of each language over time', le_wait: 'Shows up once there are at least two snapshots with this data.', le_other: 'Other',
       games_h2: 'GTA VI vs other games', games_tw: 'Twitch: most-watched games right now', games_tw_sub: 'Viewers summed across every stream of each game. Just Chatting and other non-game categories are left out.',
       games_kk: 'Kick: most-watched games right now', games_kk_sub: "Across Kick's 100 biggest streams (the public API's limit), by game. Smaller streams are not included.",
@@ -200,6 +204,10 @@
       <div class="card-head"><div><h3 id="leT"></h3><div class="desc" id="leS"></div></div><div class="seg" id="leSeg"><button data-lp="twitch">Twitch</button><button data-lp="kick">Kick</button></div></div>
       <div class="lg-leg" id="leLeg"></div>
       <div class="chart sm"><canvas id="langEvo"></canvas></div>
+    </div>
+    <div class="grid2 even" style="margin-top:12px">
+      <div class="panel"><h3 id="szT"></h3><div class="desc" id="szS"></div><div class="lg-leg" id="szLeg"></div><div class="chart sm"><canvas id="sizeChart"></canvas></div></div>
+      <div class="panel"><h3 id="duT"></h3><div class="desc" id="duS"></div><div class="lg-leg" id="duLeg"></div><div class="chart sm"><canvas id="durChart"></canvas></div></div>
     </div>
     <p class="insight" id="mapInsight" style="margin-top:18px"></p>
     <div class="grid2">
@@ -363,6 +371,24 @@
     mkOrUpdate('langEvo', { type: 'line', plugins: [launchLine], data: { datasets: ds }, options: baseLine(xs.length ? xs : [0, 1]) });
   }
 
+  /* ------------------------------------------------ tamanho dos canais e tempo no ar */
+  function renderSizes() {
+    const pre = { global: '', luso: 'p', portugal: 'pp' }[S.scope], pts = inRange().filter((p) => p.twitch?.[pre + 'sv']);
+    const xs = pts.map((p) => Date.parse(p.ts)), B = ['#0d366b', '#1c5cab', '#3987e5', '#9ec5f4'];
+    document.getElementById('szT').textContent = X('sz_title'); document.getElementById('szS').textContent = X('sz_sub');
+    document.getElementById('duT').textContent = X('du_title'); document.getElementById('duS').textContent = X('du_sub');
+    const last = pts[pts.length - 1]?.twitch;
+    document.getElementById('szLeg').innerHTML = pts.length > 1 ? EX[S.lang].sz_b.map((n, i) => `<span><i class="dot" style="background:${B[i]}"></i>${esc(n)}${last ? ` · ${fmt(last[pre + 'sz'][i])} ${X('sz_ch')}` : ''}`+'</span>').join('') : `<span>${esc(X('le_wait'))}</span>`;
+    mkOrUpdate('sizeChart', { type: 'line', plugins: [launchLine],
+      data: { datasets: pts.length > 1 ? EX[S.lang].sz_b.map((n, i) => ({ label: n, data: pts.map((p, j) => ({ x: xs[j], y: p.twitch[pre + 'sv'][i] })), borderColor: B[i], backgroundColor: B[i], fill: i === 0 ? 'origin' : '-1', borderWidth: 1 })) : [] },
+      options: { ...baseLine(xs.length ? xs : [0, 1]), scales: { ...baseLine(xs.length ? xs : [0, 1]).scales, y: { stacked: true, beginAtZero: true, border: { display: false }, ticks: { callback: (v) => fmtC(v) } } } } });
+    const dp = pts.filter((p) => p.twitch[pre + 'ad'] != null), dx = dp.map((p) => Date.parse(p.ts));
+    document.getElementById('duLeg').innerHTML = dp.length > 1 ? `<span><i class="dot" style="background:${css('--sun-1')}"></i>${X('du_avg')} · ${(dp[dp.length - 1].twitch[pre + 'ad'] / 60).toFixed(1)} ${X('du_unit')}</span><span><i class="dot" style="background:#9ec5f4"></i>${X('du_med')} · ${(dp[dp.length - 1].twitch[pre + 'md'] / 60).toFixed(1)} ${X('du_unit')}</span>` : `<span>${esc(X('le_wait'))}</span>`;
+    mkOrUpdate('durChart', { type: 'line', plugins: [launchLine],
+      data: { datasets: dp.length > 1 ? [[X('du_avg'), 'ad', css('--sun-1')], [X('du_med'), 'md', '#9ec5f4']].map(([l, f, c]) => ({ label: l, data: dp.map((p, j) => ({ x: dx[j], y: p.twitch[pre + f] / 60 })), borderColor: c, backgroundColor: c })) : [] },
+      options: { ...baseLine(dx.length ? dx : [0, 1]), plugins: { tooltip: { callbacks: { title: (it) => dt(it[0].parsed.x, { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }), label: (c) => ` ${c.dataset.label}: ${c.parsed.y.toFixed(1)} h` } } } } });
+  }
+
   /* ------------------------------------------------------- principais conclusões */
   function renderInsights() {
     const pt = S.lang === 'pt', L = (a, b) => (pt ? a : b), k = KEYS[S.scope];
@@ -408,6 +434,12 @@
     if (fn) cards.push([L('Última hora', 'Last hour'), (fi - fo >= 0 ? '+' : '−') + fmt(Math.abs(fi - fo)), L(`Começaram <b>${fmt(fi)}</b> streams e terminaram <b>${fmt(fo)}</b> (Twitch).`, `<b>${fmt(fi)}</b> streams started and <b>${fmt(fo)}</b> ended (Twitch).`)]);
     const best = Object.values(S.hall?.all || {}).filter(scopeFilter).sort((a, b) => b.peak - a.peak)[0];
     if (best) cards.push([L('Recorde individual', 'Individual record'), fmtC(best.peak), L(`<b>${esc(best.name)}</b> na ${NAMES[best.platform]}, a ${esc(dt(best.at, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }))}.`, `<b>${esc(best.name)}</b> on ${NAMES[best.platform]}, on ${esc(dt(best.at, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }))}.`)]);
+    const pre = { global: '', luso: 'p', portugal: 'pp' }[S.scope], tw = [...pts].reverse().find((p) => p.twitch?.[pre + 'sv'])?.twitch;
+    if (tw && PLATFORMS.includes('twitch')) {
+      const sv = tw[pre + 'sv'], sum = sv.reduce((a, b) => a + b, 0), big = sv[3] + sv[2];
+      if (sum) cards.push([L('Canais grandes', 'Big channels'), pct(big, sum), L(`Dos espectadores estão em canais com mais de 100 pessoas. Em canais com menos de 10: <b>${pct(sv[0], sum)}</b>.`, `of viewers are on channels with over 100 people. On channels under 10: <b>${pct(sv[0], sum)}</b>.`)]);
+      if (tw[pre + 'ad'] != null) cards.push([L('Tempo no ar', 'Time live'), `${(tw[pre + 'ad'] / 60).toFixed(1)} h`, L(`Em média, as streams já levam este tempo em direto. A mediana é <b>${(tw[pre + 'md'] / 60).toFixed(1)} h</b>.`, `On average, streams have been live this long. The median is <b>${(tw[pre + 'md'] / 60).toFixed(1)} h</b>.`)]);
+    }
     const st = totalNow('S');
     if (st && now) cards.push([L('Média por stream', 'Average per stream'), fmtC(now / st), L(`<b>${fmt(st)}</b> streams em direto. Quanto mais alta a média, mais concentrado está o público.`, `<b>${fmt(st)}</b> live streams. The higher the average, the more concentrated the audience.`)]);
     document.getElementById('ins').innerHTML = cards.map(([l, v, n]) => `<div class="kpi"><div class="label">${esc(l)}</div><div class="value tnum">${esc(v)}</div><div class="note">${n}</div></div>`).join('');
@@ -610,7 +642,7 @@
   /* ------------------------------------------------------------------ main */
   window.renderExtras = function () {
     const run = (f) => { try { f(); } catch (e) { console.error(f.name, e); } };
-    [renderSponsor, renderGames, renderHeat, renderLangEvo, renderInsights, renderClips, renderHall, renderF24, renderMap, renderTrends].forEach(run);
+    [renderSponsor, renderGames, renderHeat, renderLangEvo, renderSizes, renderInsights, renderClips, renderHall, renderF24, renderMap, renderTrends].forEach(run);
   };
   if (points().length || S.liveOk) window.renderExtras();
 })();
