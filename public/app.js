@@ -5,7 +5,6 @@ const AUTHOR = String(CFG.author || 'Duarte Rodrigues');
 const AUTHOR_URL = (() => { try { const u = new URL(CFG.authorUrl); if (u.protocol === 'https:') return u.href; } catch { /* usa o padrão */ } return 'https://www.linkedin.com/in/duartenrodrigues26/'; })();
 const PUBLIC_DOWNLOADS = CFG.publicDownloads !== false;
 const LAUNCH = new Date(CFG.launch || '2026-11-19T00:00:00Z');
-const ANNOUNCED = new Date('2025-11-06T00:00:00Z');   // anúncio da data final
 const LIVE_EVERY = 120e3, HISTORY_EVERY = 5 * 60e3, VISIT_EVERY = 180e3;
 const PLATFORMS = ['twitch', 'kick', 'youtube'];
 const NAMES = { twitch: 'Twitch', kick: 'Kick', youtube: 'YouTube' };
@@ -22,8 +21,9 @@ const I18N = {
     scope_note: { global: 'Twitch, Kick e YouTube somados. Muda para 🇵🇹 Portugal ou 🗣️ Em português no topo.', portugal: 'Só criadores de Portugal: lista de streamers portugueses + deteção automática (PT-PT no título, país do canal no YouTube). O Brasil fica de fora.', luso: 'Todas as streams faladas em português: Portugal, Brasil e outros países.' },
     visitors: (n) => `<b>${n}</b> ${n === 1 ? 'pessoa' : 'pessoas'} neste site agora`, visitors_tip: (d, t) => `${d} visitas hoje, ${t} no total`,
     hero_viewers: { global: 'a ver agora, em todo o mundo', portugal: 'a ver agora, em streams de Portugal', luso: 'a ver agora, em streams em português' },
-    hero_streams: 'streams em direto agora', days: 'dias', hours: 'horas', minutes: 'min', seconds: 'seg',
-    cd_until_t: 'Faltam para o lançamento', cd_since_t: 'Desde o lançamento', cd_date: '19 nov 2026 · PS5 & Xbox Series X|S',
+    hero_streams: 'streams em direto agora',
+    hc_title: 'Últimas 24 horas', hc_peak: (v) => `pico ${v}`,
+    page_title: 'GTA 6 ao vivo: quantas pessoas estão a ver GTA VI agora? | Twitch, Kick e YouTube', page_desc: 'GTA 6 (GTA VI, Grand Theft Auto VI) ao vivo: espectadores, streams, recordes e vídeos em tempo real na Twitch, Kick e YouTube. No mundo, em Portugal e em português. Por Duarte Rodrigues.',
     now_title: { global: 'Agora, em todo o mundo', portugal: 'Agora, em Portugal', luso: 'Agora, em língua portuguesa' },
     now_sub: { global: 'Soma das três plataformas.', portugal: 'Streams portuguesas (PT-PT). Vê a metodologia no fim da página.', luso: 'Todas as streams em português: Portugal, Brasil e outros.' },
     share_title: 'Fatia de espectadores por plataforma',
@@ -33,9 +33,6 @@ const I18N = {
     hero_sub: (s, live) => `Em ${s} streams na Twitch, na Kick e no YouTube. ${live}`,
     live: 'Ao vivo', live_ago: (m) => m < 1 ? 'Atualizado agora mesmo.' : `Atualizado há ${m} min.`, live_off: (d) => `Última recolha às ${d}.`,
     status_live: 'Ao vivo', status_off: 'Última recolha',
-    cd_until: (d, h, m, s) => `O jogo sai a 19 de novembro. Faltam <b class="tnum">${d}</b> dias, <b class="tnum">${h}</b> h <b class="tnum">${m}</b> min <b class="tnum">${s}</b> s.`,
-    cd_since: (d, h) => `O jogo saiu há <b class="tnum">${d}</b> ${d === 1 ? 'dia' : 'dias'} e <b class="tnum">${h}</b> h.`,
-    cd_announced: 'Data anunciada a 6 de novembro de 2025', cd_pct: (p) => `${p}% da espera`, cd_out: 'Já saiu',
     k_now: 'Espectadores agora', k_peak: 'Pico registado', k_hours: 'Horas assistidas', k_streams: 'Streams agora', k_rank: 'Lugar na Twitch', k_share: 'Fatia do total mundial', k_unique: 'Canais diferentes',
     k_hours_note: 'estimativa desde o início', k_rank_note: 'entre todas as categorias', k_unique_note: 'já transmitiram GTA VI', k_share_note: 'dos espectadores globais', k_streams_note: 'nas três plataformas',
     streams: 'streams', stream1: 'stream', of_total: 'do total', top100: 'só as 100 maiores', top50: 'só as maiores lives', hourly: 'de hora a hora', live_short: 'ao vivo',
@@ -67,15 +64,16 @@ const I18N = {
     cant_render: 'Não foi possível gerar a imagem. Faz uma captura de ecrã ao cartão.',
   },
   en: {
-    locale: 'en-US',
+    locale: (/^en/i.test(navigator.language || '') ? navigator.language : 'en-US'),   // formatos do país do visitante
     scope_global: 'World', scope_portugal: 'Portugal', scope_luso: 'In Portuguese',
     lead: 'How many people are watching GTA VI (GTA 6, Grand Theft Auto VI) right now? Live viewers, streams and videos across Twitch, Kick and YouTube.',
     nav_now: 'Now', nav_time: 'Over time', nav_games: 'vs other games', nav_streamers: 'Streamers', nav_more: 'More data', skip: 'Skip to the data',
     scope_note: { global: 'Twitch, Kick and YouTube combined. Switch to 🇵🇹 Portugal or 🗣️ In Portuguese at the top.', portugal: 'Creators from Portugal only: a list of Portuguese streamers plus automatic detection (European Portuguese in the title, channel country on YouTube). Brazil is left out.', luso: 'Every stream spoken in Portuguese: Portugal, Brazil and other countries.' },
     visitors: (n) => `<b>${n}</b> ${n === 1 ? 'person' : 'people'} on this site now`, visitors_tip: (d, t) => `${d} visits today, ${t} in total`,
     hero_viewers: { global: 'watching right now, worldwide', portugal: 'watching Portuguese streams right now', luso: 'watching Portuguese-language streams' },
-    hero_streams: 'live streams right now', days: 'days', hours: 'hours', minutes: 'min', seconds: 'sec',
-    cd_until_t: 'Until launch', cd_since_t: 'Since launch', cd_date: 'Nov 19, 2026 · PS5 & Xbox Series X|S',
+    hero_streams: 'live streams right now',
+    hc_title: 'Last 24 hours', hc_peak: (v) => `peak ${v}`,
+    page_title: 'GTA 6 live: how many people are watching GTA VI right now? | Twitch, Kick and YouTube', page_desc: 'GTA 6 (GTA VI, Grand Theft Auto VI, Grand Theft Auto 6) live: viewers, streams, records and videos in real time on Twitch, Kick and YouTube. Worldwide, in Portugal and in Portuguese. By Duarte Rodrigues.',
     now_title: { global: 'Right now, worldwide', portugal: 'Right now, in Portugal', luso: 'Right now, in Portuguese' },
     now_sub: { global: 'All three platforms combined.', portugal: 'Portugal-based (PT-PT) streams. See the methodology at the bottom.', luso: 'Every Portuguese-language stream: Portugal, Brazil and others.' },
     share_title: 'Viewer share by platform',
@@ -85,9 +83,6 @@ const I18N = {
     hero_sub: (s, live) => `Across ${s} streams on Twitch, Kick and YouTube. ${live}`,
     live: 'Live', live_ago: (m) => m < 1 ? 'Updated just now.' : `Updated ${m} min ago.`, live_off: (d) => `Last snapshot at ${d}.`,
     status_live: 'Live', status_off: 'Last snapshot',
-    cd_until: (d, h, m, s) => `The game comes out on November 19. <b class="tnum">${d}</b> days, <b class="tnum">${h}</b> h <b class="tnum">${m}</b> min <b class="tnum">${s}</b> s to go.`,
-    cd_since: (d, h) => `The game came out <b class="tnum">${d}</b> ${d === 1 ? 'day' : 'days'} and <b class="tnum">${h}</b> h ago.`,
-    cd_announced: 'Date announced on November 6, 2025', cd_pct: (p) => `${p}% of the wait`, cd_out: "It's out",
     k_now: 'Viewers now', k_peak: 'Peak recorded', k_hours: 'Hours watched', k_streams: 'Streams now', k_rank: 'Rank on Twitch', k_share: 'Share of the world total', k_unique: 'Different channels',
     k_hours_note: 'estimated since tracking began', k_rank_note: 'among all categories', k_unique_note: 'have streamed GTA VI', k_share_note: 'of global viewers', k_streams_note: 'across the three platforms',
     streams: 'streams', stream1: 'stream', of_total: 'of total', top100: 'top 100 only', top50: 'biggest lives only', hourly: 'hourly', live_short: 'live',
@@ -243,6 +238,8 @@ function forecastPlatform(p, key) {
 /* ============================================================ render */
 function applyI18n() {
   document.documentElement.lang = S.lang;
+  document.title = t('page_title');
+  document.querySelector('meta[name=description]')?.setAttribute('content', t('page_desc'));
   document.querySelectorAll('[data-i]').forEach((el) => { const v = t(el.dataset.i); if (typeof v === 'string') el.textContent = v; });
   document.querySelectorAll('#scopeSeg button').forEach((b) => b.setAttribute('aria-pressed', b.dataset.scope === S.scope));
   document.querySelectorAll('#langSeg button').forEach((b) => b.setAttribute('aria-pressed', b.dataset.lang === S.lang));
@@ -268,6 +265,18 @@ function renderHero() {
   document.getElementById('heroViewersLbl').textContent = t('hero_viewers');
   document.getElementById('scopeNote').textContent = t('scope_note');
   document.getElementById('heroSub').textContent = S.liveOk && S.liveAt ? T().live_ago(Math.floor((Date.now() - S.liveAt) / 60e3)) : lastTs ? T().live_off(hhmm(lastTs)) : '';
+  // mini gráfico das últimas 24 horas
+  const since = Date.now() - 24 * 3600e3;
+  const p24 = points().filter((p) => Date.parse(p.ts) >= since && totalOf(p, k.v) != null);
+  document.getElementById('hcTitle').textContent = t('hc_title');
+  if (p24.length > 1) {
+    const ys = p24.map((p) => totalOf(p, k.v)), mx = Math.max(...ys);
+    document.getElementById('hcPeak').textContent = T().hc_peak(fmtC(mx));
+    const xs = p24.map((p) => Date.parse(p.ts));
+    const o = baseLine([xs[0], xs[xs.length - 1]]);
+    o.scales.x.ticks.callback = (v) => hhmm(v); o.scales.x.ticks.maxTicksLimit = 5;
+    mkOrUpdate('heroChart', { type: 'line', data: { datasets: [{ label: t('viewers'), data: p24.map((p, i) => ({ x: xs[i], y: ys[i] })), borderColor: css('--sun-1'), backgroundColor: css('--sun-1') + '26', fill: true }] }, options: o });
+  } else document.getElementById('hcPeak').textContent = '';
   const hist = seriesTotal(k.v);
   const best = Math.max(0, ...hist, S.history.peaks?.[S.scope]?.v || 0);
   const rec = document.getElementById('recordChip');
@@ -482,19 +491,6 @@ function renderBoard() {
 }
 
 /* ============================================================ contagem decrescente */
-function tickCountdown() {
-  const now = Date.now(), d = LAUNCH - now, abs = Math.abs(d);
-  const D = Math.floor(abs / 864e5), H = Math.floor(abs / 36e5) % 24, M = Math.floor(abs / 6e4) % 60, Sx = Math.floor(abs / 1e3) % 60;
-  document.getElementById('cdD').textContent = D;
-  document.getElementById('cdH').textContent = String(H).padStart(2, '0');
-  document.getElementById('cdM').textContent = String(M).padStart(2, '0');
-  document.getElementById('cdS').textContent = String(Sx).padStart(2, '0');
-  document.getElementById('cdTitle').textContent = d > 0 ? t('cd_until_t') : t('cd_since_t');
-  const p = Math.min(1, Math.max(0, (now - ANNOUNCED) / (LAUNCH - ANNOUNCED)));
-  document.getElementById('cdBar').style.width = (p * 100).toFixed(2) + '%';
-  document.getElementById('cdPct').textContent = d > 0 ? T().cd_pct(nf({ maximumFractionDigits: 1 }).format(p * 100)) : '🎉 ' + t('cd_out');
-}
-
 /* ============================================================ imagem para o LinkedIn */
 function cardSpark(vals, t0, t1) {
   if (vals.length < 3) return '';
@@ -571,7 +567,7 @@ async function loadLive() {
   catch { S.liveOk = false; }
 }
 function renderAll() {
-  applyI18n(); tickCountdown(); renderHero(); renderVisitors();
+  applyI18n(); renderHero(); renderVisitors();
   const empty = !points().length && !S.liveOk;
   document.querySelector('main').classList.toggle('nodata', empty);
   if (empty) { document.getElementById('kpis').innerHTML = `<div class="empty" style="grid-column:1/-1">${t('no_data')}</div>`; return; }
@@ -644,7 +640,6 @@ function initSecnav() {
   if (!window.GTA_FORECAST) await new Promise((r) => setTimeout(r, 50));
   renderAll();
   if (params.get('card')) document.getElementById('openCard').click();
-  setInterval(tickCountdown, 1000);
   initSecnav();
   visitorsTick(); setInterval(visitorsTick, VISIT_EVERY);
   document.addEventListener('visibilitychange', () => { if (!document.hidden && !vis.off) visitorsTick(); });

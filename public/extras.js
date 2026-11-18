@@ -23,7 +23,7 @@
       conc_title: 'Espectadores por stream', conc_sub: 'Média de espectadores por stream. Quanto mais alta, mais o público está concentrado em poucos canais grandes.',
       conc_avg: 'média por stream', conc_top10: 'nas 10 maiores streams',
       share_t_title: 'A fatia de cada plataforma', share_t_sub: 'Percentagem dos espectadores, hora a hora',
-      heat_title: 'Quando é que se vê mais GTA VI?', heat_sub: 'Espectadores por hora do dia, na hora de Lisboa. Mais claro, mais gente.', heat_less: 'menos', heat_more: 'mais',
+      heat_title: 'Quando é que se vê mais GTA VI?', heat_sub: 'Espectadores por hora do dia, na tua hora local. Mais claro, mais gente.', heat_less: 'menos', heat_more: 'mais',
       clips_title: '🎬 Os clips mais vistos', clips_sub: 'Clips de GTA VI mais vistos na Twitch nas últimas 24 h', clips_sub_pt: 'Clips em português mais vistos na Twitch nas últimas 24 h', clips_empty: 'Ainda sem clips nesta vista.',
       hall_title: '🏆 Recordes por streamer', hall_sub: 'O maior número de pessoas que cada streamer teve a ver ao mesmo tempo', hall_all: 'Desde sempre', hall_24: 'Primeiras 24 h', hall_empty: 'Ainda sem recordes nesta vista.',
       mara_title: '⏳ Maratonas', mara_sub: 'As streams que estão no ar há mais tempo', mara_empty: 'Sem maratonas nesta vista.', live_for: 'no ar há',
@@ -53,7 +53,7 @@
       conc_title: 'Viewers per stream', conc_sub: 'Average viewers per stream. The higher it is, the more the audience is concentrated in a few big channels.',
       conc_avg: 'avg per stream', conc_top10: 'on the 10 biggest streams',
       share_t_title: 'Each platform\'s slice', share_t_sub: 'Share of viewers, hour by hour',
-      heat_title: 'When do people watch GTA VI?', heat_sub: 'Viewers by hour of day, Lisbon time. Lighter means more people.', heat_less: 'less', heat_more: 'more',
+      heat_title: 'When do people watch GTA VI?', heat_sub: 'Viewers by hour of day, in your local time. Lighter means more people.', heat_less: 'less', heat_more: 'more',
       clips_title: '🎬 The most-watched clips', clips_sub: 'Most-viewed GTA VI clips on Twitch in the last 24 h', clips_sub_pt: 'Most-viewed Portuguese-language clips on Twitch, last 24 h', clips_empty: 'No clips in this view yet.',
       hall_title: '🏆 Records by streamer', hall_sub: 'The most people each streamer has had watching at once', hall_all: 'All time', hall_24: 'First 24 h', hall_empty: 'No records in this view yet.',
       mara_title: '⏳ Marathons', mara_sub: 'The streams that have been live the longest', mara_empty: 'No marathons in this view.', live_for: 'live for',
@@ -70,8 +70,9 @@
   const X = (k) => { const v = EX[S.lang][k]; return v && typeof v === 'object' && !Array.isArray(v) ? v[S.scope] : v; };
   const CFG = window.SITE_CONFIG || {};
   const SEQ = ['#0d366b', '#104281', '#1c5cab', '#2a78d6', '#3987e5', '#6da7ec', '#9ec5f4', '#cde2fb']; // rampa sequencial (azul), escuro → claro no fundo escuro
-  const lisbonHour = (ts) => Number(new Intl.DateTimeFormat('en-GB', { hour: '2-digit', hourCycle: 'h23', timeZone: 'Europe/Lisbon' }).format(new Date(ts)));
-  const lisbonDay = (ts) => new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Lisbon' }).format(new Date(ts));
+  // hora local de quem está a ver (o servidor guarda tudo em UTC)
+  const lisbonHour = (ts) => new Date(ts).getHours();
+  const lisbonDay = (ts) => new Intl.DateTimeFormat('en-CA').format(new Date(ts));
   const durFmt = (ms) => { const m = Math.max(0, ms / 60e3); return m >= 60 ? `${Math.floor(m / 60)} h ${String(Math.floor(m % 60)).padStart(2, '0')}` : `${Math.floor(m)} min`; };
   const scopeFilter = (r) => S.scope === 'global' ? true : S.scope === 'luso' ? r.lang === 'pt' : !!r.portugal;
 
@@ -305,8 +306,8 @@
     for (const d of days) grid.get(d).forEach((v, h) => { if (v != null) { sums[h] += v; cnt[h]++; } });
     const avgs = sums.map((x, h) => cnt[h] ? x / cnt[h] : -1), best = avgs.indexOf(Math.max(...avgs)), worst = avgs.indexOf(Math.min(...avgs.map((a) => a < 0 ? Infinity : a)));
     document.getElementById('heatInsight').innerHTML = days.length && best >= 0 ? (S.lang === 'pt'
-      ? `Em média, a hora com mais gente a ver é às <b>${best}h</b> de Lisboa, e a mais calma às <b>${worst}h</b>.`
-      : `On average, the busiest hour is <b>${best}:00</b> Lisbon time, and the quietest is <b>${worst}:00</b>.`) : '';
+      ? `Em média, a hora com mais gente a ver é às <b>${best}h</b> (hora local), e a mais calma às <b>${worst}h</b>.`
+      : `On average, the busiest hour is <b>${best}:00</b> your local time, and the quietest is <b>${worst}:00</b>.`) : '';
     document.getElementById('heatLegend').innerHTML = `${X('heat_less')} ${SEQ.map((c) => `<i style="background:${c}"></i>`).join('')} ${X('heat_more')}`;
   }
 
