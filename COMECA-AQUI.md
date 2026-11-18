@@ -10,7 +10,7 @@ Lista curta para pôr o site no ar. Os detalhes de cada passo estão no `README.
 - [ ] **Kick:** em kick.com/settings/developer, cria uma app com o redirect `http://localhost`. Copia o **Client ID** e o **Client Secret**.
 
 ### 2. GitHub
-- [ ] Cria um repositório **privado** chamado `gta6-tracker`.
+- [ ] Cria um repositório **público** (não há chaves no código; assim o GitHub Actions é ilimitado).
 - [ ] Faz upload do **conteúdo** desta pasta, incluindo a pasta escondida `.github`. No Mac, carrega em `Cmd+Shift+.` para a veres.
 - [ ] Em **Settings → Secrets and variables → Actions**, cria estes secrets:
   - `YOUTUBE_API_KEY`
@@ -18,7 +18,7 @@ Lista curta para pôr o site no ar. Os detalhes de cada passo estão no `README.
   - `TWITCH_CLIENT_SECRET`
   - `KICK_CLIENT_ID`
   - `KICK_CLIENT_SECRET`
-- [ ] Em **Actions → Recolha horária GTA VI**, carrega em **Run workflow** e espera pelo ✓ verde.
+- [ ] Em **Actions → Recolha GTA VI**, carrega em **Run workflow** e espera pelo ✓ verde. Aparece um branch `data` com os dados.
 
 ### 3. Vercel
 - [ ] Entra em vercel.com com a conta GitHub e vai a **Add New → Project → Import gta6-tracker**.
@@ -27,6 +27,7 @@ Lista curta para pôr o site no ar. Os detalhes de cada passo estão no `README.
 - [ ] Carrega em **Deploy**.
 - [ ] Abre `https://o-teu-link.vercel.app/api/live` e confirma que aparece `"errors": []`.
 - [ ] Ativa as estatísticas em **Analytics → Enable**.
+- [ ] Opcional: **Storage → Upstash (Redis) Free → Connect Project → Redeploy** para o contador de pessoas no site.
 
 ### 4. Personalizar (no GitHub, ficheiro `public/config.js`)
 - [ ] `sponsor.url`: o teu link da Instant Gaming, no lugar de `COLOCA_AQUI`.

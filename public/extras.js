@@ -7,9 +7,15 @@
 (function () {
   const EX = {
     pt: {
-      ad: 'Publicidade', ad_note: 'link de afiliado',
-      ad_title: 'Jogos para PS5, Xbox e PC mais baratos',
-      ad_text: 'A Instant Gaming vende chaves digitais com desconto. Se comprares por este link, apoias este projeto.', ad_cta: 'Ver na Instant Gaming',
+      ad_note: 'link de afiliado',
+      ad_title: 'Compra aqui os teus jogos mais baratos',
+      ad_text: 'GTA VI e outros jogos para PS5, Xbox e PC, com desconto na Instant Gaming.', ad_cta: 'Ver preços',
+      games_h2: 'GTA VI vs outros jogos', games_tw: 'Twitch: os jogos mais vistos agora', games_tw_sub: 'Espectadores somados de todas as streams de cada jogo. Sem Just Chatting e outras categorias que não são jogos.',
+      games_kk: 'Kick: os jogos mais vistos agora', games_kk_sub: 'Nas 100 maiores streams da Kick (limite da API pública), por jogo.',
+      games_rank: 'Lugar entre os jogos na Twitch', games_vs: (x, n) => `${x} o 2º lugar (${n})`, games_vs_lbl: 'Comparado com o 2º jogo', games_vs_lbl2: 'Comparado com o 1º jogo', games_behind: (x, n) => `${x} do 1º lugar (${n})`,
+      games_share: 'dos espectadores das 1000 maiores streams da Twitch', games_wait: 'A comparação aparece depois da primeira recolha.',
+      games_insight: (r, x, n) => r === 1 ? `Na Twitch, o GTA VI é agora o <b>jogo mais visto</b>, com <b>${x}</b> o público do 2º lugar, ${n}.` : `Na Twitch, o GTA VI está agora em <b>${r}º lugar</b> entre os jogos. Tem ${x} do público do líder, ${n}.`,
+      times: (v) => `${v}×`, more: 'mais que',
       dom_title: 'Quanto pesa o GTA VI em cada plataforma', dom_sub: 'Peso do GTA VI entre as maiores streams de cada plataforma, de todas as categorias',
       dom_tw_big: 'dos espectadores das 1000 maiores streams da Twitch', dom_kk_big: 'dos espectadores das 100 maiores streams da Kick',
       dom_top100: (n, of) => `${n} das ${of} maiores streams`, dom_top10: (n) => `${n} das 10 maiores`,
@@ -31,9 +37,15 @@
       viewers: 'espectadores', views: 'visualizações',
     },
     en: {
-      ad: 'Ad', ad_note: 'affiliate link',
-      ad_title: 'Cheaper PS5, Xbox and PC games',
-      ad_text: 'Instant Gaming sells discounted digital keys. Buying through this link supports this project.', ad_cta: 'Go to Instant Gaming',
+      ad_note: 'affiliate link',
+      ad_title: 'Buy your games cheaper here',
+      ad_text: 'GTA VI and other PS5, Xbox and PC games, discounted on Instant Gaming.', ad_cta: 'See prices',
+      games_h2: 'GTA VI vs other games', games_tw: 'Twitch: most-watched games right now', games_tw_sub: 'Viewers summed across every stream of each game. Just Chatting and other non-game categories are left out.',
+      games_kk: 'Kick: most-watched games right now', games_kk_sub: "Across Kick's 100 biggest streams (the public API's limit), by game.",
+      games_rank: 'Rank among games on Twitch', games_vs: (x, n) => `${x} the #2 game (${n})`, games_vs_lbl: 'Against the #2 game', games_vs_lbl2: 'Against the #1 game', games_behind: (x, n) => `${x} of the #1 game (${n})`,
+      games_share: "of viewers across Twitch's 1,000 biggest streams", games_wait: 'The comparison appears after the first snapshot.',
+      games_insight: (r, x, n) => r === 1 ? `On Twitch, GTA VI is now the <b>most-watched game</b>, with <b>${x}</b> the audience of #2, ${n}.` : `On Twitch, GTA VI is now <b>#${r}</b> among games, with ${x} of the leader's audience, ${n}.`,
+      times: (v) => `${v}×`, more: 'more than',
       dom_title: 'How much GTA VI weighs on each platform', dom_sub: "GTA VI's weight among each platform's biggest streams, across all categories",
       dom_tw_big: "of viewers across Twitch's 1,000 biggest streams", dom_kk_big: "of viewers across Kick's 100 biggest streams",
       dom_top100: (n, of) => `${n} of the top ${of} streams`, dom_top10: (n) => `${n} of the top 10`,
@@ -71,7 +83,12 @@
   .ad:hover { filter: brightness(1.06); }
   .ad .ad-ico { width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center; background: #ff5400; color: #fff; font-weight: 800; font-size: 15px; font-stretch: 75%; }
   .ad .ad-t { font-weight: 650; font-size: 17px; } .ad .ad-s { color: var(--text-secondary); font-size: 14.5px; }
-  .ad .ad-tag { font-size: 12.5px; color: var(--text-muted); display: block; margin-bottom: 2px; }
+  .ad .ad-tag { font-size: 11px; color: var(--text-muted); display: block; text-align: center; margin-top: 5px; }
+  .ad .ad-end { display: flex; flex-direction: column; align-items: center; }
+  .grid2.even { grid-template-columns: 1fr 1fr; }
+  .chart.games { height: 340px; }
+  .stats3 .big-stat { font-size: 44px; margin-top: 10px; }
+  .sub-h { font-family: var(--font-display); font-size: 20px; margin: 28px 0 0; letter-spacing: -.01em; }
   .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
   .big-stat { font-family: var(--font-display); font-weight: 700; font-size: 48px; letter-spacing: -.03em; line-height: 1; margin-top: 8px; }
   .stat-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
@@ -100,8 +117,8 @@
   .trends { width: 100%; height: 380px; border: 0; border-radius: 10px; background: #fff; }
   .embed-code { width: 100%; min-height: 96px; background: var(--surface-2); color: var(--text-primary); border: 1px solid var(--border); border-radius: 6px; padding: 12px; font: 13px/1.5 ui-monospace, Menlo, monospace; resize: vertical; }
   .embed-box { background: var(--surface-1); border: 1px solid var(--border); border-radius: 18px; padding: 22px; width: min(720px, 92vw); display: flex; flex-direction: column; gap: 12px; }
-  @media (max-width: 1000px) { .grid3 { grid-template-columns: 1fr; } .f24 { grid-template-columns: repeat(2, 1fr); } .clips { grid-template-columns: repeat(2, 1fr); } .ad { grid-template-columns: auto 1fr; } .ad .btn { grid-column: 1 / -1; } }
-  @media (max-width: 560px) { .clips { grid-template-columns: 1fr; } .heat { font-size: 10px; } }
+  @media (max-width: 1000px) { .grid3 { grid-template-columns: 1fr; } .grid2.even { grid-template-columns: 1fr; } .stats3 { grid-template-columns: repeat(3, 1fr); } .stats3 .big-stat { font-size: 30px; } .f24 { grid-template-columns: repeat(2, 1fr); } .clips { grid-template-columns: repeat(2, 1fr); } .ad { grid-template-columns: auto 1fr; } .ad .btn { grid-column: 1 / -1; } }
+  @media (max-width: 560px) { .stats3 { grid-template-columns: 1fr; } .clips { grid-template-columns: 1fr; } .heat { font-size: 10px; } }
   @media print { .ad, #trendsCard { display: none !important; } .grid3 { grid-template-columns: repeat(3, 1fr) !important; } .f24 { grid-template-columns: repeat(5, 1fr) !important; } .clips { grid-template-columns: repeat(4, 1fr) !important; } }
   `;
   document.head.appendChild(style);
@@ -111,36 +128,26 @@
   const hideTip = () => { tip.style.display = 'none'; };
 
   /* ------------------------------------------------------------ esqueleto */
-  document.getElementById('extras').innerHTML = `
-  <section id="secDom">
-    <h2 id="domTitle"></h2><p class="insight" id="domSub"></p>
-    <div class="grid3">
-      <div class="panel"><h3><i class="dot" style="background:${COLOR.twitch}"></i> Twitch</h3><div class="big-stat tnum" id="domTw">—</div><div class="desc" id="domTwL" style="margin:6px 0 0"></div><div class="stat-row" id="domTwChips"></div></div>
-      <div class="panel"><h3><i class="dot" style="background:${COLOR.kick}"></i> Kick</h3><div class="big-stat tnum" id="domKk">—</div><div class="desc" id="domKkL" style="margin:6px 0 0"></div><div class="stat-row" id="domKkChips"></div></div>
-      <div class="panel"><h3 id="concTitle"></h3><div class="desc" id="concSub"></div><div class="mini-plats" id="conc"></div></div>
+  const mount = (id, html) => { const el = document.getElementById(id); if (el) el.outerHTML = html; };
+  mount('mountGames', `
+  <section id="jogos">
+    <h2 id="gamesH2"></h2><p class="insight" id="gamesInsight"></p>
+    <div class="grid3 stats3">
+      <div class="panel"><div class="desc" id="gRankL" style="margin:0"></div><div class="big-stat tnum" id="gRank">—</div></div>
+      <div class="panel"><div class="desc" id="gVsL" style="margin:0"></div><div class="big-stat tnum" id="gVs">—</div><div class="desc" id="gVsS" style="margin:6px 0 0"></div></div>
+      <div class="panel"><div class="desc" style="margin:0">Twitch</div><div class="big-stat tnum" id="domTw">—</div><div class="desc" id="domTwL" style="margin:6px 0 0"></div></div>
     </div>
-    <div class="grid2" style="margin-top:16px">
-      <div class="panel"><h3 id="domChartT"></h3><div class="desc" id="domChartS"></div><div class="chart sm"><canvas id="domChart"></canvas></div></div>
-      <div class="panel"><h3 id="concChartT"></h3><div class="desc" id="concChartS"></div><div class="legend" data-legend2></div><div class="chart sm"><canvas id="concChart"></canvas></div></div>
+    <div class="grid2 even" style="margin-top:12px">
+      <div class="panel"><h3 id="gTwT"></h3><div class="desc" id="gTwS"></div><div class="chart games"><canvas id="gamesTw"></canvas></div></div>
+      <div class="panel"><h3 id="gKkT"></h3><div class="desc" id="gKkS"></div><div class="chart games"><canvas id="gamesKk"></canvas></div></div>
     </div>
-  </section>
+    <div class="panel" style="margin-top:12px"><h3 id="domChartT"></h3><div class="desc" id="domChartS"></div><div class="chart sm"><canvas id="domChart"></canvas></div></div>
+  </section>`);
 
-  <section>
-    <h2 id="heatT"></h2><p class="insight" id="heatInsight"></p>
-    <div class="grid2">
-      <div class="panel"><h3 id="heatS2"></h3><div class="desc" id="heatS"></div><div class="heat" id="heat"></div><div class="heat-legend" id="heatLegend"></div></div>
-      <div class="panel"><h3 id="shareTT"></h3><div class="desc" id="shareTS"></div><div class="legend" data-legend2></div><div class="chart sm"><canvas id="shareTChart"></canvas></div></div>
-    </div>
-  </section>
-
-  <section>
-    <h2 id="clipsT"></h2><p class="insight" id="clipsS"></p>
-    <div class="clips" id="clips"></div>
-  </section>
-
-  <section>
+  mount('mountStreamers', `
+  <section id="streamers">
     <h2 id="hallH2"></h2><p class="insight" id="hallInsight"></p>
-    <div class="grid2">
+    <div class="grid2 even">
       <div class="panel">
         <div class="card-head"><div><h3 id="hallT"></h3><div class="desc" id="hallS"></div></div>
           <div class="seg" id="hallSeg"><button data-h="all"></button><button data-h="first24"></button></div></div>
@@ -148,21 +155,30 @@
       </div>
       <div class="panel"><h3 id="maraT"></h3><div class="desc" id="maraS"></div><div class="board" id="mara"></div></div>
     </div>
-  </section>
+    <h3 class="sub-h" id="clipsT"></h3><p class="insight" id="clipsS"></p>
+    <div class="clips" id="clips"></div>
+  </section>`);
 
-  <section id="secF24">
+  mount('mountF24', `
+  <section id="secF24" hidden>
     <div class="card-head" style="align-items:flex-end"><h2 id="f24T"></h2><button class="btn" id="f24Btn"></button></div>
     <p class="insight" id="f24S"></p>
     <div id="f24"></div>
-  </section>
+  </section>`);
 
-  <section>
-    <h2 id="mapH2"></h2><p class="insight" id="mapInsight"></p>
+  mount('mountMore', `
+  <section id="mais">
+    <h2 id="moreH2"></h2><p class="insight" id="heatInsight"></p>
+    <div class="grid2">
+      <div class="panel"><h3 id="heatS2"></h3><div class="desc" id="heatS"></div><div class="heat" id="heat"></div><div class="heat-legend" id="heatLegend"></div></div>
+      <div class="panel"><h3 id="langT"></h3><div class="desc" id="langS"></div><div class="chart sm"><canvas id="langChart"></canvas></div></div>
+    </div>
+    <p class="insight" id="mapInsight" style="margin-top:18px"></p>
     <div class="grid2">
       <div class="panel"><h3 id="mapT"></h3><div class="desc" id="mapS"></div><div class="map-wrap" id="map"></div><div class="heat-legend" id="mapLegend"></div></div>
       <div class="panel" id="trendsCard"><div class="card-head"><div><h3 id="trT"></h3><div class="desc" id="trS"></div></div><a class="btn ghost" id="trOpen" target="_blank" rel="noopener"></a></div><div id="trends"></div></div>
     </div>
-  </section>`;
+  </section>`);
 
   document.getElementById('hallSeg').onclick = (e) => { const b = e.target.closest('button'); if (b) { S.hallMode = b.dataset.h; renderHall(); } };
   S.hallMode = S.hallMode || 'all';
@@ -176,98 +192,99 @@
     if (!ok) { box.innerHTML = ''; return; }
     box.innerHTML = `<a class="ad" href="${esc(spUrl)}" target="_blank" rel="sponsored noopener noreferrer">
       <span class="ad-ico">IG</span>
-      <span><span class="ad-tag">${X('ad')}, ${X('ad_note')}</span><span class="ad-t">${X('ad_title')}</span><br><span class="ad-s">${X('ad_text')}</span></span>
-      <span class="btn">${X('ad_cta')}</span></a>`;
+      <span><span class="ad-t">${X('ad_title')}</span><br><span class="ad-s">${X('ad_text')}</span></span>
+      <span class="ad-end"><span class="btn">${X('ad_cta')}</span><span class="ad-tag">${X('ad_note')}</span></span></a>`;
   }
 
-  /* ------------------------------------------------- domínio + concentração */
+  /* --------------------------------------------- GTA VI vs outros jogos */
   const lastWith = (p, f) => [...points()].reverse().find((x) => x[p]?.[f] != null)?.[p];
-  function renderDominance() {
-    document.getElementById('domTitle').textContent = X('dom_title');
-    const dtw = lastWith('twitch', 'dg');
-    const oneIn = dtw && dtw.dg ? Math.max(1, Math.round(dtw.dt / dtw.dg)) : null;
-    document.getElementById('domSub').innerHTML = oneIn
-      ? (S.lang === 'pt' ? `Entre as 1000 streams mais vistas da Twitch, de todos os jogos e categorias, <b>1 em cada ${oneIn}</b> espectadores está a ver GTA VI. ${dtw.d10 ? `${dtw.d10} das 10 maiores streams da plataforma são de GTA VI.` : ''}`
-                         : `Across Twitch's 1,000 most-watched streams, in every game and category, <b>1 in ${oneIn}</b> viewers is watching GTA VI. ${dtw.d10 ? `${dtw.d10} of the platform's 10 biggest streams are GTA VI.` : ''}`)
-      : X('dom_sub');
-    document.getElementById('domChartS').textContent = S.lang === 'pt' ? 'Percentagem, hora a hora' : 'Percentage, hour by hour';
-    for (const [p, id, lbl] of [['twitch', 'Tw', 'dom_tw_big'], ['kick', 'Kk', 'dom_kk_big']]) {
-      const d = lastWith(p, 'dg');
-      document.getElementById('dom' + id).textContent = d && d.dt ? pct(d.dg, d.dt) : '—';
-      document.getElementById('dom' + id + 'L').textContent = d ? X(lbl) : X('dom_wait');
-      document.getElementById('dom' + id + 'Chips').innerHTML = d ? `<span class="chip">${EX[S.lang].dom_top100(fmt(d.d100), d.dn >= 1000 ? 100 : fmt(Math.min(100, d.dn)))}</span><span class="chip">${EX[S.lang].dom_top10(fmt(d.d10))}</span>` : '';
+  const OTHER = '#4b4659';
+  function gamesChart(id, list) {
+    const rows = (list || []).slice(0, 10);
+    const name = (g) => (g.gta ? 'GTA VI' : g.name.length > 26 ? g.name.slice(0, 25) + '…' : g.name);
+    return mkOrUpdate(id, {
+      type: 'bar',
+      plugins: [{ id: 'vals', afterDatasetsDraw(ch) {
+        const g = ch.ctx, meta = ch.getDatasetMeta(0);
+        g.save(); g.font = `600 12px ${css('--sans')}`; g.textBaseline = 'middle';
+        meta.data.forEach((bar, i) => { g.fillStyle = rows[i]?.gta ? css('--text-primary') : css('--text-secondary'); g.fillText(fmtC(rows[i].viewers), bar.x + 6, bar.y); });
+        g.restore();
+      } }],
+      data: { labels: rows.map(name), datasets: [{ data: rows.map((g) => g.viewers), backgroundColor: rows.map((g) => (g.gta ? css('--sun-1') : OTHER)), borderRadius: 4, borderSkipped: 'start', barPercentage: .78, categoryPercentage: .9 }] },
+      options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, animation: false, layout: { padding: { right: 48 } },
+        plugins: { tooltip: { callbacks: { label: (c) => ` ${fmt(rows[c.dataIndex].viewers)} ${X('viewers')} · ${fmt(rows[c.dataIndex].streams)} streams` } } },
+        scales: { x: { beginAtZero: true, border: { display: false }, grid: { color: css('--grid') }, ticks: { callback: (v) => fmtC(v), maxTicksLimit: 5 } },
+                  y: { grid: { display: false }, ticks: { color: (c) => (rows[c.index]?.gta ? css('--text-primary') : css('--text-secondary')), font: (c) => ({ weight: rows[c.index]?.gta ? '700' : '400' }) } } } },
+    });
+  }
+  function renderGames() {
+    document.getElementById('gamesH2').textContent = X('games_h2');
+    const tw = (S.latest.games?.twitch || []).slice().sort((a, b) => b.viewers - a.viewers);
+    const kk = (S.latest.games?.kick || []).slice().sort((a, b) => b.viewers - a.viewers);
+    // usa o valor ao vivo do GTA VI, se houver
+    const liveTw = S.liveOk && S.live?.twitch?.viewers;
+    if (liveTw) for (const g of tw) if (g.gta) g.viewers = liveTw;
+    tw.sort((a, b) => b.viewers - a.viewers);
+    const i = tw.findIndex((g) => g.gta), gta = tw[i];
+    document.getElementById('gTwT').textContent = X('games_tw'); document.getElementById('gTwS').textContent = X('games_tw_sub');
+    document.getElementById('gKkT').textContent = X('games_kk'); document.getElementById('gKkS').textContent = X('games_kk_sub');
+    document.getElementById('gRankL').textContent = X('games_rank');
+    document.getElementById('gVsL').textContent = X('games_vs_lbl');
+    const nf1 = nf({ maximumFractionDigits: 1 });
+    if (gta && tw.length > 1) {
+      const rank = i + 1;
+      document.getElementById('gRank').textContent = S.lang === 'pt' ? `${rank}º` : `#${rank}`;
+      if (rank === 1) {
+        const second = tw[1], x = second.viewers ? gta.viewers / second.viewers : null;
+        document.getElementById('gVs').textContent = x ? EX[S.lang].times(nf1.format(x)) : '—';
+        document.getElementById('gVsS').textContent = x ? `${X('more')} ${second.name}` : '';
+        document.getElementById('gamesInsight').innerHTML = x ? EX[S.lang].games_insight(1, EX[S.lang].times(nf1.format(x)), esc(second.name)) : '';
+      } else {
+        const lead = tw[0], share = lead.viewers ? gta.viewers / lead.viewers : 0;
+        document.getElementById('gVs').textContent = pct(share, 1);
+        document.getElementById('gVsL').textContent = X('games_vs_lbl2');
+        document.getElementById('gVsS').textContent = EX[S.lang].games_behind('', lead.name).trim();
+        document.getElementById('gamesInsight').innerHTML = EX[S.lang].games_insight(rank, pct(share, 1), esc(lead.name));
+      }
+    } else {
+      document.getElementById('gRank').textContent = '—'; document.getElementById('gVs').textContent = '—'; document.getElementById('gVsS').textContent = '';
+      document.getElementById('gamesInsight').textContent = X('games_wait');
     }
-    // concentração (vista atual)
-    const k = KEYS[S.scope];
-    document.getElementById('concTitle').textContent = X('conc_title');
-    document.getElementById('concSub').textContent = X('conc_avg');
-    const avgs = PLATFORMS.map((p) => { const v = nowFor(p, 'V'), s = nowFor(p, 'S'); return [p, v && s ? v / s : null]; });
-    const max = Math.max(1, ...avgs.map(([, a]) => a || 0));
-    const lp = lastPoint();
-    document.getElementById('conc').innerHTML = avgs.map(([p, a]) => {
-      const t10 = S.scope === 'global' && lp[p]?.t10 && lp[p]?.v ? ` · ${pct(lp[p].t10, lp[p].v)} ${X('conc_top10')}` : '';
-      return `<div class="mp"><span><i class="dot" style="background:${COLOR[p]}"></i> ${NAMES[p]}</span><span class="bar"><i style="width:${(a || 0) / max * 100}%;background:${COLOR[p]}"></i></span><b class="tnum">${a ? fmt(a) : '—'}</b></div>${t10 ? `<div class="desc" style="margin:-8px 0 0 100px">${t10.slice(3)}</div>` : ''}`;
-    }).join('');
+    gamesChart('gamesTw', tw);
+    gamesChart('gamesKk', kk);
 
-    // gráfico: quota GTA na Twitch ao longo do tempo
+    const d = lastWith('twitch', 'dg');
+    document.getElementById('domTw').textContent = d && d.dt ? pct(d.dg, d.dt) : '—';
+    document.getElementById('domTwL').textContent = d ? X('games_share') : X('dom_wait');
+
     document.getElementById('domChartT').textContent = X('dom_chart');
+    document.getElementById('domChartS').textContent = S.lang === 'pt' ? 'Percentagem ao longo do tempo' : 'Percentage over time';
     const dp = inRange().filter((p) => p.twitch?.dg != null && p.twitch?.dt);
     mkOrUpdate('domChart', {
       type: 'line', plugins: [launchLine],
-      data: { datasets: [{ label: 'Twitch', data: dp.map((p) => ({ x: Date.parse(p.ts), y: p.twitch.dg / p.twitch.dt * 100 })), borderColor: COLOR.twitch, backgroundColor: COLOR.twitch + '33', fill: true }] },
-      options: { responsive: true, maintainAspectRatio: false, parsing: false, spanGaps: 3 * 3600e3, animation: { duration: 400 },
+      data: { datasets: [{ label: 'Twitch', data: dp.map((p) => ({ x: Date.parse(p.ts), y: p.twitch.dg / p.twitch.dt * 100 })), borderColor: css('--sun-1'), backgroundColor: css('--sun-1') + '22', fill: true }] },
+      options: { responsive: true, maintainAspectRatio: false, parsing: false, spanGaps: 3 * 3600e3, animation: false,
         interaction: { mode: 'nearest', axis: 'x', intersect: false }, elements: { point: { radius: 0, hoverRadius: 5, hitRadius: 10 }, line: { borderWidth: 2, tension: .3 } },
         plugins: { tooltip: { callbacks: { title: (it) => dt(it[0].parsed.x, { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }), label: (c) => ` ${nf({ maximumFractionDigits: 1 }).format(c.parsed.y)}%` } } },
         scales: { x: { type: 'linear', min: dp.length ? Date.parse(dp[0].ts) : undefined, max: dp.length ? Date.parse(dp[dp.length - 1].ts) : undefined, grid: { display: false }, ticks: { maxTicksLimit: 6, maxRotation: 0, callback: timeTick } },
                   y: { beginAtZero: true, border: { display: false }, ticks: { callback: (v) => v + '%' } } } },
     });
-
-    // gráfico: média por stream ao longo do tempo
-    document.getElementById('concChartT').textContent = X('conc_title');
-    document.getElementById('concChartS').textContent = X('conc_sub');
-    mkOrUpdate('concChart', {
-      type: 'line', plugins: [launchLine],
-      data: { datasets: PLATFORMS.map((p) => ({ label: NAMES[p], data: inRange().map((pt) => ({ x: Date.parse(pt.ts), y: pt[p]?.[k.s] ? pt[p][k.v] / pt[p][k.s] : null })), borderColor: COLOR[p], backgroundColor: COLOR[p] })) },
-      options: { responsive: true, maintainAspectRatio: false, parsing: false, spanGaps: 3 * 3600e3, animation: { duration: 400 },
-        interaction: { mode: 'nearest', axis: 'x', intersect: false }, elements: { point: { radius: 0, hoverRadius: 5, hitRadius: 10 }, line: { borderWidth: 2, tension: .3 } },
-        plugins: { tooltip: { callbacks: { title: (it) => dt(it[0].parsed.x, { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }), label: (c) => ` ${c.dataset.label}: ${fmt(c.parsed.y)}` } } },
-        scales: { x: { type: 'linear', min: inRange().length ? Date.parse(inRange()[0].ts) : undefined, max: points().length ? Date.parse(lastPoint().ts) : undefined, grid: { display: false }, ticks: { maxTicksLimit: 6, maxRotation: 0, callback: timeTick } },
-                  y: { beginAtZero: true, border: { display: false }, ticks: { callback: (v) => fmtC(v) } } } },
-    });
-  }
-
-  /* ------------------------------------------------ quota ao longo do tempo */
-  function renderShareTime() {
-    const k = KEYS[S.scope];
-    document.getElementById('shareTT').textContent = X('share_t_title');
-    document.getElementById('shareTS').textContent = X('share_t_sub');
-    const pts = inRange().filter((pt) => PLATFORMS.some((p) => pt[p]?.[k.v]));
-    const tot = pts.map((pt) => PLATFORMS.reduce((a, p) => a + (pt[p]?.[k.v] || 0), 0));
-    mkOrUpdate('shareTChart', {
-      type: 'line', plugins: [launchLine],
-      data: { datasets: PLATFORMS.map((p, i) => ({ label: NAMES[p], data: pts.map((pt, j) => ({ x: Date.parse(pt.ts), y: tot[j] ? (pt[p]?.[k.v] || 0) / tot[j] * 100 : null })),
-        borderColor: css('--surface-1'), borderWidth: 1, backgroundColor: COLOR[p], fill: i === 0 ? 'origin' : '-1', pointRadius: 0, tension: .25 })) },
-      options: { responsive: true, maintainAspectRatio: false, parsing: false, animation: { duration: 400 },
-        interaction: { mode: 'nearest', axis: 'x', intersect: false }, elements: { point: { radius: 0, hoverRadius: 4, hitRadius: 10 } },
-        plugins: { tooltip: { callbacks: { title: (it) => dt(it[0].parsed.x, { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }), label: (c) => ` ${c.dataset.label}: ${nf({ maximumFractionDigits: 1 }).format(c.parsed.y)}%` } } },
-        scales: { x: { type: 'linear', min: pts.length ? Date.parse(pts[0].ts) : undefined, max: pts.length ? Date.parse(pts[pts.length - 1].ts) : undefined, grid: { display: false }, ticks: { maxTicksLimit: 6, maxRotation: 0, callback: timeTick } },
-                  y: { stacked: true, min: 0, max: 100, border: { display: false }, ticks: { callback: (v) => v + '%', stepSize: 25 } } } },
-    });
-    document.querySelectorAll('[data-legend2]').forEach((el) => el.innerHTML = PLATFORMS.map((p) => `<span><i class="dot" style="background:${COLOR[p]}"></i>${NAMES[p]}</span>`).join(''));
   }
 
   /* ----------------------------------------------------------- mapa de calor */
   function renderHeat() {
     const k = KEYS[S.scope];
-    document.getElementById('heatT').textContent = X('heat_title');
+    document.getElementById('moreH2').textContent = X('heat_title');
+    document.getElementById('langT').textContent = T().lang_title; document.getElementById('langS').textContent = T().lang_desc;
     document.getElementById('heatS2').textContent = S.lang === 'pt' ? 'Hora a hora' : 'Hour by hour';
     document.getElementById('heatS').textContent = X('heat_sub');
-    const grid = new Map(); // dia -> [24]
+    const grid = new Map(), acc = new Map(); // dia -> [24] (média dos pontos de cada hora)
     for (const pt of inRange()) {
       const v = PLATFORMS.reduce((a, p) => a + (pt[p]?.[k.v] || 0), 0);
-      const d = lisbonDay(pt.ts), h = lisbonHour(pt.ts);
+      const d = lisbonDay(pt.ts), h = lisbonHour(pt.ts), key = d + ':' + h;
       if (!grid.has(d)) grid.set(d, Array(24).fill(null));
-      grid.get(d)[h] = v;
+      const a = acc.get(key) || [0, 0]; a[0] += v; a[1]++; acc.set(key, a);
+      grid.get(d)[h] = Math.round(a[0] / a[1]);
     }
     const days = [...grid.keys()].sort().slice(-14);
     const vals = days.flatMap((d) => grid.get(d)).filter((v) => v != null);
@@ -348,6 +365,7 @@
   function renderF24() {
     document.getElementById('f24T').textContent = X('f24_title');
     const f = first24Stats();
+    document.getElementById('secF24').hidden = !f;   // só aparece depois do lançamento
     const btn = document.getElementById('f24Btn');
     btn.textContent = X('f24_img'); btn.hidden = !f || !(PUBLIC_DOWNLOADS || params.get('owner'));
     document.getElementById('f24S').textContent = f && !f.complete ? `${X('f24_sub')}, ${X('f24_partial')}.` : X('f24_sub') + '.';
@@ -401,7 +419,6 @@
     renderMap();
   }
   function renderMap() {
-    document.getElementById('mapH2').textContent = S.lang === 'pt' ? 'Onde se fala, e onde se procura' : 'Where it is spoken, and where it is searched';
     const ls = Object.entries(S.latest.languages || {}).sort((a, b) => b[1] - a[1]); const totL = ls.reduce((a, [, v]) => a + v, 0);
     const ptL = (S.latest.languages || {}).pt || 0, ptRank = ls.findIndex(([l]) => l === 'pt') + 1;
     document.getElementById('mapInsight').innerHTML = totL && ptRank ? (S.lang === 'pt'
@@ -483,7 +500,7 @@
   /* ------------------------------------------------------------------ main */
   window.renderExtras = function () {
     const run = (f) => { try { f(); } catch (e) { console.error(f.name, e); } };
-    [renderSponsor, renderDominance, renderShareTime, renderHeat, renderClips, renderHall, renderF24, renderMap, renderTrends].forEach(run);
+    [renderSponsor, renderGames, renderHeat, renderClips, renderHall, renderF24, renderMap, renderTrends].forEach(run);
   };
   if (points().length || S.liveOk) window.renderExtras();
 })();

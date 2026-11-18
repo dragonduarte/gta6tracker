@@ -129,24 +129,42 @@ h2 { font-family: var(--font-display); font-size: 26px; margin: 0; letter-spacin
 .plat .when.live { color: #ffd2db; border-color: rgba(255,59,92,.4); background: rgba(255,59,92,.12); }
 .plat .value { font-family: var(--font-display); font-size: 30px; font-weight: 700; letter-spacing: -.03em; margin-top: 10px; }
 .plat .meta { color: var(--text-muted); font-size: 12.5px; }
-.plat .spark { height: 44px; margin-top: 10px; }
+.plat .spark { height: 44px; margin-top: 10px; overflow: hidden; }
 .chip { font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 999px; background: var(--surface-2); color: var(--text-secondary); border: 1px solid var(--border); white-space: nowrap; }
 .dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; flex: none; }
 
-.share-card { margin-top: 12px; }
-.share { display: flex; height: 12px; border-radius: 99px; overflow: hidden; gap: 2px; margin-top: 12px; background: var(--surface-2); }
-.share i { display: block; height: 100%; }
-.share-legend { display: flex; gap: 16px; color: var(--text-secondary); font-size: 12.5px; margin-top: 8px; flex-wrap: wrap; }
-.share-legend span { display: flex; align-items: center; gap: 6px; }
 
 .grid2 { display: grid; grid-template-columns: 1.6fr 1fr; gap: 12px; }
 .panel.flex { display: flex; flex-direction: column; }
 .panel.flex .chart { flex: 1; min-height: 340px; height: auto; }
-.chart { position: relative; height: 320px; }
+.chart { position: relative; height: 320px; overflow: hidden; }
+.chart canvas { max-width: 100%; }
+html, body { overflow-x: clip; }
 .chart.sm { height: 260px; }
 .legend { display: flex; gap: 14px; font-size: 12.5px; color: var(--text-secondary); margin-bottom: 8px; flex-wrap: wrap; }
 .legend span { display: flex; align-items: center; gap: 6px; }
 .legend .fc { width: 18px; height: 0; border-top: 2px dashed var(--text-secondary); display: inline-block; }
+
+
+/* ---------- navegação por secções ---------- */
+.skip { position: absolute; left: -999px; top: 8px; z-index: 30; background: var(--surface-1); padding: 8px 12px; border-radius: 8px; }
+.skip:focus { left: 8px; }
+.secnav { border-top: 1px solid rgba(255,255,255,.05); }
+.secnav .wrap { display: flex; justify-content: flex-start; gap: 4px; overflow-x: auto; scrollbar-width: none; min-height: 0; flex-wrap: nowrap; padding-top: 0; padding-bottom: 0; }
+.secnav .wrap::-webkit-scrollbar { display: none; }
+.secnav a { text-decoration: none; color: var(--text-muted); font-size: 13.5px; font-weight: 500; padding: 10px 12px 9px; border-bottom: 2px solid transparent; white-space: nowrap; }
+.secnav a:hover { color: var(--text-primary); }
+.secnav a.on { color: var(--text-primary); border-bottom-color: var(--sun-1); }
+section[id] { scroll-margin-top: 112px; }
+
+.scope-note { color: var(--text-muted); font-size: 13px; margin: 14px 0 0; max-width: 520px; }
+.hero-meta { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; color: var(--text-muted); font-size: 12.5px; margin-top: 12px; }
+.visitors { display: inline-flex; align-items: center; gap: 8px; color: var(--text-secondary); background: rgba(23,21,31,.6); border: 1px solid var(--border); padding: 4px 10px; border-radius: 999px; }
+.visitors i { width: 7px; height: 7px; border-radius: 50%; background: #5fdc7b; }
+.visitors b { color: var(--text-primary); font-variant-numeric: tabular-nums; }
+.plat .pct { font-size: 12.5px; font-weight: 600; color: var(--text-secondary); margin-left: 8px; font-family: var(--sans); letter-spacing: 0; }
+.kpis { margin-top: 12px; grid-template-columns: repeat(4, 1fr); }
+.fc-row { margin-top: 12px; grid-template-columns: 1fr 1fr; }
 
 /* listas */
 .board { display: flex; flex-direction: column; }
@@ -219,19 +237,19 @@ footer a { color: var(--text-secondary); }
 .sc-foot b { color: var(--text-primary); }
 .sc-mono { width: 52px; height: 52px; border-radius: 14px; display: grid; place-items: center; font-family: var(--font-display); font-weight: 700; color: #1a0b12; background: linear-gradient(135deg, var(--sun-1), var(--sun-2) 55%, var(--sun-3)); font-size: 22px; flex: none; }
 
-main.nodata > section:not(:first-child), main.nodata #platforms, main.nodata .share-card, main.nodata #extras, main.nodata #sponsorTop { display: none; }
+main.nodata > section:not(:first-child), main.nodata > div, main.nodata #platforms { display: none; }
 .print-credit { display: none; }
 @media print {
   @page { size: A4 landscape; margin: 8mm 8mm 14mm; }
   html { zoom: .72; }
   html, body { background: var(--bg) !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  .topbar, .modal, #rangeSeg, #metricSeg, .btn, .author .controls, .seg { display: none !important; }
+  .topbar, .modal, .skip, #rangeSeg, #metricSeg, .btn, .author .controls, .seg { display: none !important; }
   .print-credit { display: flex !important; position: fixed; left: 0; right: 0; bottom: 0; justify-content: space-between; font-size: 12px; color: var(--text-secondary); padding: 8px 14px; background: var(--surface-1); border-top: 1px solid var(--border); max-width: none; }
   .hero { padding: 10px 0 18px; } section { padding: 8px 0; }
   .panel, .kpi, .plat { break-inside: avoid; }
   .hero .wrap { grid-template-columns: 1.15fr 1fr !important; }
   .grid2 { grid-template-columns: 1.6fr 1fr !important; }
-  .kpis { grid-template-columns: repeat(5, 1fr) !important; }
+  .kpis { grid-template-columns: repeat(4, 1fr) !important; }
   .platforms { grid-template-columns: repeat(3, 1fr) !important; }
   .videos { grid-template-columns: repeat(4, 1fr) !important; }
   .chart { height: 260px !important; } .panel.flex .chart { min-height: 260px; }
@@ -251,6 +269,9 @@ main.nodata > section:not(:first-child), main.nodata #platforms, main.nodata .sh
   .brand { display: none; }
   .controls { width: 100%; } #scopeSeg { flex: 1 1 100%; } #scopeSeg button { flex: 1; padding: 6px 2px; font-size: 12px; }
   .countdown .ttl { flex-direction: column; gap: 2px; }
+  .topbar .secnav .wrap { padding-top: 0; padding-bottom: 0; }
+  .who .n { overflow: hidden; } .who .n .tag:not(.pt) { display: none; }
+  .row { grid-template-columns: 22px 32px minmax(0, 1fr) auto; gap: 10px; }
   .kpi .value { font-size: 28px; }
   .videos { grid-template-columns: 1fr; }
 }
@@ -259,6 +280,7 @@ main.nodata > section:not(:first-child), main.nodata #platforms, main.nodata .sh
 </head>
 <body>
 
+<a class="skip" href="#agora" data-i="skip"></a>
 <div class="topbar">
   <div class="wrap">
     <a class="brand" href="./"><span class="logo">🌴</span><span>GTA VI · Live Tracker</span><span class="byline" id="byline"></span></a>
@@ -274,19 +296,23 @@ main.nodata > section:not(:first-child), main.nodata #platforms, main.nodata .sh
       <button class="btn" id="openCard" data-i="share_btn"></button>
     </div>
   </div>
+  <nav class="secnav" aria-label="Secções"><div class="wrap" id="secnav">
+    <a href="#agora" data-i="nav_now"></a><a href="#evolucao" data-i="nav_time"></a><a href="#jogos" data-i="nav_games"></a><a href="#streamers" data-i="nav_streamers"></a><a href="#youtube">YouTube</a><a href="#mais" data-i="nav_more"></a>
+  </div></nav>
 </div>
 
 <header class="hero">
   <div class="wrap">
     <div>
       <div class="eyebrows"><span class="eyebrow"><i class="pulse off" id="livePulse"></i><span id="liveLabel"></span></span><span class="eyebrow record" id="recordChip"></span></div>
-      <h1><span class="grad">GTA VI</span></h1>
+      <h1><span class="grad">GTA&nbsp;VI</span></h1>
       <p class="lead" data-i="lead"></p>
       <div class="hero-now">
         <div><div class="big tnum" id="heroViewers">—</div><div class="lbl" id="heroViewersLbl"></div></div>
         <div><div class="big tnum" id="heroStreams">—</div><div class="lbl" data-i="hero_streams"></div></div>
       </div>
-      <div class="hero-upd" id="heroSub"></div>
+      <p class="scope-note" id="scopeNote"></p>
+      <div class="hero-meta"><span id="heroSub"></span><span class="visitors" id="visitors" hidden></span></div>
     </div>
     <div class="countdown" aria-live="polite">
       <div class="ttl"><span id="cdTitle"></span><span data-i="cd_date"></span></div>
@@ -304,20 +330,16 @@ main.nodata > section:not(:first-child), main.nodata #platforms, main.nodata .sh
 
 <div class="print-credit wrap" id="printCredit"></div>
 <main class="wrap">
-  <section>
-    <div class="card-head" style="align-items:flex-end"><div><h2 id="nowTitle"></h2><p class="insight" id="nowSub" style="margin-bottom:14px"></p></div><div class="notices" id="statusChips"></div></div>
-    <div class="kpis" id="kpis"></div>
+  <section id="agora">
+    <div class="card-head" style="align-items:flex-end"><div><h2 id="nowTitle"></h2><p class="insight" id="nowSub"></p></div><div class="notices" id="statusChips"></div></div>
     <div class="platforms" id="platforms"></div>
-    <div class="panel share-card">
-      <div class="card-head"><h3 data-i="share_title"></h3><span class="chip" id="shareTotal"></span></div>
-      <div class="share" id="shareBar"></div>
-      <div class="share-legend" id="shareLegend"></div>
-    </div>
+    <div class="kpis" id="kpis"></div>
   </section>
 
   <div id="sponsorTop"></div>
+  <div id="mountF24"></div>
 
-  <section>
+  <section id="evolucao">
     <div class="card-head" style="align-items:flex-end">
       <div><h2 id="tsH2"></h2></div>
       <div class="controls">
@@ -336,39 +358,31 @@ main.nodata > section:not(:first-child), main.nodata #platforms, main.nodata .sh
         <div class="board" id="board"></div>
       </div>
     </div>
-  </section>
-
-  <section id="secForecast">
-    <h2 data-i="fc_title"></h2>
-    <p class="insight" id="fcInsight"></p>
-    <div class="grid2">
-      <div class="panel"><h3 data-i="fc_chart"></h3><div class="desc" data-i="fc_chart_desc"></div><div class="legend"><span><i class="dot" style="background:var(--sun-1)"></i><span data-i="fc_real"></span></span><span><i class="fc" style="border-color:var(--sun-3)"></i><span data-i="fc_pred"></span></span></div><div class="chart sm"><canvas id="fcChart"></canvas></div></div>
+    <div class="grid2 fc-row" id="secForecast">
+      <div class="panel"><h3 data-i="fc_title"></h3><p class="insight" id="fcInsight" style="margin-bottom:0"></p></div>
       <div class="panel"><h3 data-i="fc_track"></h3><div class="desc" data-i="fc_track_desc"></div><div id="fcTable"></div></div>
     </div>
   </section>
 
-  <div id="extras"></div>
+  <div id="mountGames"></div>
+  <div id="mountStreamers"></div>
 
-  <section>
+  <section id="youtube">
     <h2>YouTube</h2>
     <p class="insight" id="ytSub"></p>
-    <div class="grid2">
-      <div class="panel">
-        <h3 data-i="yt_new_title"></h3><div class="desc" data-i="yt_new_desc"></div>
-        <div class="chart sm"><canvas id="ytChart"></canvas></div>
-      </div>
-      <div class="panel">
-        <h3 data-i="lang_title"></h3><div class="desc" data-i="lang_desc"></div>
-        <div class="chart sm"><canvas id="langChart"></canvas></div>
-      </div>
-    </div>
-    <div class="panel" style="margin-top:16px">
-      <h3 id="vidTitle"></h3><div class="desc" data-i="vid_desc"></div>
+    <div class="panel">
+      <h3 id="vidTitle"></h3><div class="desc" id="vidDesc"></div>
       <div class="videos" id="videos"></div>
+    </div>
+    <div class="panel" style="margin-top:12px">
+      <h3 data-i="yt_new_title"></h3><div class="desc" data-i="yt_new_desc"></div>
+      <div class="chart sm"><canvas id="ytChart"></canvas></div>
     </div>
   </section>
 
-  <section>
+  <div id="mountMore"></div>
+
+  <section id="sobre">
     <div class="panel"><h3 data-i="method_title" style="margin-bottom:8px"></h3><div class="method" id="method"></div></div>
     <div class="panel author">
       <div class="who2"><div class="mono">DR</div><div><div class="nm" id="authorName"></div><div class="rl" data-i="author_role"></div></div></div>

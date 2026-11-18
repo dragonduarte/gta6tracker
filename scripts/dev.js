@@ -16,6 +16,17 @@ const TYPES = { '.html': 'text/html; charset=utf-8', '.json': 'application/json'
 
 http.createServer(async (req, res) => {
   const url = new URL(req.url, 'http://x');
+  if (url.pathname === '/api/data') {
+    // local: lê os ficheiros de public/data (no Vercel vêm do branch "data")
+    const f = url.searchParams.get('f') || '';
+    if (!/^(history|latest|hall|predictions|streamers|events)$/.test(f)) { res.writeHead(404); return res.end(); }
+    return fs.readFile(path.join(ROOT, 'public', 'data', f + '.json'), (err, buf) => { res.writeHead(err ? 404 : 200, { 'Content-Type': 'application/json' }); res.end(err ? '{}' : buf); });
+  }
+  if (url.pathname === '/api/visitors') {
+    if (!process.env.MOCK) { res.writeHead(404); return res.end('{}'); }
+    if (req.method === 'POST') { res.writeHead(204); return res.end(); }
+    res.writeHead(200, { 'Content-Type': 'application/json' }); return res.end(JSON.stringify({ online: 37, today: 1243, total: 8921 }));
+  }
   if (url.pathname === '/api/live') {
     if (process.env.MOCK) {
       const { mockSnapshots } = await import('./mock.js');

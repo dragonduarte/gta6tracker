@@ -8,14 +8,14 @@ Feito por Duarte Rodrigues.
 ## Como funciona
 
 ```
-GitHub Actions (de hora a hora) ──► guarda o histórico no repositório ──► Vercel publica o site
+GitHub Actions (de 10 em 10 min) ──► guarda o histórico no branch "data" ──► o site lê-o por /api/data (sem gastar deploys)
                                                                           │
                      visitantes ◄── /api/live (Twitch + Kick, a cada 2 min) ┘
 ```
 
 - **O teu computador pode estar desligado.** Tudo corre nos servidores do GitHub e do Vercel.
 - **As chaves nunca chegam ao browser.** Ficam nos *Secrets* do GitHub e nas *Environment Variables* do Vercel. O site só recebe números já somados.
-- **As APIs não vão abaixo.** O YouTube só é consultado pelo GitHub, de hora a hora. A Twitch e a Kick passam por uma cache de 2 minutos, por isso recebem cerca de um pedido a cada 2 minutos, haja 10 ou 100 000 visitantes.
+- **As APIs não vão abaixo.** O YouTube só é consultado pelo GitHub, de hora a hora (a quota diária grátis não dá para mais). Twitch e Kick entram no histórico de 10 em 10 minutos. A Twitch e a Kick passam por uma cache de 2 minutos, por isso recebem cerca de um pedido a cada 2 minutos, haja 10 ou 100 000 visitantes.
 - **Custo: 0 €.**
 
 ---
@@ -69,13 +69,13 @@ A conta Twitch precisa de ter a autenticação de dois fatores ligada (*Settings
    | `KICK_CLIENT_SECRET` | o Client Secret da Kick |
 
 6. Vai ao separador **Actions**. Se aparecer um aviso, clica para ativar os workflows. Depois:
-   1. clica **Recolha horária GTA VI** à esquerda;
+   1. clica **Recolha GTA VI** à esquerda;
    2. clica **Run workflow** e outra vez **Run workflow**;
    3. espera cerca de 1 minuto até aparecer um ✓ verde.
 
    Se aparecer um ✗ vermelho, clica nele e abre o passo **Recolher dados**: diz qual plataforma falhou e porquê (ver "Problemas comuns" no fim).
 
-A partir daqui a recolha corre sozinha de hora a hora.
+A partir daqui a recolha corre sozinha de 10 em 10 minutos. Os dados ficam num branch chamado `data`, que aparece sozinho depois da primeira recolha. Não mexas nele.
 
 ## 3. Publicar no Vercel
 
@@ -90,6 +90,12 @@ A partir daqui a recolha corre sozinha de hora a hora.
 ### Confirmar que está tudo bem
 - Abre `https://<o-teu-link>/api/live`. Deves ver números da Twitch e da Kick, e `"errors": []`.
 - No site, o ponto ao lado de "Ao vivo" deve estar cor-de-rosa.
+
+### Contador "pessoas neste site agora" (opcional, grátis)
+1. No projeto do Vercel, abre **Storage → Create Database → Upstash (Redis) → Continue**, escolhe o plano **Free** e a região mais perto (Frankfurt).
+2. Liga-o ao projeto (**Connect Project**). O Vercel cria sozinho as variáveis `KV_REST_API_URL` e `KV_REST_API_TOKEN`.
+3. Faz **Deployments → ⋯ → Redeploy**. O contador aparece por baixo dos números principais.
+Não guarda IPs nem cookies, só contadores. Se o plano grátis esgotar num dia de muito tráfego, o contador esconde-se sozinho e o resto do site continua igual.
 
 ### Extras no Vercel (opcionais)
 - **Estatísticas de visitas:** abre o projeto no Vercel, vai a **Analytics → Enable**. O código já está no site.
@@ -122,7 +128,9 @@ Para afinar a vista **Portugal**, acrescenta os logins dos streamers portugueses
 | Secção | Fonte | Atualização |
 |---|---|---|
 | Frase principal e números de agora, por plataforma | Twitch, Kick e YouTube | 2 min (Twitch e Kick), 1 h (YouTube) |
-| Gráfico ao longo do tempo, com filtro de 24 h, 48 h, 7 dias, 1 mês ou tudo | histórico | 1 h |
+| Gráfico ao longo do tempo, com filtro de 24 h, 48 h, 7 dias, 1 mês ou tudo | histórico | 10 min |
+| GTA VI vs outros jogos (Twitch e Kick) | Twitch e Kick | 30 min |
+| Pessoas no site agora | Upstash (opcional) | 3 min |
 | Previsão para as próximas 24 h, e "Acertámos?" | histórico | 1 h |
 | Quanto pesa o GTA VI na Twitch (1000 maiores streams) e na Kick (100 maiores) | Twitch e Kick | 1 h |
 | Espectadores por stream | histórico | 1 h |
@@ -175,12 +183,14 @@ O que foi verificado e está protegido (e coberto por testes automáticos em `te
 | Link do anúncio | Só é aceite se for `https://` de `instant-gaming.com`; abre com `rel="sponsored noopener noreferrer"`. |
 | Dependências | Zero dependências npm em produção (nada para ficar desatualizado). |
 
-Recomendações para ti: mantém o repositório **privado**, ativa a autenticação de dois fatores no GitHub, no Vercel, na Twitch, na Kick e na Google, e restringe a chave do YouTube à "YouTube Data API v3" (passo 1).
+Recomendações para ti: deixa o repositório **público** (não há chaves no código, e assim o GitHub Actions é ilimitado e grátis; num repositório privado a recolha de 10 em 10 min passa das 2000 min/mês grátis, por isso terias de mudar o `cron` para `*/30` e criar no Vercel um `GITHUB_TOKEN` só de leitura), ativa a autenticação de dois fatores no GitHub, no Vercel, na Twitch, na Kick e na Google, e restringe a chave do YouTube à "YouTube Data API v3" (passo 1).
 
 ## Ficheiros
 
 ```
-.github/workflows/collect.yml   recolha de hora a hora (GitHub Actions)
+.github/workflows/collect.yml   recolha de 10 em 10 min (GitHub Actions), guarda no branch data
+api/data.js                     serve o histórico do branch data (cache de 1 min)
+api/visitors.js                 contador de pessoas no site (opcional, Upstash)
 api/live.js                     números ao vivo da Twitch e da Kick (servidor Vercel)
 lib/platforms.js                ligação às APIs da Twitch, Kick e YouTube
 scripts/collect.js              guarda o histórico, os recordes e as previsões

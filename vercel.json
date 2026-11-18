@@ -1,8 +1,13 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "framework": null,
-  "buildCommand": "node scripts/build.js",
   "outputDirectory": "public",
+  "buildCommand": "node scripts/build.js",
+  "git": {
+    "deploymentEnabled": {
+      "data": false
+    }
+  },
+  "framework": null,
   "functions": {
     "api/live.js": {
       "maxDuration": 30

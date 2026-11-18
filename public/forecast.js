@@ -1,7 +1,7 @@
 // Previsão simples e explicável para as próximas horas.
 // Usada no browser (dashboard) e no coletor (para guardar a previsão de cada dia e comparar com o real).
 //
-// Modelo: para cada hora futura, média dos valores à mesma hora do dia (hora de Lisboa) nos últimos
+// Modelo: (dados agregados à hora) para cada hora futura, média dos valores à mesma hora do dia (hora de Lisboa) nos últimos
 // 3 dias disponíveis, multiplicada pela tendência (últimas 24 h ÷ 24 h anteriores, limitada a 0,6–1,5).
 // Depois do lançamento só usa dados pós-lançamento (o comportamento muda completamente).
 
@@ -17,7 +17,15 @@ const lisbonHour = (t) => Number(new Intl.DateTimeFormat('en-GB', { hour: '2-dig
  * @returns {{ts:number, v:number}[] | null}
  */
 export function forecast(points, value, fromTs, hours = 24, launchTs = Date.parse('2026-11-19T00:00:00Z')) {
-  let series = points.map((p) => ({ t: Date.parse(p.ts), v: value(p) })).filter((x) => x.v != null && x.t < fromTs);
+  // médias por hora (a recolha é de 10 em 10 min; o modelo trabalha à hora)
+  const buckets = new Map();
+  for (const p of points) {
+    const t = Date.parse(p.ts), v = value(p);
+    if (v == null || !(t < fromTs)) continue;
+    const h = Math.floor(t / HOUR) * HOUR, b = buckets.get(h) || [0, 0];
+    b[0] += v; b[1]++; buckets.set(h, b);
+  }
+  let series = [...buckets].sort((a, b) => a[0] - b[0]).map(([t, [s, n]]) => ({ t, v: s / n }));
   if (fromTs > launchTs) series = series.filter((x) => x.t >= launchTs);   // regime pós-lançamento
   if (series.length < 24) return null;                                     // precisa de pelo menos 1 dia
   const last = series[series.length - 1].t;

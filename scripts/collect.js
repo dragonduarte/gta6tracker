@@ -1,5 +1,5 @@
-// Coletor horário (GitHub Actions). Escreve:
-//   public/data/history.json  — série temporal (1 ponto por hora)
+// Coletor (GitHub Actions, de 10 em 10 minutos). Escreve:
+//   public/data/history.json  — série temporal (1 ponto a cada 10 min nos últimos 3 dias, depois 1 por hora)
 //   public/data/latest.json   — rankings e detalhes da última recolha
 //   data/seen.json            — canais únicos já vistos (privado, fora do site)
 // Uso: node scripts/collect.js         (usa as variáveis de ambiente)
@@ -7,8 +7,9 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { twitchSnapshot, twitchExtras, kickSnapshot, youtubeSnapshot, creds, strip } from '../lib/platforms.js';
+import { twitchSnapshot, twitchExtras, kickSnapshot, youtubeSnapshot, creds, strip, setLearnedPortugal, ptSignal } from '../lib/platforms.js';
 import { forecast, peakOf } from '../public/forecast.js';
+import PORTUGAL_LIST from '../portugal.js';
 
 const LAUNCH = Date.parse('2026-11-19T00:00:00Z');
 
@@ -18,35 +19,75 @@ const PRIV = path.join(ROOT, 'data');
 const readJSON = (f, d) => { try { return JSON.parse(fs.readFileSync(f, 'utf8')); } catch { return d; } };
 const writeJSON = (f, o) => { fs.mkdirSync(path.dirname(f), { recursive: true }); fs.writeFileSync(f, JSON.stringify(o)); };
 
+const STEP_MIN = 10;                                   // resolução da série (minutos)
 const now = process.env.MOCK_NOW ? new Date(process.env.MOCK_NOW) : new Date();
-now.setUTCMinutes(0, 0, 0);
+now.setUTCMinutes(Math.floor(now.getUTCMinutes() / STEP_MIN) * STEP_MIN, 0, 0);
 const ts = now.toISOString().replace('.000Z', 'Z');
-const withVideos = now.getUTCHours() % 3 === 0 || process.env.FORCE_YT_VIDEOS === '1';
+
+// O YouTube tem quota diária: só é consultado de hora a hora (lives) e a cada 3 h (vídeos novos).
+// Twitch e Kick são consultados em todas as recolhas.
+const state = readJSON(path.join(PRIV, 'state.json'), {});
+const ago = (k) => (state[k] ? now.getTime() - Date.parse(state[k]) : Infinity);
+const force = process.env.FORCE_YT_VIDEOS === '1';
+const withYoutube = force || ago('youtube') >= 55 * 60e3;
+const withVideos = force || (withYoutube && ago('youtube_videos') >= 175 * 60e3);
 
 async function run() {
   const c = creds();
   const res = {}, errors = [];
+  // canais que o tracker já reconheceu como portugueses
+  const learned = readJSON(path.join(PRIV, 'portugal-learned.json'), { twitch: {}, kick: {}, youtube: {} });
+  setLearnedPortugal(Object.fromEntries(Object.entries(learned).map(([k, v]) => [k, Object.keys(v || {})])));
+  const ytCache = readJSON(path.join(PRIV, 'yt-channels.json'), {});
   const jobs = process.env.MOCK
     ? (await import('./mock.js')).mockSnapshots(now, withVideos)
     : {
       twitch: c.twitch && twitchSnapshot({ ...c.twitch, maxPages: 150 }),
       kick: c.kick && kickSnapshot(c.kick),
-      youtube: c.youtube && youtubeSnapshot({ ...c.youtube, withVideos, now }),
+      youtube: c.youtube && withYoutube && youtubeSnapshot({ ...c.youtube, withVideos, now, channelCache: ytCache }),
     };
+  if (process.env.MOCK && !withYoutube) delete jobs.youtube;
   await Promise.all(Object.entries(jobs).map(async ([k, p]) => {
     if (!p) { console.log(`${k}: sem credenciais, a saltar`); return; }
     try { res[k] = await p; console.log(`${k}: ${res[k].streams} streams, ${res[k].viewers} espectadores`); }
     catch (e) { errors.push(`${k}: ${e.message}`); console.error(`ERRO ${k}:`, e.message); }
   }));
 
-  // ---- extras da Twitch (clips + domínio na plataforma)
+  // ---- YouTube: guardar estado e cache dos canais
+  if (res.youtube) {
+    state.youtube = ts; if (withVideos) state.youtube_videos = ts;
+    if (res.youtube.channel_cache) writeJSON(path.join(PRIV, 'yt-channels.json'), res.youtube.channel_cache);
+  }
+
+  // ---- aprender canais portugueses (só com sinais fortes: país do canal, lista, marca explícita de Portugal)
+  for (const [k, r] of Object.entries(res)) {
+    const bucket = (learned[k] ||= {});
+    for (const st of r.list) {
+      const strong = (k === 'youtube' && (st.country === 'PT')) || (st.lang === 'pt' && ptSignal(st.title) === 'strong');
+      const key = String(k === 'youtube' ? st.id : st.login || '').toLowerCase();
+      if (!key) continue;
+      if (strong) bucket[key] = { name: st.name, n: (bucket[key]?.n || 0) + 1, last: ts };
+    }
+  }
+  writeJSON(path.join(PRIV, 'portugal-learned.json'), learned);
+
+  // ---- extras da Twitch (clips, peso no top 1000, comparação com outros jogos) — a cada 30 min chega
   let extras = {};
-  if (res.twitch?.game_id && (c.twitch || process.env.MOCK)) {
+  const prevLatest = readJSON(path.join(PUB, 'latest.json'), {});
+  const extrasDue = force || process.env.MOCK || ago('extras') >= 25 * 60e3;
+  if (res.twitch?.game_id && (c.twitch || process.env.MOCK) && extrasDue) {
     try {
-      extras = process.env.MOCK ? (await import('./mock.js')).mockExtras(now) : await twitchExtras({ ...c.twitch, gameId: res.twitch.game_id, now });
+      extras = process.env.MOCK ? (await import('./mock.js')).mockExtras(now) : await twitchExtras({ ...c.twitch, gameId: res.twitch.game_id, gta: res.twitch, now });
       if (extras.clips_error) errors.push(`twitch clips: ${extras.clips_error}`);
+      if (extras.games_error) errors.push(`twitch jogos: ${extras.games_error}`);
+      state.extras = ts;
     } catch (e) { errors.push(`twitch extras: ${e.message}`); }
   }
+  // mantém a lista de jogos atualizada com o valor de GTA VI desta recolha
+  if (!extras.games && prevLatest.games?.twitch && res.twitch) {
+    extras.games = prevLatest.games.twitch.map((g) => (g.gta ? { ...g, viewers: res.twitch.viewers, streams: res.twitch.streams } : g)).sort((a, b) => b.viewers - a.viewers);
+  }
+  writeJSON(path.join(PRIV, 'state.json'), state);
 
   // ---- canais únicos acumulados
   const seen = readJSON(path.join(PRIV, 'seen.json'), {});
@@ -60,6 +101,11 @@ async function run() {
   // ---- histórico
   const history = readJSON(path.join(PUB, 'history.json'), { points: [] });
   const point = { ts };
+  // YouTube não consultado nesta recolha: repete o último valor (marcado com c:1) para os totais não caírem
+  if (!res.youtube) {
+    const lastYt = [...history.points].reverse().find((p) => p.youtube);
+    if (lastYt && now - Date.parse(lastYt.ts) < 3 * 3600e3) { const { nv, nvp, nvpp, ...rest } = lastYt.youtube; void nv; void nvp; void nvpp; point.youtube = { ...rest, c: 1 }; }
+  }
   for (const [k, r] of Object.entries(res)) {
     point[k] = { v: r.viewers, s: r.streams, pv: r.pt_viewers, ps: r.pt_streams, ppv: r.ptpt_viewers, pps: r.ptpt_streams };
     if (r.rank != null) point[k].rank = r.rank;
@@ -71,9 +117,26 @@ async function run() {
   // quem domina o top 10 (todas as plataformas juntas)
   const top10all = Object.values(res).flatMap((r) => r.list).sort((a, b) => b.viewers - a.viewers).slice(0, 10);
   if (top10all.length) point.mix = Object.fromEntries(Object.keys(res).map((k) => [k, top10all.filter((s) => s.platform === k).length]));
-  history.points = history.points.filter((p) => p.ts !== ts); // re-run na mesma hora substitui
+  history.points = history.points.filter((p) => p.ts !== ts); // re-run no mesmo intervalo substitui
   if (Object.keys(point).length > 1) history.points.push(point);
   history.points.sort((a, b) => a.ts.localeCompare(b.ts));
+  // compactação: pontos com mais de 3 dias ficam 1 por hora (o mais próximo da hora certa)
+  const cut = now.getTime() - 72 * 3600e3, byHour = new Map(), keep = [];
+  for (const p of history.points) {
+    const t = Date.parse(p.ts);
+    if (t >= cut) { keep.push(p); continue; }
+    const h = Math.floor(t / 3600e3), cur = byHour.get(h);
+    if (!cur || (t % 3600e3) < (Date.parse(cur.ts) % 3600e3)) byHour.set(h, p);
+  }
+  history.points = [...byHour.values(), ...keep].sort((a, b) => a.ts.localeCompare(b.ts));
+  // recordes (não se perdem com a compactação)
+  const tot = (p, key) => { const v = ['twitch', 'kick', 'youtube'].map((k) => p[k]?.[key]).filter((x) => x != null); return v.length ? v.reduce((a, b) => a + b, 0) : null; };
+  history.peaks ||= {};
+  for (const [sc, key] of Object.entries({ global: 'v', luso: 'pv', portugal: 'ppv' })) {
+    const v = tot(point, key);
+    if (v != null && (!history.peaks[sc] || v > history.peaks[sc].v)) history.peaks[sc] = { v, ts };
+  }
+  history.step = STEP_MIN;
   history.updated = new Date().toISOString();
   writeJSON(path.join(PUB, 'history.json'), history);
 
@@ -108,15 +171,15 @@ async function run() {
 
   // ---- séries por streamer (para as páginas individuais) — os 150 maiores picos
   const series = readJSON(path.join(PUB, 'streamers.json'), {});
-  const hourIdx = Math.round(now.getTime() / 3600e3);   // hora desde 1970 (compacto)
+  const hourIdx = Math.floor(now.getTime() / 3600e3);   // hora desde 1970 (compacto)
   const liveByKey = new Map(Object.values(res).flatMap((r) => r.list).map((s) => [`${s.platform}:${s.id}`, s]));
   const tracked = Object.keys(hall.all).slice(0, 150);
   for (const key of tracked) {
     const s = liveByKey.get(key), h = hall.all[key];
     const rec = series[key] || { name: h.name, platform: h.platform, url: h.url, avatar: h.avatar, lang: h.lang, portugal: h.portugal, pts: [] };
     Object.assign(rec, { name: h.name, avatar: h.avatar || rec.avatar, peak: h.peak, peak_at: h.at, portugal: h.portugal || rec.portugal });
-    rec.pts = rec.pts.filter((x) => x[0] !== hourIdx);
-    if (s) rec.pts.push([hourIdx, s.viewers]);
+    const same = rec.pts.find((x) => x[0] === hourIdx);
+    if (s) { if (same) same[1] = Math.max(same[1], s.viewers); else rec.pts.push([hourIdx, s.viewers]); }
     rec.pts = rec.pts.slice(-1500);
     series[key] = rec;
   }
@@ -124,22 +187,27 @@ async function run() {
   writeJSON(path.join(PUB, 'streamers.json'), series);
 
   // ---- saltos: streamers que ganharam muitos espectadores desde a última hora
-  const prevV = readJSON(path.join(PRIV, 'prev.json'), {});
+  // compara com o valor de há ~1 hora (guardamos uma janela de 6 recolhas)
+  const prevRaw = readJSON(path.join(PRIV, 'prev.json'), {});
+  const win = Array.isArray(prevRaw.win) ? prevRaw.win : [];
+  const prevV = win[0]?.v || {};
   const events = readJSON(path.join(PUB, 'events.json'), []);
   const nextV = {};
+  const seenEvt = new Set(events.filter((e) => now - Date.parse(e.ts) < 3 * 3600e3).map((e) => e.key + e.kind));
   for (const [key, s] of liveByKey) {
     if (s.viewers >= 200) nextV[key] = s.viewers;
     const before = prevV[key] || 0, gain = s.viewers - before;
+    if (seenEvt.has(key + (before ? 'jump' : 'start'))) continue;
     const min = s.lang === 'pt' ? 1000 : 5000;
     if (s.viewers >= min && (gain >= min || (before && s.viewers >= before * 2 && gain >= min / 2))) {
       events.push({ ts, key, ...strip(s), from: before, to: s.viewers, kind: before ? 'jump' : 'start' });
     }
   }
-  writeJSON(path.join(PRIV, 'prev.json'), nextV);
-  writeJSON(path.join(PUB, 'events.json'), events.filter((e) => e.ts !== ts || true).slice(-80));
+  writeJSON(path.join(PRIV, 'prev.json'), { win: [...win, { ts, v: nextV }].filter((w) => now - Date.parse(w.ts) <= 65 * 60e3).slice(-7) });
+  writeJSON(path.join(PUB, 'events.json'), events.slice(-80));
 
   // ---- maratonas: streams em direto há mais tempo (com pelo menos 20 espectadores)
-  const allLive = Object.values(res).flatMap((r) => r.list).filter((s) => s.started_at && s.viewers >= 20);
+  const allLive = [...Object.entries(res).filter(([k]) => k !== 'youtube').flatMap(([, r]) => r.list), ...(res.youtube?.list || prevLatest.youtube_live || [])].filter((s) => s.started_at && s.viewers >= 20);
   const byAge = (arr) => arr.sort((a, b) => Date.parse(a.started_at) - Date.parse(b.started_at)).slice(0, 10).map(strip);
   const marathons = { global: byAge([...allLive]), luso: byAge(allLive.filter((s) => s.lang === 'pt')), portugal: byAge(allLive.filter((s) => s.portugal)) };
 
@@ -148,11 +216,17 @@ async function run() {
   for (const k of ['twitch', 'kick']) for (const s of res[k]?.list || []) langs[s.lang || '?'] = (langs[s.lang || '?'] || 0) + s.viewers;
 
   // ---- latest (rankings)
-  const prev = readJSON(path.join(PUB, 'latest.json'), {});
-  const all = Object.values(res).flatMap((r) => r.list);
+  const prev = prevLatest;
+  // YouTube não consultado agora: reaproveita as lives da última recolha (até 2 h)
+  const ytLive = res.youtube?.list || (prev.youtube_live && now - Date.parse(prev.youtube_live_ts || 0) < 2 * 3600e3 ? prev.youtube_live : []);
+  const all = [...Object.entries(res).filter(([k]) => k !== 'youtube').flatMap(([, r]) => r.list), ...ytLive];
   const latest = {
     ts, updated: new Date().toISOString(), errors,
-    totals: Object.fromEntries(Object.entries(res).map(([k, r]) => [k, { viewers: r.viewers, streams: r.streams, pt_viewers: r.pt_viewers, ptpt_viewers: r.ptpt_viewers, complete: r.complete, rank: r.rank ?? null }])),
+    totals: { ...(prev.totals || {}), ...Object.fromEntries(Object.entries(res).map(([k, r]) => [k, { viewers: r.viewers, streams: r.streams, pt_viewers: r.pt_viewers, ptpt_viewers: r.ptpt_viewers, complete: r.complete, rank: r.rank ?? null, at: ts }])) },
+    youtube_live: ytLive.slice(0, 60).map((x) => ({ ...strip(x), country: x.country || '' })), youtube_live_ts: res.youtube ? ts : prev.youtube_live_ts,
+    games: { twitch: extras.games || prev.games?.twitch || [], kick: res.kick?.dominance?.games || prev.games?.kick || [] },
+    videos_portugal: res.youtube?.videos_portugal || prev.videos_portugal || [],
+    portugal_channels: { listed: ['twitch', 'kick', 'youtube'].reduce((a, k) => a + ((PORTUGAL_LIST[k] || []).length), 0), learned: Object.values(learned).reduce((a, b) => a + Object.keys(b || {}).length, 0) },
     top_global: all.sort((a, b) => b.viewers - a.viewers).slice(0, 25).map(strip),
     top_pt: all.filter((s) => s.lang === 'pt').sort((a, b) => b.viewers - a.viewers).slice(0, 25).map(strip),
     top_portugal: all.filter((s) => s.portugal).sort((a, b) => b.viewers - a.viewers).slice(0, 25).map(strip),
@@ -166,7 +240,7 @@ async function run() {
     box_art: res.twitch?.box_art || prev.box_art || null,
   };
   writeJSON(path.join(PUB, 'latest.json'), latest);
-  console.log(`OK ${ts} — ${Object.keys(res).length} plataformas, ${errors.length} erros`);
+  console.log(`OK ${ts} — ${Object.keys(res).join(', ') || 'nenhuma'}${withYoutube ? '' : ' (YouTube na próxima hora)'} — ${errors.length} erros`);
   if (!Object.keys(res).length && !process.env.ALLOW_EMPTY) process.exitCode = 1;
 }
 run();
