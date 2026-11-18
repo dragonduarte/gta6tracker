@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GTA 6 / GTA VI Live Tracker (widget) — Grand Theft Auto VI</title>
+<link rel="stylesheet" href="fonts/fonts.css">
+<script src="config.js"></script>
+<script defer src="/_vercel/insights/script.js"></script>
+<style>
+  :root { --bg: #0d0b14; --s1: #17151f; --b: #2b2836; --t1: #f3f1f7; --t2: #c4c0cf; --t3: #8c8799; }
+  * { box-sizing: border-box; } html, body { margin: 0; height: 100%; background: transparent; font: 14px/1.4 Inter, system-ui, -apple-system, 'Segoe UI', sans-serif; color: var(--t1); }
+  .w { position: relative; overflow: hidden; height: 100%; min-height: 170px; border-radius: 14px; border: 1px solid var(--b); background: var(--bg); padding: 16px 18px; display: flex; flex-direction: column; gap: 6px; }
+  .w::before { content: ''; position: absolute; inset: 0; background: radial-gradient(60% 80% at 90% 0%, rgba(255,79,154,.28), transparent 70%), radial-gradient(40% 60% at 0% 0%, rgba(108,75,255,.22), transparent 70%); pointer-events: none; }
+  .w > * { position: relative; }
+  .top { display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: var(--t2); letter-spacing: .08em; text-transform: uppercase; font-weight: 600; }
+  .ttl { display: flex; align-items: center; gap: 8px; } .ttl b { font-size: 15px; letter-spacing: -.01em; text-transform: none; background: linear-gradient(100deg,#ff4f9a,#ff8a4c 45%,#ffc95c); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .p { width: 8px; height: 8px; border-radius: 50%; background: #ff3b5c; animation: p 1.8s infinite; } .p.off { background: var(--t3); animation: none; }
+  @keyframes p { 70% { box-shadow: 0 0 0 7px rgba(255,59,92,0); } 0% { box-shadow: 0 0 0 0 rgba(255,59,92,.6); } }
+  .row { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; }
+  .n { font-size: 40px; font-weight: 800; letter-spacing: -.03em; line-height: 1; font-variant-numeric: tabular-nums; }
+  .l { color: var(--t3); font-size: 12.5px; }
+  .cd { text-align: right; } .cd b { font-size: 18px; font-variant-numeric: tabular-nums; display: block; }
+  svg { width: 100%; height: 34px; display: block; margin-top: auto; }
+  .f { display: flex; justify-content: space-between; font-size: 11.5px; color: var(--t3); }
+  .f a { color: var(--t2); text-decoration: none; } .f a:hover { color: var(--t1); }
+</style>
+</head>
+<body>
+<div class="w">
+  <div class="top"><span class="ttl"><i class="p off" id="p"></i><b>GTA VI</b> Live Tracker</span><span id="scope"></span></div>
+  <div class="row"><div><div class="n" id="n">—</div><div class="l" id="l"></div></div><div class="cd"><b id="cd">—</b><span class="l" id="cdl"></span></div></div>
+  <svg viewBox="0 0 300 34" preserveAspectRatio="none"><defs><linearGradient id="g" x1="0" x2="1"><stop offset="0" stop-color="#6c4bff"/><stop offset=".6" stop-color="#ff4f9a"/><stop offset="1" stop-color="#ffc95c"/></linearGradient></defs><path id="sp" fill="none" stroke="url(#g)" stroke-width="2" vector-effect="non-scaling-stroke"/></svg>
+  <div class="f"><span id="by"></span><a id="go" target="_blank" rel="noopener"></a></div>
+</div>
+<script src="embed.js"></script>
+</body>
+</html>
