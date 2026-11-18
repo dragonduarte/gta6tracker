@@ -1,0 +1,43 @@
+name: Recolha horária GTA VI
+
+on:
+  schedule:
+    - cron: "5 * * * *"    # de hora a hora (UTC); o GitHub pode atrasar uns minutos
+  workflow_dispatch:        # botão "Run workflow"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: collect
+  cancel-in-progress: false
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: true
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+      - name: Recolher dados
+        env:
+          TWITCH_CLIENT_ID: ${{ secrets.TWITCH_CLIENT_ID }}
+          TWITCH_CLIENT_SECRET: ${{ secrets.TWITCH_CLIENT_SECRET }}
+          KICK_CLIENT_ID: ${{ secrets.KICK_CLIENT_ID }}
+          KICK_CLIENT_SECRET: ${{ secrets.KICK_CLIENT_SECRET }}
+          KICK_CATEGORY_ID: ${{ secrets.KICK_CATEGORY_ID }}
+          YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
+          FORCE_YT_VIDEOS: ${{ github.event_name == 'workflow_dispatch' && '1' || '' }}
+        run: node scripts/collect.js
+      - name: Guardar (o Vercel publica automaticamente)
+        run: |
+          git config user.name "gta6-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add public/data data
+          git diff --cached --quiet && exit 0
+          git commit -m "dados $(date -u +%Y-%m-%dT%H:%MZ)"
+          for i in 1 2 3; do git pull --rebase -X theirs && git push && break; sleep 5; done
