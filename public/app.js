@@ -26,7 +26,8 @@ const I18N = {
     hero_viewers: { global: 'a ver agora, em todo o mundo', portugal: 'a ver agora, em streams de Portugal', luso: 'a ver agora, em streams em português' },
     hero_streams: 'streams em direto agora',
     d1h: (pct) => `${pct} na última hora`, d1h_flat: 'estável na última hora',
-    top_now: 'Mais vistos agora', pt_top: 'Mais visto em Portugal agora', pt_none: 'Nenhum streamer de Portugal em direto agora.', viewers_s: 'espectadores',
+    top_now: 'A seguir', no1: { global: 'Mais visto agora, no mundo', portugal: 'Mais visto agora, em Portugal', luso: 'Mais visto agora, em português' }, pt_none: 'Ninguém em direto agora nesta vista.', viewers_s: 'espectadores',
+    tab_title: (n) => `${n} a ver GTA VI · Live Tracker`,
     hc_title: 'Últimas 24 horas', hc_peak: (v) => `pico ${v}`,
     page_title: 'GTA 6 ao vivo: quantas pessoas estão a ver GTA VI agora? | Twitch, Kick e YouTube', page_desc: 'GTA 6 (GTA VI, Grand Theft Auto VI) ao vivo: espectadores, streams, recordes e vídeos em tempo real na Twitch, Kick e YouTube. No mundo, em Portugal e em português. Por Duarte Rodrigues.',
     now_title: { global: 'Agora, em todo o mundo', portugal: 'Agora, em Portugal', luso: 'Agora, em língua portuguesa' },
@@ -94,7 +95,8 @@ const I18N = {
     hero_viewers: { global: 'watching right now, worldwide', portugal: 'watching Portuguese streams right now', luso: 'watching Portuguese-language streams' },
     hero_streams: 'live streams right now',
     d1h: (pct) => `${pct} in the last hour`, d1h_flat: 'steady in the last hour',
-    top_now: 'Most watched now', pt_top: 'Most watched in Portugal now', pt_none: 'No streamer from Portugal is live right now.', viewers_s: 'viewers',
+    top_now: 'Next up', no1: { global: 'Most watched now, worldwide', portugal: 'Most watched now, in Portugal', luso: 'Most watched now, in Portuguese' }, pt_none: 'Nobody live right now in this view.', viewers_s: 'viewers',
+    tab_title: (n) => `${n} watching GTA VI · Live Tracker`,
     hc_title: 'Last 24 hours', hc_peak: (v) => `peak ${v}`,
     page_title: 'GTA 6 live: how many people are watching GTA VI right now? | Twitch, Kick and YouTube', page_desc: 'GTA 6 (GTA VI, Grand Theft Auto VI, Grand Theft Auto 6) live: viewers, streams, records and videos in real time on Twitch, Kick and YouTube. Worldwide, in Portugal and in Portuguese. By Duarte Rodrigues.',
     now_title: { global: 'Right now, worldwide', portugal: 'Right now, in Portugal', luso: 'Right now, in Portuguese' },
@@ -191,10 +193,10 @@ window.infoBtn = infoBtn;
 // Logótipo da plataforma: usa public/img/<plataforma>.svg (ou .png) se existir; senão, o ponto de cor. Sem estilos nem handlers inline.
 const LOGO = {};
 for (const p of ['twitch', 'kick', 'youtube']) { LOGO[p] = null; }
-const plat = (p, withName = true) => `<span class="pl"><span class="pi" data-p="${esc(p)}"><i class="dot" style="background:${COLOR[p] || 'var(--text-muted)'}"></i><img src="img/${esc(p)}.png" alt="" width="16" height="16" data-logo="${esc(p)}"></span>${withName ? esc(NAMES[p] || p) : ''}</span>`;
+const plat = (p, withName = true) => `<span class="pl"><span class="pi" data-p="${esc(p)}"><i class="dot" style="background:${COLOR[p] || 'var(--text-muted)'}"></i><img src="img/${esc(p)}.svg" alt="" width="16" height="16" data-logo="${esc(p)}"></span>${withName ? esc(NAMES[p] || p) : ''}</span>`;
 window.platHtml = plat;
 // se o ficheiro do logótipo não existir, a imagem desaparece e fica o ponto de cor
-document.addEventListener('error', (e) => { const i = e.target; if (i?.tagName === 'IMG' && i.dataset?.logo) i.remove(); else if (i?.tagName === 'IMG' && i.dataset?.plogo) i.remove(); }, true);
+document.addEventListener('error', (e) => { const i = e.target; if (i?.tagName === 'IMG' && i.dataset?.logo) { if (!i.dataset.png) { i.dataset.png = '1'; i.src = 'img/' + i.dataset.logo + '.png'; } else i.remove(); } else if (i?.tagName === 'IMG' && i.dataset?.plogo) i.remove(); }, true);
 document.addEventListener('load', (e) => { const i = e.target; if (i?.tagName !== 'IMG') return; if (i.dataset?.logo) i.closest('.pi')?.classList.add('has'); else if (i.dataset?.plogo) i.closest('.bl')?.classList.add('has'); }, true);
 // tooltip único, posicionado junto ao ícone (compatível com a CSP: sem estilos nem handlers inline)
 (function initInfoTip() {
@@ -380,6 +382,7 @@ function renderHero() {
   document.getElementById('srcNote').textContent = T().src_note[S.src];
   document.getElementById('heroSub').textContent = S.liveOk && S.liveAt ? T().live_ago(Math.floor((Date.now() - S.liveAt) / 60e3)) : lastTs ? T().live_off(hhmm(lastTs)) : '';
   renderHeroExtras(now);
+  if (now != null) document.title = T().tab_title(fmtC(now));
   // mini gráfico das últimas 24 horas
   const since = Date.now() - 24 * 3600e3;
   const p24 = points().filter((p) => Date.parse(p.ts) >= since && totalOf(p, k.v) != null);
@@ -427,15 +430,14 @@ function renderHeroExtras(now) {
     d.innerHTML = `<span aria-hidden="true">${abs < 1 ? '→' : pct > 0 ? '▲' : '▼'}</span> ${esc(txt)}`;
     d.title = `${fmt(ago)} → ${fmt(now)}`; d.hidden = false;
   } else d.hidden = true;
-  const top = leaderboard().slice(0, 5);
+  const lb = leaderboard(), no1 = lb[0], top = lb.slice(1, 6);
   const tr = document.getElementById('heroTop');
   tr.hidden = !top.length;
   tr.innerHTML = top.length ? `<span class="ht-lbl">${esc(t('top_now'))}</span><span class="ht-list">${top.map((r) => `<a href="${esc(safeUrl(r.url))}" target="_blank" rel="noopener" class="ht-item" title="${esc(r.name)} · ${esc(fmt(r.viewers))} ${esc(t('viewers_s'))} · ${esc(NAMES[r.platform] || '')}">${avHtml(r, 'sm')}<span class="ht-n">${esc(r.name)}</span><span class="ht-v tnum">${fmtC(r.viewers)}</span></a>`).join('')}</span>` : '';
-  const pt = liveRows('portugal')[0];
-  const box = document.getElementById('heroPt');
-  box.innerHTML = pt
-    ? `<a class="hp" href="${esc(safeUrl(pt.url))}" target="_blank" rel="noopener">${avHtml(pt)}<span class="hp-txt"><span class="hp-lbl">🇵🇹 ${esc(t('pt_top'))}</span><span class="hp-n">${esc(pt.name)} <span class="tag">${plat(pt.platform)}</span></span><span class="hp-t" title="${esc(pt.title)}">${esc(pt.title)}</span></span><span class="hp-v"><b class="tnum">${fmt(pt.viewers)}</b><small>${esc(t('viewers_s'))}</small></span></a>`
-    : `<div class="hp empty">🇵🇹 ${esc(t('pt_none'))}</div>`;
+  const flag = { global: '🌍', portugal: '🇵🇹', luso: '🗣️' }[S.scope];
+  document.getElementById('heroPt').innerHTML = no1
+    ? `<a class="hp" href="${esc(safeUrl(no1.url))}" target="_blank" rel="noopener">${avHtml(no1)}<span class="hp-txt"><span class="hp-lbl">${flag} ${esc(t('no1'))}</span><span class="hp-n">${esc(no1.name)} <span class="tag">${plat(no1.platform)}</span></span><span class="hp-t" title="${esc(no1.title)}">${esc(no1.title)}</span></span><span class="hp-v"><b class="tnum">${fmt(no1.viewers)}</b><small>${esc(t('viewers_s'))}</small></span></a>`
+    : `<div class="hp empty">${esc(t('pt_none'))}</div>`;
 }
 
 function renderNow() {
@@ -521,6 +523,8 @@ const launchLine = { id: 'launch', afterDatasetsDraw(ch) {
   const lbl = S.lang === 'pt' ? `Lançamento em Portugal ${new Date(LAUNCH).toLocaleString(T().locale, { timeZone: 'Europe/Lisbon', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}` : `Launch ${dt(LAUNCH, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}`;
   const w = g.measureText(lbl).width, flip = px + 6 + w > right; g.textAlign = flip ? 'right' : 'left'; g.fillText(lbl, flip ? px - 6 : px + 6, top + 12); g.restore();
 } };
+const tickFor = (xs) => { const span = xs.length > 1 ? xs[xs.length - 1] - xs[0] : 0;
+  return (v) => dt(v, span <= 30 * 3600e3 ? { hour: '2-digit', minute: '2-digit' } : span <= 4 * 86400e3 ? { day: 'numeric', month: 'short', hour: '2-digit' } : { day: 'numeric', month: 'short' }); };
 const timeTick = (v) => { const span = (Number(S.range) || 999) <= 48; return dt(v, span ? { hour: '2-digit', minute: '2-digit' } : { day: 'numeric', month: 'short' }); };
 const charts = {};
 function mkOrUpdate(id, cfg) {
@@ -538,7 +542,7 @@ const baseLine = (xs, extra = {}) => ({ responsive: true, maintainAspectRatio: f
   interaction: { mode: 'nearest', axis: 'x', intersect: false },
   elements: { point: { radius: 0, hoverRadius: 5, hitRadius: 10, hoverBorderWidth: 2, hoverBorderColor: css('--surface-1') }, line: { borderWidth: 2, tension: .25 } },
   plugins: { tooltip: { callbacks: { title: (it) => dt(it[0].parsed.x, { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }), label: (c) => ` ${c.dataset.label}: ${fmt(c.parsed.y)}` } } },
-  scales: { x: { type: 'linear', min: xs[0], max: xs[xs.length - 1], grid: { display: false }, ticks: { maxTicksLimit: 7, maxRotation: 0, callback: timeTick } },
+  scales: { x: { type: 'linear', min: xs[0], max: xs[xs.length - 1], grid: { display: false }, ticks: { maxTicksLimit: 7, maxRotation: 0, callback: tickFor(xs) } },
             y: { beginAtZero: true, border: { display: false }, ticks: { callback: (v) => nf({ notation: 'compact', maximumFractionDigits: 1 }).format(v) } } }, ...extra });
 
 function renderCharts() {
@@ -721,7 +725,7 @@ function renderFlow() {
     ] },
     options: { responsive: true, maintainAspectRatio: false, parsing: false, animation: false,
       plugins: { tooltip: { callbacks: { title: (it) => dt(it[0].parsed.x, { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }), label: (c) => ` ${c.dataset.label}: ${fmt(Math.abs(c.parsed.y))}` } } },
-      scales: { x: { type: 'linear', stacked: true, offset: true, min: hs.length ? hs[0] - 1800e3 : undefined, max: hs.length ? hs[hs.length - 1] + 1800e3 : undefined, grid: { display: false }, ticks: { maxTicksLimit: 7, maxRotation: 0, callback: timeTick } },
+      scales: { x: { type: 'linear', stacked: true, offset: true, min: hs.length ? hs[0] - 1800e3 : undefined, max: hs.length ? hs[hs.length - 1] + 1800e3 : undefined, grid: { display: false }, ticks: { maxTicksLimit: 7, maxRotation: 0, callback: tickFor(hs) } },
                 y: { stacked: true, border: { display: false }, ticks: { callback: (v) => fmtC(Math.abs(v)) } } } },
   });
 }

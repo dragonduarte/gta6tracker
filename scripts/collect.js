@@ -229,6 +229,31 @@ async function run() {
   for (const r of Object.values(res)) for (const s of r.list) { if (s.viewers >= 50) { bump(hall.all, s); if (inFirst24) bump(hall.first24, s); } }
   const trim = (o) => Object.fromEntries(Object.entries(o).sort((a, b) => b[1].peak - a[1].peak).slice(0, 400));
   hall.all = trim(hall.all); hall.first24 = trim(hall.first24);
+  // ---- resumo de cada dia (Lisboa): pico, horas vistas, máximo de streams e maior streamer.
+  // Fica em hall.json (não é afetado pela compactação do histórico ao fim de 72 h).
+  try {
+    hall.days ||= {};
+    const D = (hall.days[day] ||= {});
+    const gap = D.lt ? Math.min(20, Math.max(0, (now.getTime() - Date.parse(D.lt)) / 60e3)) : STEP_MIN;
+    D.lt = ts;
+    const SETS = { twitch: ['twitch'], tk: ['twitch', 'kick'], all: ['twitch', 'kick', 'youtube'] };
+    for (const [sc, vk, sk, f] of [['global', 'v', 's', () => true], ['luso', 'pv', 'ps', (x) => x.lang === 'pt'], ['portugal', 'ppv', 'pps', (x) => x.portugal]]) {
+      const E = (D[sc] ||= { pk: {}, hw: {}, ms: {}, top: {} });
+      for (const [set, plats] of Object.entries(SETS)) {
+        const vals = plats.map((k) => point[k]?.[vk]).filter((x) => x != null);
+        if (!vals.length) continue;
+        const v = vals.reduce((a, b) => a + b, 0);
+        if (!E.pk[set] || v > E.pk[set].v) E.pk[set] = { v, at: ts };
+        E.hw[set] = Math.round((E.hw[set] || 0) + v * gap / 60);
+        E.ms[set] = Math.max(E.ms[set] || 0, plats.map((k) => point[k]?.[sk] || 0).reduce((a, b) => a + b, 0));
+      }
+      for (const [k, r] of Object.entries(res)) {
+        const b = (r.list || []).filter(f).reduce((m, x) => (!m || x.viewers > m.viewers ? x : m), null);
+        if (b && (!E.top[k] || b.viewers > E.top[k].peak)) E.top[k] = { ...strip(b), peak: b.viewers, at: ts, avatar: b.avatar || E.top[k]?.avatar || null };
+      }
+    }
+    hall.days = Object.fromEntries(Object.entries(hall.days).sort().slice(-120));
+  } catch (e) { console.error('resumo diário:', e.message); }
   writeJSON(path.join(PUB, 'hall.json'), hall);
 
   // ---- séries por streamer (para as páginas individuais) — os 150 maiores picos

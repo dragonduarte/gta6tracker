@@ -108,6 +108,18 @@
   .ins .kpi .value { font-size: 30px; }
   .ins .note { font-size: 13.5px; color: var(--text-secondary); line-height: 1.45; }
   .ins .note b { color: var(--text-primary); }
+  .days { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+  .day { background: var(--surface-1); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+  .day.cur { border-color: rgba(255,79,154,.55); }
+  .day .dh { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+  .day .dn { font-family: var(--font-display); font-weight: 700; font-size: 19px; }
+  .day .dd { color: var(--text-muted); font-size: 12.5px; }
+  .day .live { font-size: 11px; font-weight: 700; color: var(--sun-1); }
+  .day dl { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 12px; margin: 0; }
+  .day dt { color: var(--text-muted); font-size: 12px; } .day dd { margin: 0; font-weight: 700; font-size: 17px; font-variant-numeric: tabular-nums; }
+  .day dd small { display: block; font-weight: 400; color: var(--text-muted); font-size: 11.5px; }
+  .day .dtop { display: flex; align-items: center; gap: 10px; padding-top: 10px; border-top: 1px solid var(--border); color: var(--text-primary); text-decoration: none; min-width: 0; }
+  .day .dtop .w { min-width: 0; } .day .dtop .w b { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .day .dtop .w small { color: var(--text-muted); font-size: 12px; }
   .gtabuy .by-tag { font-size: 11px; color: var(--text-muted); }
   .clips-gate { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 34px 18px; border: 1px dashed var(--border); border-radius: var(--radius); color: var(--text-secondary); text-align: center; }
   .lg-leg { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12.5px; color: var(--text-secondary); margin-bottom: 8px; }
@@ -216,7 +228,8 @@
     </div>
   </section>`);
 
-  mount('mountInsights', `<section id="resumo"><h2 id="insT"></h2><p class="insight" id="insS"></p><div class="ins" id="ins"></div></section>`);
+  mount('mountInsights', `<section id="resumo"><h2 id="insT"></h2><p class="insight" id="insS"></p><div class="ins" id="ins"></div></section>
+  <section id="dias"><h2 id="dayT"></h2><p class="insight" id="dayS"></p><div class="days" id="days"></div></section>`);
 
   document.getElementById('hallSeg').onclick = (e) => { const b = e.target.closest('button'); if (b) { S.hallMode = b.dataset.h; renderHall(); } };
   S.hallMode = S.hallMode || 'all';
@@ -390,6 +403,57 @@
   }
 
   /* ------------------------------------------------------- principais conclusões */
+  /* ------------------------------------------------ resumo de cada dia (dia 1, dia 2, ...) */
+  const lisDay = (ts) => new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Lisbon' }).format(new Date(ts));
+  function renderDays() {
+    const pt = S.lang === 'pt', L = (a, b) => (pt ? a : b), k = KEYS[S.scope];
+    document.getElementById('dayT').textContent = L('Resumo de cada dia', 'Day by day');
+    document.getElementById('dayS').textContent = L('Dia 1 é o dia do lançamento (19 de novembro, hora de Lisboa). Segue a vista e as plataformas escolhidas no topo.', 'Day 1 is launch day (19 November, Lisbon time). Follows the view and platforms picked at the top.');
+    const set = { twitch: 'twitch', kick: 'tk', all: 'all' }[S.src] || 'twitch';
+    const days = {};
+    // a partir do histórico (exato nas últimas 72 h; depois, 1 ponto por hora)
+    const pts = points();
+    for (let i = 0; i < pts.length; i++) {
+      const d = lisDay(pts[i].ts), v = totalOf(pts[i], k.v), st = totalOf(pts[i], k.s);
+      if (v == null) continue;
+      const o = (days[d] ||= { pk: 0, at: null, hw: 0, ms: 0, top: null, sum: 0, n: 0 });
+      o.sum += v; o.n++;
+      if (v > o.pk) { o.pk = v; o.at = pts[i].ts; }
+      o.ms = Math.max(o.ms, st || 0);
+      const gap = i ? Math.min(2, (Date.parse(pts[i].ts) - Date.parse(pts[i - 1].ts)) / 3600e3) : 1 / 6;
+      o.hw += v * gap;
+    }
+    // resumo guardado pela recolha (não perde detalhe com a compactação)
+    for (const [d, D] of Object.entries(S.hall?.days || {})) {
+      const E = D?.[S.scope]; if (!E) continue;
+      const o = (days[d] ||= { pk: 0, at: null, hw: 0, ms: 0, top: null, sum: 0, n: 0 });
+      if (E.pk?.[set] && E.pk[set].v > o.pk) { o.pk = E.pk[set].v; o.at = E.pk[set].at; }
+      o.hw = Math.max(o.hw, E.hw?.[set] || 0); o.ms = Math.max(o.ms, E.ms?.[set] || 0);
+      o.top = PLATFORMS.map((p) => E.top?.[p]).filter(Boolean).sort((a, b) => b.peak - a.peak)[0] || null;
+    }
+    const launchDay = lisDay(LAUNCH), today = lisDay(Date.now());
+    const num = (d) => Math.round((Date.parse(d) - Date.parse(launchDay)) / 86400e3) + 1;
+    const keys = Object.keys(days).filter((d) => days[d].pk > 0).sort().reverse();
+    const hrs = (h) => fmtC(Math.round(h));
+    document.getElementById('days').innerHTML = keys.length ? keys.map((d) => {
+      const o = days[d], n = num(d);
+      const name = n >= 1 ? L(`Dia ${n}`, `Day ${n}`) : n === 0 ? L('Véspera', 'Launch eve') : L('Antes do lançamento', 'Before launch');
+      const date = new Date(d + 'T12:00:00Z').toLocaleDateString(T().locale, { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' });
+      const at = o.at ? new Date(o.at).toLocaleTimeString(T().locale, { hour: '2-digit', minute: '2-digit', timeZone: pt ? 'Europe/Lisbon' : undefined }) : '';
+      const tp = o.top;
+      return `<div class="day${d === today ? ' cur' : ''}">
+        <div class="dh"><span class="dn">${esc(name)}</span><span class="dd">${d === today ? `<span class="live">● ${L('em curso', 'in progress')}</span> ` : ''}${esc(date)}</span></div>
+        <dl>
+          <div><dt>${L('Pico', 'Peak')}</dt><dd>${fmtC(o.pk)}<small>${at ? L('às ', 'at ') + esc(at) : ''}</small></dd></div>
+          <div><dt>${L('Horas vistas', 'Hours watched')}</dt><dd>${hrs(o.hw)}<small>${L('estimativa', 'estimate')}</small></dd></div>
+          <div><dt>${L('Máx. de streams', 'Max streams')}</dt><dd>${fmt(o.ms)}<small>${L('ao mesmo tempo', 'at once')}</small></dd></div>
+          <div><dt>${L('Média', 'Average')}</dt><dd>${o.n ? fmtC(o.sum / o.n) : '—'}<small>${L('espectadores', 'viewers')}</small></dd></div>
+        </dl>
+        ${tp ? `<a class="dtop" href="${esc(safeUrl(tp.url))}" target="_blank" rel="noopener">${avHtml(tp, 'sm')}<span class="w"><small>${L('Maior streamer do dia', 'Biggest streamer of the day')}</small><b>${esc(tp.name)} · ${fmtC(tp.peak)}</b></span><span class="tag">${plat(tp.platform)}</span></a>` : ''}
+      </div>`;
+    }).join('') : `<div class="dd">${esc(L('Ainda sem dados.', 'No data yet.'))}</div>`;
+  }
+
   function renderInsights() {
     const pt = S.lang === 'pt', L = (a, b) => (pt ? a : b), k = KEYS[S.scope];
     document.getElementById('insT').textContent = L('Principais conclusões', 'Key takeaways');
@@ -642,7 +706,7 @@
   /* ------------------------------------------------------------------ main */
   window.renderExtras = function () {
     const run = (f) => { try { f(); } catch (e) { console.error(f.name, e); } };
-    [renderSponsor, renderGames, renderHeat, renderLangEvo, renderSizes, renderInsights, renderClips, renderHall, renderF24, renderMap, renderTrends].forEach(run);
+    [renderSponsor, renderGames, renderHeat, renderLangEvo, renderSizes, renderInsights, renderDays, renderClips, renderHall, renderF24, renderMap, renderTrends].forEach(run);
   };
   if (points().length || S.liveOk) window.renderExtras();
 })();
