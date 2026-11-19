@@ -74,7 +74,7 @@ const I18N = {
     kick_full: 'lista completa', kick_partial: (n) => `top 100, a mais pequena tem ${n}`, yt_partial: (n) => `top 50, a mais pequena tem ${n}`,
     sources_of: (names) => names.join(', '),
     yt_k_viewers: 'A ver lives agora', yt_k_lives: 'Lives agora', yt_k_read: 'Última leitura', yt_k_vids: 'Vídeos novos (3 h)',
-    yt_live_title: 'Espectadores nas lives do YouTube', yt_live_desc: 'Uma leitura por hora',
+    yt_live_title: 'Espectadores nas lives do YouTube', yt_live_desc: (n) => `Conta só as maiores lives (cerca de 50, as que a pesquisa do YouTube devolve${n ? `; agora a mais pequena tem ${n} espectadores` : ''}). As lives mais pequenas não entram, por isso o total real é maior. Uma leitura por hora.`,
     yt_board: 'Lives com mais gente', yt_board_empty: 'Sem lives nesta vista na última leitura.',
     yt_disc: 'O YouTube só mostra as 50 lives mais vistas e é lido de hora a hora, por isso estes números são um mínimo e não entram no total por defeito. ',
     flow_title: 'Streams a entrar e a sair', flow_desc: 'Por hora: canais que começaram (acima) e que terminaram (abaixo) de transmitir GTA VI',
@@ -143,7 +143,7 @@ const I18N = {
     kick_full: 'complete list', kick_partial: (n) => `top 100, the smallest has ${n}`, yt_partial: (n) => `top 50, the smallest has ${n}`,
     sources_of: (names) => names.join(', '),
     yt_k_viewers: 'Watching lives now', yt_k_lives: 'Lives now', yt_k_read: 'Last read', yt_k_vids: 'New videos (3 h)',
-    yt_live_title: 'Viewers on YouTube lives', yt_live_desc: 'One reading per hour',
+    yt_live_title: 'Viewers on YouTube lives', yt_live_desc: (n) => `Counts only the biggest lives (about 50, the ones YouTube search returns${n ? `; right now the smallest has ${n} viewers` : ''}). Smaller lives are left out, so the real total is higher. One reading per hour.`,
     yt_board: 'Lives with the most people', yt_board_empty: 'No lives in this view in the last reading.',
     yt_disc: 'YouTube only shows the 50 most-watched lives and is read hourly, so these numbers are a minimum and are left out of the total by default.',
     flow_title: 'Streams starting and ending', flow_desc: 'Per hour: channels that started (up) and stopped (down) streaming GTA VI',
@@ -660,7 +660,7 @@ function renderYoutube() {
   document.getElementById('ytH2').innerHTML = `<span style="display:inline-flex;align-items:center;gap:10px">${plat('youtube', false).replace('width="16" height="16"', 'width="16" height="16"')}YouTube</span>`;
   document.getElementById('ytSub').textContent = t('yt_sub');
   document.getElementById('ytLiveT').textContent = t('yt_live_title');
-  document.getElementById('ytLiveD').textContent = t('yt_live_desc');
+  document.getElementById('ytLiveD').textContent = T().yt_live_desc(S.latest?.totals?.youtube?.min_v ? fmt(S.latest.totals.youtube.min_v) : '');
   document.getElementById('ytBoardT').textContent = t('yt_board');
   const reads = points().filter((p) => p.youtube && !p.youtube.c);
   const last = reads[reads.length - 1];
