@@ -175,6 +175,26 @@ async function run() {
     }
     history.fix_tw_pages = new Date().toISOString();
   }
+  // reposição única: volta a pôr os valores originais das recolhas de 19/11 (15:10–17:40) que a limpeza tinha tirado,
+  // exatamente como estavam. Lê scripts/restore-2026-11-19.json (cópia do histórico antigo). Só preenche o que falta,
+  // não apaga nem altera nada que já exista. As entradas/saídas não são repostas.
+  const RESTORE = path.join(ROOT, 'scripts', 'restore-2026-11-19.json');
+  const RESTORED = fs.existsSync(RESTORE) ? readJSON(RESTORE, { points: [] }) : null;
+  if (RESTORED && history.restored_1119 !== (RESTORED.source || '1')) {
+    const back = (RESTORED.points || []).filter((p) => p.ts >= '2026-11-19T15:05:00Z' && p.ts < '2026-11-19T17:50:00Z');
+    const FLOW = new Set(['si', 'so', 'psi', 'pso', 'ppsi', 'ppso']);
+    for (const r of back) {
+      let cur = history.points.find((p) => p.ts === r.ts);
+      if (!cur) { cur = { ts: r.ts }; history.points.push(cur); }
+      for (const [k, b] of Object.entries(r)) {
+        if (k === 'ts') continue;
+        if (b && typeof b === 'object' && !Array.isArray(b)) { cur[k] ||= {}; for (const [f, v] of Object.entries(b)) if (!FLOW.has(f) && cur[k][f] === undefined) cur[k][f] = v; }
+        else if (cur[k] === undefined) cur[k] = b;
+      }
+    }
+    history.points.sort((a, b) => a.ts.localeCompare(b.ts));
+    history.restored_1119 = RESTORED.source || '1';
+  }
   const point = { ts };
   // YouTube não consultado nesta recolha: repete o último valor (marcado com c:1) para os totais não caírem
   if (!res.youtube) {
