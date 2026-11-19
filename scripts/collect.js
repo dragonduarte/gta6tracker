@@ -136,16 +136,22 @@ async function run() {
   const flow = {}, nextSets = { ts };
   for (const [k, r] of Object.entries(res)) {
     if (k === 'youtube') continue;
-    const sets = { g: new Set(r.list.map((x) => x.id)), p: new Set(r.list.filter((x) => x.lang === 'pt').map((x) => x.id)), q: new Set(r.list.filter((x) => x.portugal).map((x) => x.id)) };
-    nextSets[k] = Object.fromEntries(Object.entries(sets).map(([n, v]) => [n, [...v]]));
+    // lista completa (Twitch): conta todos. Lista parcial (Kick, só top 100): conta só canais bem acima do mínimo
+    // da amostra (2× o mais pequeno), para não confundir "saiu do top 100" com "terminou a stream".
+    const thr = r.complete === false ? Math.max(1, 2 * (r.min_v || 0)) : 0;
+    const big = r.list.filter((x) => x.viewers >= thr);
+    const sets = { g: new Set(big.map((x) => x.id)), p: new Set(big.filter((x) => x.lang === 'pt').map((x) => x.id)), q: new Set(big.filter((x) => x.portugal).map((x) => x.id)) };
+    const all = new Set(r.list.map((x) => x.id));
+    nextSets[k] = { ...Object.fromEntries(Object.entries(sets).map(([n, v]) => [n, [...v]])), a: [...all], t: thr };
     const prevSets = liveSets[k];
-    if (!prevSets || !liveSets.ts || now - Date.parse(liveSets.ts) > 25 * 60e3 || now <= Date.parse(liveSets.ts) || r.complete === false) continue;
+    if (!prevSets || !liveSets.ts || now - Date.parse(liveSets.ts) > 25 * 60e3 || now <= Date.parse(liveSets.ts)) continue;
+    const oldAll = new Set(prevSets.a || prevSets.g || []);
     const f = {};
     for (const [n, cur] of Object.entries(sets)) {
-      const old = new Set(prevSets[n] || []);
-      f[n] = { i: [...cur].filter((x) => !old.has(x)).length, o: [...old].filter((x) => !cur.has(x)).length };
+      // entrou: está agora (acima do limite) e não aparecia em lado nenhum antes; saiu: estava (acima do limite) e já não aparece
+      f[n] = { i: [...cur].filter((x) => !oldAll.has(x)).length, o: (prevSets[n] || []).filter((x) => !all.has(x)).length };
     }
-    flow[k] = f;
+    flow[k] = f; flow[k].t = thr;
   }
   for (const k of Object.keys(liveSets)) if (k !== 'ts' && !nextSets[k]) nextSets[k] = liveSets[k]; // plataforma falhou: mantém
   if (!(liveSets.ts && Date.parse(liveSets.ts) >= now.getTime())) writeJSON(path.join(PRIV, 'live-ids.json'), nextSets);
@@ -172,7 +178,7 @@ async function run() {
       }
     }
     if (r.rank != null) point[k].rank = r.rank;
-    if (flow[k]) Object.assign(point[k], { si: flow[k].g.i, so: flow[k].g.o, psi: flow[k].p.i, pso: flow[k].p.o, ppsi: flow[k].q.i, ppso: flow[k].q.o });
+    if (flow[k]) Object.assign(point[k], { si: flow[k].g.i, so: flow[k].g.o, psi: flow[k].p.i, pso: flow[k].p.o, ppsi: flow[k].q.i, ppso: flow[k].q.o }, flow[k].t ? { ft: flow[k].t } : {});
     if (r.top10 != null) point[k].t10 = r.top10;
     const dom = k === 'twitch' ? extras.dominance : r.dominance;
     if (dom) Object.assign(point[k], { dg: dom.gta_viewers, dt: dom.sample_viewers, d100: dom.gta_in_top100, d10: dom.gta_in_top10, dn: dom.sample });

@@ -704,7 +704,8 @@ function renderYoutube() {
 function renderFlow() {
   const keys = { global: ['si', 'so'], luso: ['psi', 'pso'], portugal: ['ppsi', 'ppso'] }[S.scope];
   document.getElementById('flowT').textContent = t('flow_title');
-  document.getElementById('flowD').textContent = t('flow_desc');
+  const kFt = PLATFORMS.includes('kick') ? [...points()].reverse().find((p) => p.kick?.ft)?.kick.ft : null;
+  document.getElementById('flowD').textContent = t('flow_desc') + (kFt ? (S.lang === 'pt' ? `. Na Kick (só top 100) contam só canais com ${fmt(kFt)}+ espectadores.` : `. On Kick (top 100 only), only channels with ${fmt(kFt)}+ viewers count.`) : '');
   const pts = points().filter((p) => Date.parse(p.ts) >= rangeStart());
   const byH = new Map();
   for (const p of pts) {
