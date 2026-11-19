@@ -2,7 +2,7 @@
 // Corre no servidor do Vercel: as chaves ficam nas Environment Variables do Vercel e nunca vão para o browser.
 // Resposta em cache na CDN durante 2 min → no máximo ~1 pedido a cada 2 minutos às APIs, por muitos visitantes que tenhas.
 // O YouTube não entra aqui (a quota grátis não chega para pedidos ao minuto) — vem da recolha horária.
-import { twitchSnapshot, kickSnapshot, creds, strip } from '../lib/platforms.js';
+import { twitchSnapshot, kickSnapshot, creds, strip, redact } from '../lib/platforms.js';
 
 // Proteção extra: além da cache da CDN, cada instância reaproveita o último resultado durante 45 s
 // e junta pedidos simultâneos num só. Assim, mesmo com milhares de visitas, as APIs quase não sentem.
@@ -19,6 +19,7 @@ export default async function handler(req, res) {
     res.setHeader('Allow', 'GET, HEAD');
     return res.status(405).send(JSON.stringify({ error: 'method not allowed' }));
   }
+  if (/\?./.test(req.url || '')) { res.setHeader('Cache-Control', 'public, s-maxage=3600'); return res.status(400).send('{"error":"no parameters"}'); }
   res.setHeader('Cache-Control', 'public, s-maxage=120, stale-while-revalidate=300');
   if (memo && Date.now() - memo.at < FRESH_MS) return res.status(200).send(memo.body);
   try {
@@ -50,7 +51,7 @@ async function collect() {
         top_portugal: r.list.filter((s) => s.portugal).slice(0, 15).map(strip),
       };
     } catch (e) {
-      out.errors.push(`${k}: ${String(e.message).slice(0, 160)}`); // nunca inclui credenciais
+      out.errors.push(redact(`${k}: ${String(e.message)}`).slice(0, 160)); // nunca inclui credenciais
     }
   }));
   // Se uma plataforma falhou mas temos um valor recente, mantém-no (marcado como antigo)

@@ -51,7 +51,10 @@ export default async function handler(req, res) {
     res.setHeader('Allow', 'GET, HEAD');
     return res.status(405).send('{"error":"method not allowed"}');
   }
-  const name = String(new URL(req.url || '/', 'http://x').searchParams.get('f') || '');
+  const sp = new URL(req.url || '/', 'http://x').searchParams;
+  const name = String(sp.get('f') || '');
+  // só o parâmetro "f" é aceite (outros serviriam para contornar a cache da CDN)
+  if ([...sp.keys()].some((k) => k !== 'f') || sp.getAll('f').length !== 1) { res.setHeader('Cache-Control', 'public, s-maxage=3600'); return res.status(400).send('{"error":"bad request"}'); }
   if (!FILES.has(name)) return res.status(404).send('{"error":"not found"}');
 
   const m = memo.get(name);

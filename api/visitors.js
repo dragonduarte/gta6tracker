@@ -25,12 +25,22 @@ async function redis(cmds) {
   } finally { clearTimeout(timer); }
 }
 
+// Só aceita batimentos vindos do próprio site num browser (os browsers atuais mandam sempre Sec-Fetch-Site).
 function sameOrigin(req) {
   const h = req.headers || {};
-  if (h['sec-fetch-site'] && h['sec-fetch-site'] !== 'same-origin') return false;
+  if (h['sec-fetch-site'] !== 'same-origin') return false;
   const origin = h.origin;
   if (!origin) return true;
   try { return new URL(origin).host === h.host; } catch { return false; }
+}
+// Limite por IP (só em memória, nada é guardado): no máximo 1 batimento a cada 60 s por IP e instância.
+const seen = new Map();
+function throttled(req) {
+  const ip = String(req.headers?.['x-forwarded-for'] || req.headers?.['x-real-ip'] || '').split(',')[0].trim() || 'x';
+  const now = Date.now(), last = seen.get(ip) || 0;
+  if (seen.size > 5000) for (const [k, t] of seen) if (now - t > 120e3) seen.delete(k);
+  if (now - last < 60e3) return true;
+  seen.set(ip, now); return false;
 }
 
 async function readBody(req) {
@@ -55,6 +65,7 @@ export default async function handler(req, res) {
   if (req.method === 'POST') {
     res.setHeader('Cache-Control', 'no-store');
     if (!sameOrigin(req)) return res.status(403).send('{"error":"forbidden"}');
+    if (throttled(req)) return res.status(204).end();
     const body = await readBody(req);
     // 1 comando por batimento (o plano grátis do Upstash conta comandos); EXPIRE só quando a chave nasce
     const cmds = [['INCR', `on:${slot}`]];

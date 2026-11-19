@@ -7,7 +7,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { twitchSnapshot, twitchExtras, kickSnapshot, youtubeSnapshot, creds, strip, setLearnedPortugal, ptSignal, usage } from '../lib/platforms.js';
+import { redact, notPortugal, twitchSnapshot, twitchExtras, kickSnapshot, youtubeSnapshot, creds, strip, setLearnedPortugal, ptSignal, usage } from '../lib/platforms.js';
 import { forecast, peakOf } from '../public/forecast.js';
 import PORTUGAL_LIST from '../portugal.js';
 
@@ -60,6 +60,8 @@ async function run() {
   const res = {}, errors = [];
   // canais que o tracker já reconheceu como portugueses
   const learned = readJSON(path.join(PRIV, 'portugal-learned.json'), { twitch: {}, kick: {}, youtube: {} });
+  // canais marcados como "não são de Portugal": esquecer o que foi aprendido sobre eles
+  for (const b of Object.values(learned)) for (const [kk, v] of Object.entries(b || {})) if (notPortugal(kk, v?.name)) delete b[kk];
   setLearnedPortugal(Object.fromEntries(Object.entries(learned).map(([k, v]) => [k, Object.keys(v || {})])));
   const ytCache = readJSON(path.join(PRIV, 'yt-channels.json'), {});
   const jobs = process.env.MOCK
@@ -74,7 +76,7 @@ async function run() {
     if (!p) { console.log(`${k}: sem credenciais, a saltar`); return; }
     try { res[k] = await p; console.log(`${k}: ${res[k].streams} streams, ${res[k].viewers} espectadores`); }
     catch (e) {
-      errors.push(`${k}: ${e.message}`); console.error(`ERRO ${k}:`, e.message);
+      errors.push(redact(`${k}: ${e.message}`).slice(0, 200)); console.error(`ERRO ${k}:`, redact(e.message));
       // quota esgotada de verdade (403): bloqueia o YouTube até ao fim do dia do Pacífico
       if (k === 'youtube' && e.quotaExceeded) quota.units = Math.max(quota.units, 10000);
     }
@@ -95,7 +97,7 @@ async function run() {
       const strong = (k === 'youtube' && (st.country === 'PT')) || (st.lang === 'pt' && ptSignal(st.title) === 'strong');
       const key = String(k === 'youtube' ? st.id : st.login || '').toLowerCase();
       if (!key) continue;
-      if (strong) bucket[key] = { name: st.name, n: (bucket[key]?.n || 0) + 1, last: ts };
+      if (strong && !notPortugal(key, st.name, st.id)) bucket[key] = { name: st.name, n: (bucket[key]?.n || 0) + 1, last: ts };
     }
   }
   writeJSON(path.join(PRIV, 'portugal-learned.json'), learned);
@@ -107,10 +109,10 @@ async function run() {
   if (res.twitch?.game_id && (c.twitch || process.env.MOCK) && extrasDue) {
     try {
       extras = process.env.MOCK ? (await import('./mock.js')).mockExtras(now) : await twitchExtras({ ...c.twitch, gameId: res.twitch.game_id, gta: res.twitch, now });
-      if (extras.clips_error) errors.push(`twitch clips: ${extras.clips_error}`);
-      if (extras.games_error) errors.push(`twitch jogos: ${extras.games_error}`);
+      if (extras.clips_error) errors.push(redact(`twitch clips: ${extras.clips_error}`).slice(0, 200));
+      if (extras.games_error) errors.push(redact(`twitch jogos: ${extras.games_error}`).slice(0, 200));
       state.extras = ts;
-    } catch (e) { errors.push(`twitch extras: ${e.message}`); }
+    } catch (e) { errors.push(redact(`twitch extras: ${e.message}`).slice(0, 200)); }
   }
   // mantém a lista de jogos atualizada com o valor de GTA VI desta recolha
   if (!extras.games && prevLatest.games?.twitch && res.twitch) {
@@ -221,6 +223,9 @@ async function run() {
 
   // ---- Hall of Fame: maior pico de cada streamer (geral e nas primeiras 24 h após o lançamento)
   const hall = readJSON(path.join(PUB, 'hall.json'), { all: {}, first24: {} });
+  // limpa a marca de Portugal dos canais da lista "nao_portugal" (também nos recordes já guardados)
+  for (const b of [hall.all, hall.first24]) for (const h of Object.values(b || {})) if (h.portugal && notPortugal(h.id, h.name)) h.portugal = false;
+  for (const D of Object.values(hall.days || {})) for (const [k, v] of Object.entries(D?.portugal?.top || {})) if (notPortugal(v.id, v.name)) delete D.portugal.top[k];
   const inFirst24 = now.getTime() >= LAUNCH && now.getTime() < LAUNCH + 24 * 3600e3;
   const bump = (bucket, s) => {
     const key = `${s.platform}:${s.id}`, cur = bucket[key];
@@ -253,7 +258,7 @@ async function run() {
       }
     }
     hall.days = Object.fromEntries(Object.entries(hall.days).sort().slice(-120));
-  } catch (e) { console.error('resumo diário:', e.message); }
+  } catch (e) { console.error('resumo diário:', redact(e.message)); }
   writeJSON(path.join(PUB, 'hall.json'), hall);
 
   // ---- séries por streamer (para as páginas individuais) — os 150 maiores picos
@@ -264,7 +269,7 @@ async function run() {
   for (const key of tracked) {
     const s = liveByKey.get(key), h = hall.all[key];
     const rec = series[key] || { name: h.name, platform: h.platform, url: h.url, avatar: h.avatar, lang: h.lang, portugal: h.portugal, pts: [] };
-    Object.assign(rec, { name: h.name, avatar: h.avatar || rec.avatar, peak: h.peak, peak_at: h.at, portugal: h.portugal || rec.portugal });
+    Object.assign(rec, { name: h.name, avatar: h.avatar || rec.avatar, peak: h.peak, peak_at: h.at, portugal: (h.portugal || rec.portugal) && !notPortugal(h.id, h.name) });
     const same = rec.pts.find((x) => x[0] === hourIdx);
     if (s) { if (same) same[1] = Math.max(same[1], s.viewers); else rec.pts.push([hourIdx, s.viewers]); }
     rec.pts = rec.pts.slice(-1500);

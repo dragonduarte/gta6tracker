@@ -29,11 +29,11 @@
       share_t_title: 'A fatia de cada plataforma', share_t_sub: 'Percentagem dos espectadores, hora a hora',
       heat_title: 'Quando é que se vê mais GTA VI?', heat_sub: 'Espectadores por hora do dia, na tua hora local. Mais claro, mais gente.', heat_less: 'menos', heat_more: 'mais',
       clips_title: '🎬 Os clips mais vistos', clips_sub: 'Clips de GTA VI mais vistos na Twitch nas últimas 24 h', clips_sub_pt: 'Clips em português mais vistos na Twitch nas últimas 24 h', clips_empty: 'Ainda sem clips nesta vista.',
-      hall_title: '🏆 Recordes por streamer', hall_sub: 'O maior número de pessoas que cada streamer teve a ver ao mesmo tempo', hall_all: 'Desde sempre', hall_24: 'Primeiras 24 h', hall_empty: 'Ainda sem recordes nesta vista.',
+      hall_title: '🏆 Recordes por streamer', hall_sub: { global: 'O maior número de pessoas que cada streamer teve a ver ao mesmo tempo', portugal: 'O maior número de pessoas que cada streamer teve a ver ao mesmo tempo', luso: 'O maior número de pessoas que cada streamer teve a ver ao mesmo tempo' }, hall_all: 'Desde sempre', hall_24: 'Desde o lançamento', hall_empty: 'Ainda sem recordes nesta vista.',
       mara_title: '⏳ Maratonas', mara_sub: 'As streams que estão no ar há mais tempo', mara_empty: 'Sem maratonas nesta vista.', live_for: 'no ar há',
       f24_title: '⏱️ As primeiras 24 horas', f24_sub: 'Resumo automático do dia de lançamento',
       f24_wait: (d) => `Disponível a partir de ${d}. Até lá, o dashboard vai guardando tudo.`, f24_partial: 'ainda a decorrer, atualiza de hora a hora',
-      f24_peak: 'Pico de espectadores', f24_hours: 'Horas assistidas', f24_avg: 'Média de espectadores', f24_streams: 'Pico de streams', f24_peak_at: 'Hora de pico', f24_top: 'Maiores picos individuais', f24_img: 'Descarregar imagem das 24 h',
+      f24_peak: 'Pico de espectadores', f24_hours: 'Horas assistidas', f24_avg: 'Média de espectadores', f24_streams: 'Pico de streams', f24_peak_at: 'Hora de pico', f24_top: 'Maiores picos desde o lançamento (00:00)', f24_img: 'Descarregar imagem das 24 h',
       sc24_eyebrow: 'As primeiras 24 horas', sc24_peak: 'pico de espectadores em simultâneo no dia 1',
       map_title: 'Mapa por língua', map_sub: 'Espectadores na Twitch e na Kick pela língua da stream. Cada língua pinta os países onde é falada, por isso não é a localização real de quem vê.', map_loading: 'A carregar mapa…', map_fail: 'Não foi possível carregar o mapa.',
       trends_title: 'Interesse no Google', trends_sub: { global: 'Pesquisas por "{k}" no mundo, últimos 90 dias (0–100, relativo)', portugal: 'Pesquisas por "{k}" em Portugal, últimos 90 dias (0–100, relativo)', luso: 'Pesquisas por "{k}": Portugal vs Brasil, últimos 90 dias (0–100, relativo)' }, trends_open: 'Abrir no Google Trends',
@@ -63,11 +63,11 @@
       share_t_title: 'Each platform\'s slice', share_t_sub: 'Share of viewers, hour by hour',
       heat_title: 'When do people watch GTA VI?', heat_sub: 'Viewers by hour of day, in your local time. Lighter means more people.', heat_less: 'less', heat_more: 'more',
       clips_title: '🎬 The most-watched clips', clips_sub: 'Most-viewed GTA VI clips on Twitch in the last 24 h', clips_sub_pt: 'Most-viewed Portuguese-language clips on Twitch, last 24 h', clips_empty: 'No clips in this view yet.',
-      hall_title: '🏆 Records by streamer', hall_sub: 'The most people each streamer has had watching at once', hall_all: 'All time', hall_24: 'First 24 h', hall_empty: 'No records in this view yet.',
+      hall_title: '🏆 Records by streamer', hall_sub: 'The most people each streamer has had watching at once', hall_all: 'All time', hall_24: 'Since launch', hall_empty: 'No records in this view yet.',
       mara_title: '⏳ Marathons', mara_sub: 'The streams that have been live the longest', mara_empty: 'No marathons in this view.', live_for: 'live for',
       f24_title: '⏱️ The first 24 hours', f24_sub: 'Automatic launch-day summary',
       f24_wait: (d) => `Available from ${d}. Until then, the dashboard keeps recording.`, f24_partial: 'still in progress, updates hourly',
-      f24_peak: 'Peak viewers', f24_hours: 'Hours watched', f24_avg: 'Average viewers', f24_streams: 'Peak streams', f24_peak_at: 'Peak hour', f24_top: 'Biggest individual peaks', f24_img: 'Download 24 h image',
+      f24_peak: 'Peak viewers', f24_hours: 'Hours watched', f24_avg: 'Average viewers', f24_streams: 'Peak streams', f24_peak_at: 'Peak hour', f24_top: 'Biggest peaks since launch (00:00 Lisbon)', f24_img: 'Download 24 h image',
       sc24_eyebrow: 'The first 24 hours', sc24_peak: 'peak concurrent viewers on day one',
       map_title: 'Map by language', map_sub: 'Twitch and Kick viewers by stream language. Each language colours the countries where it is spoken, so it is not where viewers actually are.', map_loading: 'Loading map…', map_fail: 'Could not load the map.',
       trends_title: 'Google interest', trends_sub: { global: 'Searches for "{k}" worldwide, last 90 days (0–100, relative)', portugal: 'Searches for "{k}" in Portugal, last 90 days (0–100, relative)', luso: 'Searches for "{k}": Portugal vs Brazil, last 90 days (0–100, relative)' }, trends_open: 'Open in Google Trends',
@@ -242,7 +242,7 @@
   <section id="dias"><h2 id="dayT"></h2><p class="insight" id="dayS"></p><div class="days" id="days"></div></section>`);
 
   document.getElementById('hallSeg').onclick = (e) => { const b = e.target.closest('button'); if (b) { S.hallMode = b.dataset.h; renderHall(); } };
-  S.hallMode = S.hallMode || 'all';
+  S.hallMode = S.hallMode || (Date.now() >= LAUNCH.getTime() && Date.now() < LAUNCH.getTime() + 48 * 3600e3 ? 'first24' : 'all');
 
   /* ------------------------------------------------------------ patrocínio */
   // Bloco de compra (afiliado). Texto muda com a fase: antes do lançamento, nas primeiras 48 h e depois.
@@ -583,12 +583,13 @@
   }
   function renderHall() {
     document.getElementById('hallH2').textContent = S.lang === 'pt' ? 'Quem juntou mais gente' : 'Who drew the biggest crowds';
-    const best = Object.values(S.hall?.all || {}).filter(scopeFilter).sort((a, b) => b.peak - a.peak)[0];
+    const best = Object.values(S.hall?.[S.hallMode] || {}).filter(scopeFilter).sort((a, b) => b.peak - a.peak)[0];
+    const since = S.hallMode === 'first24';
     document.getElementById('hallInsight').innerHTML = best ? (S.lang === 'pt'
-      ? `O recorde nesta vista é de <b>${esc(best.name)}</b>, com <b>${fmt(best.peak)}</b> pessoas a ver ao mesmo tempo na ${NAMES[best.platform]}, ${esc(dt(best.at, { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' }))}.`
-      : `The record in this view belongs to <b>${esc(best.name)}</b>, with <b>${fmt(best.peak)}</b> people watching at once on ${NAMES[best.platform]}, on ${esc(dt(best.at, { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' }))}.`) : '';
+      ? `${since ? 'Desde o lançamento (19/11, 00:00), o' : 'Desde que o tracker começou (inclui a véspera), o'} recorde nesta vista é de <b>${esc(best.name)}</b>, com <b>${fmt(best.peak)}</b> pessoas a ver ao mesmo tempo na ${NAMES[best.platform]}, ${esc(dt(best.at, { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' }))}.`
+      : `${since ? 'Since launch (Nov 19, 00:00 Lisbon), the' : 'Since tracking began (including launch eve), the'} record in this view belongs to <b>${esc(best.name)}</b>, with <b>${fmt(best.peak)}</b> people watching at once on ${NAMES[best.platform]}, on ${esc(dt(best.at, { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' }))}.`) : '';
     document.getElementById('hallT').textContent = X('hall_title');
-    document.getElementById('hallS').textContent = X('hall_sub');
+    document.getElementById('hallS').textContent = X('hall_sub') + (S.lang === 'pt' ? (S.hallMode === 'first24' ? ' — só desde as 00:00 de 19/11.' : ' — inclui antes do lançamento.') : (S.hallMode === 'first24' ? ' — only since 00:00, Nov 19.' : ' — includes before launch.'));
     document.querySelectorAll('#hallSeg button').forEach((b) => { b.textContent = X(b.dataset.h === 'all' ? 'hall_all' : 'hall_24'); b.setAttribute('aria-pressed', b.dataset.h === S.hallMode); });
     const rows = Object.values(S.hall?.[S.hallMode] || {}).filter(scopeFilter).sort((a, b) => b.peak - a.peak).slice(0, 10);
     document.getElementById('hall').innerHTML = rows.length ? rows.map((r, i) => boardRow(r, i, `${fmt(r.peak)}<small>${X('viewers')}</small>`,

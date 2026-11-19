@@ -48,3 +48,35 @@ test('YouTube: 403 de quota é marcado para parar o dia', async () => {
   globalThis.fetch = async () => J({ error: { message: 'quota', errors: [{ reason: 'quotaExceeded' }] } }, 403);
   await assert.rejects(youtubeSnapshot({ apiKey: 'k', ptHandles: [] }), (e) => e.quotaExceeded === true);
 });
+
+test('Portugal: lista nao_portugal tira canais de Portugal', async () => {
+  const { notPortugal } = await import('../lib/platforms.js');
+  assert.equal(notPortugal('maxMRM GAMEPLAY'), true);
+  assert.equal(notPortugal('@maxmrmgameplay'), true);
+  assert.equal(notPortugal('MAXMRM_GAMEPLAY'), true);
+  assert.equal(notPortugal('wuant'), false);
+});
+
+test('Segurança: redact apaga chaves de textos públicos', async () => {
+  const { redact } = await import('../lib/platforms.js');
+  const env = { YOUTUBE_API_KEY: 'AIzaSECRETKEY123456', TWITCH_CLIENT_SECRET: 'twsecret999' };
+  const out = redact('falhou https://x/y?part=id&key=AIzaSECRETKEY123456&q=1 twsecret999 Bearer abc.def', env);
+  assert.ok(!out.includes('AIzaSECRETKEY123456') && !out.includes('twsecret999') && !out.includes('abc.def'));
+});
+
+test('Segurança: APIs recusam parâmetros extra (não se contorna a cache)', async () => {
+  const mk = () => { const r = { headers: {}, code: 0, setHeader(k, v) { this.headers[k] = v; }, status(c) { this.code = c; return this; }, send() { return this; }, end() { return this; } }; return r; };
+  const live = (await import('../api/live.js')).default;
+  let r = mk(); await live({ method: 'GET', url: '/api/live?x=1' }, r); assert.equal(r.code, 400);
+  const data = (await import('../api/data.js')).default;
+  r = mk(); await data({ method: 'GET', url: '/api/data?f=latest&x=1' }, r); assert.equal(r.code, 400);
+  r = mk(); await data({ method: 'GET', url: '/api/data?f=../../etc' }, r); assert.equal(r.code, 404);
+});
+
+test('Segurança: contador de visitas só aceita o próprio site', async () => {
+  process.env.KV_REST_API_URL = 'https://redis.example'; process.env.KV_REST_API_TOKEN = 'tok';
+  const v = (await import('../api/visitors.js')).default;
+  const r = { headers: {}, code: 0, setHeader() {}, status(c) { this.code = c; return this; }, send() { return this; }, end() { return this; } };
+  await v({ method: 'POST', url: '/api/visitors', headers: { host: 'a.com' }, body: { first: true } }, r);
+  assert.equal(r.code, 403);
+});

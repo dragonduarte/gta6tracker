@@ -42,6 +42,12 @@ export default {
     '@MoveMind', '@zorlaKOKA', '@MoraisHD', '@JOliveira10', '@RTPArena', '@ClipsdoWuant', '@godmota', '@FraggerSandro',
     '@Rayderzaoo', '@jottapdrr', '@oRuiPinto', '@impaKt', '@CesarVSC', '@imHugoLeandro', '@MikeCherry',
   ],
+  // Canais que NÃO são de Portugal, mesmo que o tracker os apanhe (por ex. canal do YouTube com país "Portugal").
+  // Escreve o nome como aparece no site (ou o login / @ / ID UC...). Maiúsculas, espaços e @ não contam.
+  // Ficam de fora de Portugal em todas as tabelas a partir da próxima recolha.
+  nao_portugal: [
+    'maxMRM GAMEPLAY',
+  ],
   // Marcas explícitas de Portugal no TÍTULO (nas tags não contam como fortes: há brasileiros que põem a tag "Portugal")
   keywords: [
     'portugal', 'pt-pt', 'ptpt', 'pt_pt', '[pt]', '(pt)', 'português de portugal', 'portugues de portugal',

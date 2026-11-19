@@ -48,7 +48,7 @@ const I18N = {
     board_desc: 'Agora, nas plataformas escolhidas', board_empty: 'Ninguém a transmitir nesta vista neste momento.',
     viewers: 'espectadores', views: 'visualizações',
     yt_sub: 'Lives e vídeos novos que mencionam "GTA VI", "GTA 6", "GTA6", "Grand Theft Auto VI" ou "Grand Theft Auto 6".',
-    yt_new_title: 'Vídeos novos publicados', yt_new_desc: 'Por cada 3 horas. O número é uma estimativa do próprio YouTube.',
+    yt_new_title: 'Vídeos novos de criadores portugueses', yt_new_desc: 'Uma barra por cada 3 horas. Contados um a um nos canais portugueses que o tracker segue.',
     lang_title: 'Twitch e Kick por língua', lang_desc: 'Espectadores na última recolha, 8 línguas com mais audiência',
     vid_title: { global: 'Os vídeos novos mais vistos', portugal: 'Vídeos novos de canais portugueses', luso: 'Vídeos novos em português' },
     vid_desc: { global: 'Publicados nas 3 horas antes da última recolha de vídeos', portugal: 'Vídeos sobre GTA VI dos últimos 7 dias, de criadores portugueses (RicFazeres, Wuant, SirKazzio e outros)', luso: 'Publicados nas 3 horas antes da última recolha de vídeos' }, no_videos: 'Ainda não há vídeos nesta vista.',
@@ -117,7 +117,7 @@ const I18N = {
     board_desc: 'Right now, on the chosen platforms', board_empty: 'Nobody is streaming in this view right now.',
     viewers: 'viewers', views: 'views',
     yt_sub: 'Live streams and new videos that mention "GTA VI", "GTA 6", "GTA6", "Grand Theft Auto VI" or "Grand Theft Auto 6".',
-    yt_new_title: 'New videos published', yt_new_desc: 'Per 3 hours. The number is YouTube\'s own estimate.',
+    yt_new_title: 'New videos from Portuguese creators', yt_new_desc: 'One bar per 3 hours. Counted one by one on the Portuguese channels the tracker follows.',
     lang_title: 'Twitch and Kick by language', lang_desc: 'Viewers in the latest snapshot, top 8 languages',
     vid_title: { global: 'Most-viewed new videos', portugal: 'New videos from Portuguese channels', luso: 'New videos in Portuguese' },
     vid_desc: { global: 'Published in the 3 hours before the latest video snapshot', portugal: 'GTA VI videos from the last 7 days by Portuguese creators (RicFazeres, Wuant, SirKazzio and others)', luso: 'Published in the 3 hours before the latest video snapshot' }, no_videos: 'No videos in this view yet.',
@@ -166,7 +166,7 @@ const INFO = {
     kick: () => { const k = S.latest?.totals?.kick; return `A API pública da Kick devolve no máximo 100 streams por pedido. Com menos de 100, a lista é completa. Com 100 ou mais, vemos só as maiores${k?.min_v ? ` (agora a mais pequena tem ${fmt(k.min_v)} espectadores)` : ''}.`; },
     yt_live: 'O YouTube só devolve as cerca de 50 lives mais vistas que mencionam GTA VI. Lives pequenas ficam de fora.',
     yt_hourly: 'O YouTube tem uma quota diária grátis. Por isso as lives são lidas de hora a hora e os vídeos novos de 3 em 3 horas. Entre leituras, o valor repete-se.',
-    yt_new: 'Estimativa do próprio YouTube para os vídeos publicados nas últimas 3 horas. Pode variar bastante de leitura para leitura.',
+    yt_new: 'O YouTube não diz quantos vídeos de GTA VI saem no total: a estimativa dele fica sempre perto de 480 mil e não é fiável, por isso não a mostramos. Aqui contamos os vídeos novos dos canais portugueses que seguimos, um a um.',
     portugal: 'Nenhuma plataforma diz o país do streamer. Usamos uma lista de criadores portugueses, canais já reconhecidos e marcas de Portugal no título. É sempre uma contagem por baixo.',
     map: 'O mapa mostra a língua da stream, não o país de quem vê. O português pinta Portugal, Brasil e países africanos de língua portuguesa.',
     weight: () => { const d = sampleOf(); return `Das ${d ? fmt(d.sample) : '5 000'} maiores streams da Twitch (todas as categorias), quantos espectadores são de GTA VI.${d?.min_v ? ` A amostra chega até streams com ${fmt(d.min_v)} espectadores; as mais pequenas ficam de fora.` : ''}`; },
@@ -179,7 +179,7 @@ const INFO = {
     kick: () => { const k = S.latest?.totals?.kick; return `Kick's public API returns at most 100 streams per request. With fewer than 100, the list is complete. With 100 or more we only see the biggest${k?.min_v ? ` (right now the smallest has ${fmt(k.min_v)} viewers)` : ''}.`; },
     yt_live: 'YouTube only returns about the 50 most-watched lives that mention GTA VI. Small lives are left out.',
     yt_hourly: 'YouTube has a free daily quota. That is why lives are read hourly and new videos every 3 hours. Between readings the value repeats.',
-    yt_new: "YouTube's own estimate for videos published in the last 3 hours. It can swing a lot between readings.",
+    yt_new: "YouTube does not say how many GTA VI videos come out in total: its estimate always sits near 480K and is not reliable, so we do not show it. Here we count new videos from the Portuguese channels we follow, one by one.",
     portugal: 'No platform tells us a streamer\'s country. We use a list of Portuguese creators, channels already recognised and Portugal markers in the title. It is always an undercount.',
     map: "The map shows the stream's language, not where viewers are. Portuguese colours Portugal, Brazil and the Portuguese-speaking African countries.",
     weight: () => { const d = sampleOf(); return `Of Twitch's ${d ? fmt(d.sample) : '5,000'} biggest streams (all categories), how many viewers are on GTA VI.${d?.min_v ? ` The sample reaches down to streams with ${fmt(d.min_v)} viewers; smaller ones are left out.` : ''}`; },
@@ -575,14 +575,22 @@ function renderCharts() {
   } else document.getElementById('tsInsight').textContent = '';
   document.getElementById('tsH2').textContent = T().ts_h2[S.metric];
 
-  const yp = points().filter((p) => p.youtube?.[k.nv] != null && !p.youtube.c && Date.parse(p.ts) >= rangeStart());
+  // vídeos novos: só o número contado de verdade (Portugal); uma barra por janela de 3 h, sem espaços vazios
+  const nvB = new Map();
+  for (const p of points()) {
+    if (p.youtube?.nvpp == null || p.youtube.c || Date.parse(p.ts) < rangeStart()) continue;
+    const b = Math.floor(Date.parse(p.ts) / (3 * 3600e3));
+    nvB.set(b, Math.max(nvB.get(b) || 0, p.youtube.nvpp));
+  }
+  const nvK = [...nvB.keys()].sort((a, b) => a - b);
+  const nvLbl = (b) => `${dt(b * 3 * 3600e3, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}–${hhmm((b + 1) * 3 * 3600e3)}`;
   mkOrUpdate('ytChart', {
-    type: 'bar', plugins: [launchLine],
-    data: { datasets: [{ label: t('yt_new_title'), data: yp.map((p) => ({ x: Date.parse(p.ts), y: p.youtube[k.nv] })), backgroundColor: COLOR.youtube, borderRadius: 3, borderSkipped: 'bottom', maxBarThickness: 22 }] },
-    options: { responsive: true, maintainAspectRatio: false, parsing: false, animation: false,
-      plugins: { tooltip: { callbacks: { title: (it) => `${dt(it[0].parsed.x - 3 * 3600e3, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })} – ${hhmm(it[0].parsed.x)}`, label: (c) => ` ${fmt(c.parsed.y)}` } } },
-      scales: { x: { type: 'linear', offset: true, min: yp.length ? Date.parse(yp[0].ts) - 5400e3 : undefined, max: yp.length ? Date.parse(yp[yp.length - 1].ts) + 5400e3 : undefined, grid: { display: false }, ticks: { maxTicksLimit: 6, maxRotation: 0, callback: timeTick } },
-                y: { beginAtZero: true, border: { display: false }, ticks: { callback: (v) => fmtC(v) } } } },
+    type: 'bar',
+    data: { labels: nvK.map(nvLbl), datasets: [{ label: t('yt_new_title'), data: nvK.map((b) => nvB.get(b)), backgroundColor: COLOR.youtube, borderRadius: 4, borderSkipped: 'bottom', maxBarThickness: 36 }] },
+    options: { responsive: true, maintainAspectRatio: false, animation: false,
+      plugins: { tooltip: { callbacks: { label: (c) => ` ${fmt(c.parsed.y)} ${S.lang === 'pt' ? 'vídeos' : 'videos'}` } } },
+      scales: { x: { grid: { display: false }, ticks: { maxRotation: 0, autoSkip: true, maxTicksLimit: 8, callback: function (v) { return nvK.length ? dt(nvK[v] * 3 * 3600e3, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : ''; } } },
+                y: { beginAtZero: true, border: { display: false }, ticks: { precision: 0, callback: (v) => fmt(v) } } } },
   });
 
   const langs = Object.entries(S.latest.languages || {}).sort((a, b) => b[1] - a[1]).slice(0, 8);
@@ -673,12 +681,12 @@ function renderYoutube() {
   document.getElementById('ytBoardT').textContent = t('yt_board');
   const reads = points().filter((p) => p.youtube && !p.youtube.c);
   const last = reads[reads.length - 1];
-  const nvPt = [...points()].reverse().find((p) => p.youtube?.[k.nv] != null && !p.youtube.c);
+  const nvPt = [...points()].reverse().find((p) => p.youtube?.nvpp != null && !p.youtube.c);
   const tiles = [
     [t('yt_k_viewers'), last ? fmt(last.youtube[k.v]) : '—', last && S.latest?.totals?.youtube?.min_v ? t('yt_partial')(fmt(S.latest.totals.youtube.min_v)) : (last ? t('top50') : ''), 'yt_live'],
     [t('yt_k_lives'), last ? fmt(last.youtube[k.s]) : '—', S.scope === 'global' ? t('top50') : '', null],
     [t('yt_k_read'), last ? hhmm(last.ts) : '—', t('hourly'), 'yt_hourly'],
-    [t('yt_k_vids'), nvPt ? fmt(nvPt.youtube[k.nv]) : '—', t('yt_new_desc').split('.')[0], 'yt_new'],
+    [t('yt_k_vids'), nvPt ? fmt(nvPt.youtube.nvpp) : '—', S.lang === 'pt' ? 'de Portugal, nas últimas 3 h' : 'from Portugal, last 3 h', 'yt_new'],
   ];
   document.getElementById('ytKpis').innerHTML = tiles.map(([l, v, n, info]) => `<div class="kpi"><div class="label">${esc(l)}${info ? infoBtn(info) : ''}</div><div class="value tnum">${esc(v)}</div><div class="note">${esc(n || '')}</div></div>`).join('');
   const yp = reads.filter((p) => Date.parse(p.ts) >= rangeStart());
@@ -738,13 +746,14 @@ function cardSpark(vals, t0, t1) {
   const W = 928, H = 130, max = Math.max(...vals) || 1;
   const pts = vals.map((v, i) => [i / (vals.length - 1) * W, H - 4 - (v / max) * (H - 10)]);
   const d = pts.map(([x, y], i) => (i ? 'L' : 'M') + x.toFixed(1) + ' ' + y.toFixed(1)).join(' ');
-  const li = (LAUNCH.getTime() - t0) / (t1 - t0);
-  const lx = li > 0 && li < 1 ? li * W : null;
-  return `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" style="margin-top:30px;overflow:visible">
+  // marcas de tempo gerais (início, meio e fim), na hora local de quem descarrega
+  const tick = (f) => dt(t0 + (t1 - t0) * f, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+  const ticks = [[0, 'start'], [0.5, 'middle'], [1, 'end']].map(([f, a]) => `<text x="${f * W}" y="${H + 30}" text-anchor="${a}" fill="#8c8799" font-size="19">${esc(tick(f))}</text>`).join('');
+  return `<svg viewBox="0 0 ${W} ${H + 36}" width="${W}" height="${H + 36}" style="margin-top:24px;overflow:visible">
     <defs><linearGradient id="scg" x1="0" x2="1"><stop offset="0" stop-color="#6c4bff"/><stop offset=".55" stop-color="#ff4f9a"/><stop offset="1" stop-color="#ffc95c"/></linearGradient>
     <linearGradient id="scf" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#ff4f9a" stop-opacity=".28"/><stop offset="1" stop-color="#ff4f9a" stop-opacity="0"/></linearGradient></defs>
     <path d="${d} L ${W} ${H} L 0 ${H} Z" fill="url(#scf)"/><path d="${d}" fill="none" stroke="url(#scg)" stroke-width="4" stroke-linejoin="round"/>
-    ${lx != null ? `<line x1="${lx}" x2="${lx}" y1="0" y2="${H}" stroke="#8c8799" stroke-dasharray="6 6"/><text x="${lx - 10}" y="18" text-anchor="end" fill="#c4c0cf" font-size="18" font-weight="600">${S.lang === 'pt' ? 'Lançamento' : 'Launch'}</text>` : ''}
+    <line x1="0" x2="${W}" y1="${H}" y2="${H}" stroke="#2b2836"/>${ticks}
   </svg>`;
 }
 function cardFoot(extra) {
@@ -752,26 +761,37 @@ function cardFoot(extra) {
 }
 function buildCard() {
   if (S.cardMode === 'first24' && window.buildCard24) return window.buildCard24();
-  const k = KEYS[S.scope];
+  const k = KEYS[S.scope], pt = S.lang === 'pt';
   const tot = seriesTotal(k.v), now = totalNow('V') || 0;
-  const peak = Math.max(0, ...tot, now);
-  const rows = leaderboard().slice(0, 3);
+  // pico (inclui o recorde guardado, que não se perde com a compactação)
+  const stored = srcAll() ? S.history.peaks?.[S.scope] : null;
+  let peak = Math.max(0, ...tot, now), peakTs = points()[tot.indexOf(peak)]?.ts || null;
+  if (stored && stored.v > peak) { peak = stored.v; peakTs = stored.ts; }
+  const when = peakTs ? dt(peakTs, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '';
+  // top de sempre (recordes por streamer), não o top deste momento
+  const inScope = (r) => PLATFORMS.includes(r.platform) && (S.scope === 'global' || (S.scope === 'luso' ? r.lang === 'pt' : !!r.portugal));
+  const rows = Object.values(S.hall?.all || {}).filter(inScope).sort((x, y) => y.peak - x.peak).slice(0, 5);
   const uniq = PLATFORMS.reduce((a, p) => a + (S.latest.unique_channels?.[p] || 0), 0);
+  const rank = S.scope === 'global' ? ((S.liveOk && S.live.twitch?.rank) || [...points()].reverse().find((p) => p.twitch?.rank)?.twitch.rank) : null;
+  const ptNow = (() => { const lp = lastPoint(); const v = PLATFORMS.reduce((a, p) => a + (lp[p]?.pv || 0), 0), g = PLATFORMS.reduce((a, p) => a + (lp[p]?.v || 0), 0); return g ? v / g : null; })();
   const tiles = [
+    [fmtC(now), t('k_now')],
     [fmtC(hoursWatched(k.v)), t('k_hours')],
     [fmtC(totalNow('S')), t('k_streams')],
-    S.scope === 'global' && uniq ? [fmtC(uniq), t('k_unique')] : [fmtC(now), t('k_now')],
-  ];
+    uniq ? [fmtC(uniq), t('k_unique')] : null,
+    rank ? [(pt ? 'nº ' : '#') + rank, pt ? 'jogo mais visto na Twitch' : 'most watched game on Twitch'] : null,
+    S.scope === 'global' && ptNow ? [pct(ptNow, 1), pt ? 'a ver em português' : 'watching in Portuguese'] : null,
+  ].filter(Boolean).slice(0, 6);
   const stamp = dt(Date.now(), { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' });
   document.getElementById('shareCard').innerHTML = `
     <div class="sc-eyebrow"><i class="pulse"></i>${esc(t('sc_eyebrow'))}</div>
-    <div class="sc-title"><span class="grad">GTA VI</span></div>
+    <div class="sc-title" style="font-size:100px;margin:14px 0 2px"><span class="grad">GTA VI</span></div>
     <div class="sc-sub">${esc(PLATFORMS.map((p) => NAMES[p]).join(', '))}${S.src === 'twitch' ? '' : ' (' + esc(t('at_least')) + ')'}</div>
-    <div class="sc-hero"><div class="n tnum">${fmt(peak)}</div><div class="l">${esc(t('sc_peak'))}</div></div>
-    <div class="sc-grid">${tiles.map(([n, l]) => `<div class="sc-tile"><div class="n tnum">${n}</div><div class="l">${esc(l)}</div></div>`).join('')}</div>
+    <div class="sc-hero" style="margin-top:18px"><div class="n tnum" style="font-size:112px">${fmt(peak)}</div><div class="l">${esc(t('sc_peak'))}${when ? ` · ${esc(when)}` : ''}</div></div>
+    <div class="sc-grid" style="margin-top:20px;gap:14px">${tiles.map(([n, l]) => `<div class="sc-tile" style="padding:16px 20px"><div class="n tnum" style="font-size:42px">${esc(n)}</div><div class="l">${esc(l)}</div></div>`).join('')}</div>
     ${cardSpark(tot)}
-    <div class="sc-top"><div style="font-size:22px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.14em;font-weight:600">${esc(t('sc_top'))}</div>
-      ${rows.map((r, i) => `<div class="r"><span><b style="color:var(--text-muted);font-weight:500">${i + 1}</b> ${esc(r.name)} <span style="font-size:20px;color:var(--text-muted);display:flex;align-items:center;gap:8px"><i class="dot" style="background:${COLOR[r.platform]};width:12px;height:12px"></i>${NAMES[r.platform]}</span></span><span class="tnum">${fmt(r.viewers)}</span></div>`).join('')}</div>
+    <div class="sc-top" style="margin-top:14px;gap:8px"><div style="font-size:21px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.14em;font-weight:600">${esc(pt ? 'Recordes por streamer (desde sempre)' : 'Streamer records (all time)')}</div>
+      ${rows.map((r, i) => `<div class="r" style="font-size:24px;padding-bottom:7px"><span><b style="color:var(--text-muted);font-weight:500">${i + 1}</b> ${esc(r.name)} <span style="font-size:19px;color:var(--text-muted);display:flex;align-items:center;gap:8px"><i class="dot" style="background:${COLOR[r.platform]};width:12px;height:12px"></i>${NAMES[r.platform]} · ${esc(dt(r.at, { day: 'numeric', month: 'short' }))}</span></span><span class="tnum">${fmt(r.peak)}</span></div>`).join('')}</div>
     ${cardFoot(stamp)}`;
 }
 function fitCard() { const box = document.getElementById('cardScale'); document.getElementById('shareCard').style.transform = `scale(${box.clientWidth / 1080})`; }
