@@ -113,6 +113,7 @@ a.hp:hover, a.hp:focus-visible { border-color: var(--sun-1); }
 .hp-n { font-weight: 700; display: flex; gap: 6px; align-items: center; }
 .hp-t { font-size: 12.5px; color: var(--text-secondary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .hp-v { text-align: right; flex: none; } .hp-v b { display: block; font-size: 16px; } .hp-v small { color: var(--text-muted); font-size: 11.5px; }
+.fc-note { display: block; margin-top: 8px; font-size: 12.5px; color: var(--text-muted); }
 .hero-upd { color: var(--text-muted); font-size: 12.5px; margin-top: 14px; }
 
 .hero-chart { background: rgba(23,21,31,.78); border-radius: 20px; padding: 22px; box-shadow: 0 30px 80px -30px rgba(255,79,154,.35); }
@@ -298,7 +299,7 @@ main.nodata > section:not(:first-child), main.nodata > div, main.nodata #platfor
   .method { break-before: page; }
 }
 @media (max-width: 1000px) {
-  .hero .wrap, .grid2 { grid-template-columns: 1fr; }
+  .hero .wrap, .grid2 { grid-template-columns: minmax(0, 1fr); }
   .kpis, .kpis.four { grid-template-columns: repeat(2, 1fr); }
   .platforms { grid-template-columns: 1fr; }
   .grid2.even { grid-template-columns: 1fr; }
@@ -307,9 +308,38 @@ main.nodata > section:not(:first-child), main.nodata > div, main.nodata #platfor
 }
 @media (max-width: 560px) {
   .wrap { padding: 0 14px; }
-  .topbar .wrap { padding-top: 10px; padding-bottom: 10px; }
-  .brand { display: none; }
-  .controls { width: 100%; } #scopeSeg { flex: 1 1 100%; } #scopeSeg button { flex: 1; padding: 6px 2px; font-size: 12px; }
+  /* topo: 1.ª linha = marca + língua + descarregar; 2.ª = Mundo/Portugal/Em português. Não fica fixo (liberta o ecrã). */
+  .topbar { position: static; }
+  .topbar .wrap { padding-top: 8px; padding-bottom: 8px; gap: 8px; min-height: 0; }
+  .controls { display: contents; }
+  .brand { order: 1; margin-right: auto; font-size: 15px; gap: 8px; } .brand .logo { width: 26px; height: 26px; font-size: 14px; }
+  #langSeg { order: 2; } #langSeg button { padding: 5px 9px; font-size: 12px; }
+  #openCard { order: 3; padding: 7px 11px; font-size: 12px; }
+  #scopeSeg { order: 4; flex: 1 1 100%; } #scopeSeg button { flex: 1; padding: 7px 2px; font-size: 12.5px; }
+  .secnav a { padding: 9px 10px 8px; font-size: 13px; }
+  /* topo da página (hero) */
+  .hero { padding: 22px 0 26px; }
+  h1 { font-size: 60px; margin: 12px 0 8px; }
+  .lead { font-size: 15px; }
+  .hero-now { gap: 12px 22px; margin-top: 18px; }
+  .hero-now .big { font-size: 38px; }
+  .hero-now .lbl { font-size: 12px; }
+  .hp { padding: 10px; gap: 10px; } .hp-v b { font-size: 15px; } .hp-t { font-size: 12px; }
+  .ht-item { font-size: 12.5px; padding: 3px 9px 3px 3px; } .ht-n { max-width: 96px; }
+  .scope-note, .src-note { font-size: 12px; }
+  .src { gap: 8px; flex-wrap: nowrap; } .src > span:first-child { display: none; }
+  .src .seg { min-width: 0; } #srcSeg button { padding: 6px 8px; font-size: 12.5px; }
+  .hero-meta { gap: 8px; font-size: 12px; } .visitors { padding: 3px 9px; }
+  .hero-chart { padding: 16px; } .hero-chart .chart { height: 180px; }
+  .hero .wrap > div { min-width: 0; }
+}
+@media (max-width: 400px) {
+  .brand { font-size: 13.5px; } .brand > span:nth-child(2) { white-space: nowrap; }
+  #openCard { padding: 7px 9px; font-size: 11.5px; }
+  #langSeg button { padding: 5px 7px; }
+  #scopeSeg button { font-size: 12px; }
+  h1 { font-size: 52px; }
+  .hero-now .big { font-size: 34px; }
   .topbar .secnav .wrap { padding-top: 0; padding-bottom: 0; }
   .who .n { overflow: hidden; } .who .n .tag:not(.pt) { display: none; }
   .row { grid-template-columns: 22px 32px minmax(0, 1fr) auto; gap: 10px; }
@@ -425,10 +455,6 @@ main.nodata > section:not(:first-child), main.nodata > div, main.nodata #platfor
     <div class="panel" style="margin-top:12px">
       <h3 id="vidTitle"></h3><div class="desc" id="vidDesc"></div>
       <div class="videos" id="videos"></div>
-    </div>
-    <div class="panel" style="margin-top:12px">
-      <h3><span data-i="yt_new_title"></span><span class="info-slot" data-info="yt_new"></span></h3><div class="desc" data-i="yt_new_desc"></div>
-      <div class="chart sm"><canvas id="ytChart"></canvas></div>
     </div>
   </section>
 

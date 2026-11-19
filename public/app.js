@@ -48,7 +48,7 @@ const I18N = {
     board_desc: 'Agora, nas plataformas escolhidas', board_empty: 'Ninguém a transmitir nesta vista neste momento.',
     viewers: 'espectadores', views: 'visualizações',
     yt_sub: 'Lives e vídeos novos que mencionam "GTA VI", "GTA 6", "GTA6", "Grand Theft Auto VI" ou "Grand Theft Auto 6".',
-    yt_new_title: 'Vídeos novos de criadores portugueses', yt_new_desc: 'Uma barra por cada 3 horas. Contados um a um nos canais portugueses que o tracker segue.',
+    yt_new_title: 'Vídeos novos publicados', yt_new_desc: 'Uma barra por cada 3 horas. O número é uma estimativa do próprio YouTube.',
     lang_title: 'Twitch e Kick por língua', lang_desc: 'Espectadores na última recolha, 8 línguas com mais audiência',
     vid_title: { global: 'Os vídeos novos mais vistos', portugal: 'Vídeos novos de canais portugueses', luso: 'Vídeos novos em português' },
     vid_desc: { global: 'Publicados nas 3 horas antes da última recolha de vídeos', portugal: 'Vídeos sobre GTA VI dos últimos 7 dias, de criadores portugueses (RicFazeres, Wuant, SirKazzio e outros)', luso: 'Publicados nas 3 horas antes da última recolha de vídeos' }, no_videos: 'Ainda não há vídeos nesta vista.',
@@ -58,7 +58,7 @@ const I18N = {
     fc_track: 'Acertámos?', fc_track_desc: 'A previsão de cada dia, feita à meia-noite, comparada com o pico real',
     fc_th: ['Dia', 'Pico previsto', 'Pico real', 'Erro'],
     fc_insight: (pk, h, d) => `Pelo ritmo dos últimos dias, o próximo pico deve rondar <b>${pk}</b> pessoas, por volta das <b>${h}</b> de ${d}. O modelo é simples: repete o padrão de cada hora dos últimos 3 dias e ajusta pela tendência.`,
-    fc_wait: 'A previsão aparece quando houver pelo menos 24 horas de dados (depois do lançamento, conta só a partir dele).', fc_none: 'Ainda não há previsões terminadas para comparar.',
+    fc_wait: 'A previsão aparece quando houver pelo menos 8 horas de dados desde o lançamento.', fc_none: 'Ainda não há previsões terminadas para comparar.',
     method_title: 'Como é que isto é medido',
     method: `<p><b>Fontes.</b> Só APIs oficiais. O total mostrado por defeito conta só a Twitch, que é a única que dá todas as streams; podes somar a Kick e o YouTube, mas aí o número passa a ser "pelo menos". Na Twitch, todas as streams da categoria "Grand Theft Auto VI" (também conhecido como GTA VI, GTA 6 ou Grand Theft Auto 6). Na Kick, as 100 maiores streams da categoria, que é o limite da API pública. No YouTube, as 50 lives mais vistas que mencionam GTA VI, GTA 6, GTA6, Grand Theft Auto VI ou Grand Theft Auto 6, e uma segunda pesquisa orientada a português; os vídeos novos são contados de 3 em 3 horas e esse número é uma estimativa do YouTube.</p>
       <p><b>Portugal e português.</b> A Twitch e a Kick dizem a língua de cada stream, não o país. "Em português" junta todas as streams em português, incluindo as do Brasil. "Portugal" junta quatro sinais: uma lista de criadores portugueses (RicFazeres, Wuant, SirKazzio, Zorlak e outros), canais que o tracker já reconheceu como portugueses, títulos com marcas de Portugal ("PT-PT", "🇵🇹", "tuga") ou de português europeu ("a jogar", "connosco", "malta"), e, no YouTube, o país do canal ou o áudio em pt-PT. Os vídeos e as lives dos canais da lista são lidos diretamente, mesmo que não apareçam na pesquisa do YouTube. Ainda assim é uma contagem por baixo.</p>
@@ -117,7 +117,7 @@ const I18N = {
     board_desc: 'Right now, on the chosen platforms', board_empty: 'Nobody is streaming in this view right now.',
     viewers: 'viewers', views: 'views',
     yt_sub: 'Live streams and new videos that mention "GTA VI", "GTA 6", "GTA6", "Grand Theft Auto VI" or "Grand Theft Auto 6".',
-    yt_new_title: 'New videos from Portuguese creators', yt_new_desc: 'One bar per 3 hours. Counted one by one on the Portuguese channels the tracker follows.',
+    yt_new_title: 'New videos published', yt_new_desc: 'One bar per 3 hours. The number is YouTube\'s own estimate.',
     lang_title: 'Twitch and Kick by language', lang_desc: 'Viewers in the latest snapshot, top 8 languages',
     vid_title: { global: 'Most-viewed new videos', portugal: 'New videos from Portuguese channels', luso: 'New videos in Portuguese' },
     vid_desc: { global: 'Published in the 3 hours before the latest video snapshot', portugal: 'GTA VI videos from the last 7 days by Portuguese creators (RicFazeres, Wuant, SirKazzio and others)', luso: 'Published in the 3 hours before the latest video snapshot' }, no_videos: 'No videos in this view yet.',
@@ -127,7 +127,7 @@ const I18N = {
     fc_track: 'How close were we?', fc_track_desc: "Each day's forecast, made at midnight, against the actual peak",
     fc_th: ['Day', 'Forecast peak', 'Actual peak', 'Error'],
     fc_insight: (pk, h, d) => `Based on the last few days, the next peak should be around <b>${pk}</b> people, at about <b>${h}</b> on ${d}. The model is simple: it repeats each hour's pattern from the last 3 days and adjusts for the trend.`,
-    fc_wait: 'The forecast appears once there are at least 24 hours of data (after launch, it only counts from launch).', fc_none: 'No finished forecasts to compare yet.',
+    fc_wait: 'The forecast appears once there are at least 8 hours of data since launch.', fc_none: 'No finished forecasts to compare yet.',
     method_title: 'How this is measured',
     method: `<p><b>Sources.</b> Official APIs only. The total shown by default counts Twitch only, the one platform that gives every stream; you can add Kick and YouTube, but then the number becomes "at least". On Twitch, every stream in the "Grand Theft Auto VI" category (also known as GTA VI, GTA 6 or Grand Theft Auto 6). On Kick, the 100 biggest streams in the category, which is the public API's limit. On YouTube, the 50 most-watched live streams mentioning GTA VI, GTA 6, GTA6, Grand Theft Auto VI or Grand Theft Auto 6, plus a second, Portuguese-targeted search; new videos are counted every 3 hours and that number is YouTube's estimate.</p>
       <p><b>Portugal and Portuguese.</b> Twitch and Kick report each stream's language, not its country. "In Portuguese" counts every Portuguese-language stream, including Brazil. "Portugal" combines four signals: a list of Portuguese creators (RicFazeres, Wuant, SirKazzio, Zorlak and others), channels the tracker has already recognised as Portuguese, titles with Portugal markers ("PT-PT", "🇵🇹", "tuga") or European-Portuguese phrasing, and, on YouTube, the channel country or pt-PT audio. Videos and lives from listed channels are read directly, even when they don't show up in YouTube search. It still undercounts.</p>
@@ -166,7 +166,7 @@ const INFO = {
     kick: () => { const k = S.latest?.totals?.kick; return `A API pública da Kick devolve no máximo 100 streams por pedido. Com menos de 100, a lista é completa. Com 100 ou mais, vemos só as maiores${k?.min_v ? ` (agora a mais pequena tem ${fmt(k.min_v)} espectadores)` : ''}.`; },
     yt_live: 'O YouTube só devolve as cerca de 50 lives mais vistas que mencionam GTA VI. Lives pequenas ficam de fora.',
     yt_hourly: 'O YouTube tem uma quota diária grátis. Por isso as lives são lidas de hora a hora e os vídeos novos de 3 em 3 horas. Entre leituras, o valor repete-se.',
-    yt_new: 'O YouTube não diz quantos vídeos de GTA VI saem no total: a estimativa dele fica sempre perto de 480 mil e não é fiável, por isso não a mostramos. Aqui contamos os vídeos novos dos canais portugueses que seguimos, um a um.',
+    yt_new: 'Estimativa do próprio YouTube para os vídeos de GTA VI publicados em cada janela de 3 horas. É uma ordem de grandeza, não uma contagem exata. Em Portugal, os vídeos são contados um a um nos canais portugueses que o tracker segue.',
     portugal: 'Nenhuma plataforma diz o país do streamer. Usamos uma lista de criadores portugueses, canais já reconhecidos e marcas de Portugal no título. É sempre uma contagem por baixo.',
     map: 'O mapa mostra a língua da stream, não o país de quem vê. O português pinta Portugal, Brasil e países africanos de língua portuguesa.',
     weight: () => { const d = sampleOf(); return `Das ${d ? fmt(d.sample) : '5 000'} maiores streams da Twitch (todas as categorias), quantos espectadores são de GTA VI.${d?.min_v ? ` A amostra chega até streams com ${fmt(d.min_v)} espectadores; as mais pequenas ficam de fora.` : ''}`; },
@@ -179,7 +179,7 @@ const INFO = {
     kick: () => { const k = S.latest?.totals?.kick; return `Kick's public API returns at most 100 streams per request. With fewer than 100, the list is complete. With 100 or more we only see the biggest${k?.min_v ? ` (right now the smallest has ${fmt(k.min_v)} viewers)` : ''}.`; },
     yt_live: 'YouTube only returns about the 50 most-watched lives that mention GTA VI. Small lives are left out.',
     yt_hourly: 'YouTube has a free daily quota. That is why lives are read hourly and new videos every 3 hours. Between readings the value repeats.',
-    yt_new: "YouTube does not say how many GTA VI videos come out in total: its estimate always sits near 480K and is not reliable, so we do not show it. Here we count new videos from the Portuguese channels we follow, one by one.",
+    yt_new: "YouTube's own estimate of GTA VI videos published in each 3-hour window. It is a ballpark, not an exact count. For Portugal, videos are counted one by one on the Portuguese channels the tracker follows.",
     portugal: 'No platform tells us a streamer\'s country. We use a list of Portuguese creators, channels already recognised and Portugal markers in the title. It is always an undercount.',
     map: "The map shows the stream's language, not where viewers are. Portuguese colours Portugal, Brazil and the Portuguese-speaking African countries.",
     weight: () => { const d = sampleOf(); return `Of Twitch's ${d ? fmt(d.sample) : '5,000'} biggest streams (all categories), how many viewers are on GTA VI.${d?.min_v ? ` The sample reaches down to streams with ${fmt(d.min_v)} viewers; smaller ones are left out.` : ''}`; },
@@ -575,24 +575,6 @@ function renderCharts() {
   } else document.getElementById('tsInsight').textContent = '';
   document.getElementById('tsH2').textContent = T().ts_h2[S.metric];
 
-  // vídeos novos: só o número contado de verdade (Portugal); uma barra por janela de 3 h, sem espaços vazios
-  const nvB = new Map();
-  for (const p of points()) {
-    if (p.youtube?.nvpp == null || p.youtube.c || Date.parse(p.ts) < rangeStart()) continue;
-    const b = Math.floor(Date.parse(p.ts) / (3 * 3600e3));
-    nvB.set(b, Math.max(nvB.get(b) || 0, p.youtube.nvpp));
-  }
-  const nvK = [...nvB.keys()].sort((a, b) => a - b);
-  const nvLbl = (b) => `${dt(b * 3 * 3600e3, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}–${hhmm((b + 1) * 3 * 3600e3)}`;
-  mkOrUpdate('ytChart', {
-    type: 'bar',
-    data: { labels: nvK.map(nvLbl), datasets: [{ label: t('yt_new_title'), data: nvK.map((b) => nvB.get(b)), backgroundColor: COLOR.youtube, borderRadius: 4, borderSkipped: 'bottom', maxBarThickness: 36 }] },
-    options: { responsive: true, maintainAspectRatio: false, animation: false,
-      plugins: { tooltip: { callbacks: { label: (c) => ` ${fmt(c.parsed.y)} ${S.lang === 'pt' ? 'vídeos' : 'videos'}` } } },
-      scales: { x: { grid: { display: false }, ticks: { maxRotation: 0, autoSkip: true, maxTicksLimit: 8, callback: function (v) { return nvK.length ? dt(nvK[v] * 3 * 3600e3, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : ''; } } },
-                y: { beginAtZero: true, border: { display: false }, ticks: { precision: 0, callback: (v) => fmt(v) } } } },
-  });
-
   const langs = Object.entries(S.latest.languages || {}).sort((a, b) => b[1] - a[1]).slice(0, 8);
   const dn = (() => { try { return new Intl.DisplayNames([T().locale], { type: 'language' }); } catch { return null; } })();
   const lname = (c) => { try { const n = dn?.of(c); return n ? n[0].toUpperCase() + n.slice(1) : c; } catch { return c; } };
@@ -617,7 +599,8 @@ function renderForecast() {
     document.getElementById('fcInsight').textContent = t('fc_wait');
   } else {
     const pk = F.peakOf(f);
-    document.getElementById('fcInsight').innerHTML = T().fc_insight(fmt(pk.v), esc(hhmm(pk.ts)), esc(dt(pk.ts, { weekday: 'long' })));
+    document.getElementById('fcInsight').innerHTML = T().fc_insight(fmt(pk.v), esc(hhmm(pk.ts)), esc(dt(pk.ts, { weekday: 'long' })))
+      + (f.partial ? ` <span class="fc-note">${esc(S.lang === 'pt' ? 'Previsão provisória: ainda há menos de 24 h de dados desde o lançamento. As horas que ainda não vimos ficam ao nível das últimas 3 horas.' : 'Provisional forecast: there are under 24 hours of data since launch. Hours we have not seen yet stay at the level of the last 3 hours.')}</span>` : '');
   }
   // histórico de previsões vs real
   const days = Object.entries(S.predictions?.days || {}).sort((a, b) => b[0].localeCompare(a[0]));
@@ -681,12 +664,10 @@ function renderYoutube() {
   document.getElementById('ytBoardT').textContent = t('yt_board');
   const reads = points().filter((p) => p.youtube && !p.youtube.c);
   const last = reads[reads.length - 1];
-  const nvPt = [...points()].reverse().find((p) => p.youtube?.nvpp != null && !p.youtube.c);
   const tiles = [
     [t('yt_k_viewers'), last ? fmt(last.youtube[k.v]) : '—', last && S.latest?.totals?.youtube?.min_v ? t('yt_partial')(fmt(S.latest.totals.youtube.min_v)) : (last ? t('top50') : ''), 'yt_live'],
     [t('yt_k_lives'), last ? fmt(last.youtube[k.s]) : '—', S.scope === 'global' ? t('top50') : '', null],
     [t('yt_k_read'), last ? hhmm(last.ts) : '—', t('hourly'), 'yt_hourly'],
-    [t('yt_k_vids'), nvPt ? fmt(nvPt.youtube.nvpp) : '—', S.lang === 'pt' ? 'de Portugal, nas últimas 3 h' : 'from Portugal, last 3 h', 'yt_new'],
   ];
   document.getElementById('ytKpis').innerHTML = tiles.map(([l, v, n, info]) => `<div class="kpi"><div class="label">${esc(l)}${info ? infoBtn(info) : ''}</div><div class="value tnum">${esc(v)}</div><div class="note">${esc(n || '')}</div></div>`).join('');
   const yp = reads.filter((p) => Date.parse(p.ts) >= rangeStart());

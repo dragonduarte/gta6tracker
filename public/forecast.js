@@ -27,7 +27,9 @@ export function forecast(points, value, fromTs, hours = 24, launchTs = Date.pars
   }
   let series = [...buckets].sort((a, b) => a[0] - b[0]).map(([t, [s, n]]) => ({ t, v: s / n }));
   if (fromTs > launchTs) series = series.filter((x) => x.t >= launchTs);   // regime pós-lançamento
-  if (series.length < 24) return null;                                     // precisa de pelo menos 1 dia
+  // Previsão provisória: depois do lançamento, com 8 a 23 horas de dados (ver em baixo). Com 24 h ou mais, só dados pós-lançamento.
+  const partial = series.length < 24;
+  if (partial && (fromTs <= launchTs || series.length < 8)) return null;
   const last = series[series.length - 1].t;
 
   // tendência
@@ -36,11 +38,15 @@ export function forecast(points, value, fromTs, hours = 24, launchTs = Date.pars
   const recent = avg(win(last - 24 * HOUR, last)), before = avg(win(last - 48 * HOUR, last - 24 * HOUR));
   const trend = recent && before ? Math.min(1.5, Math.max(0.6, recent / before)) : 1;
 
-  // perfil por hora do dia (últimos 3 dias)
+  // perfil por hora do dia (últimos 3 dias). O pico das primeiras 3 horas do lançamento não se repete, por isso não entra.
+  const spike = (t) => fromTs > launchTs && t >= launchTs && t < launchTs + 3 * HOUR;
   const byHour = Array.from({ length: 24 }, () => []);
-  for (const x of series.filter((x) => x.t > last - 72 * HOUR)) byHour[lisbonHour(x.t)].push(x.v);
+  for (const x of series.filter((x) => x.t > last - 72 * HOUR && !spike(x.t))) byHour[lisbonHour(x.t)].push(x.v);
   const overall = avg(series.slice(-24).map((x) => x.v));
-  const profile = byHour.map((a) => avg(a) ?? overall);
+  // horas sem dados: na previsão provisória ficam ao nível das últimas 3 horas (não se inventa uma forma que ainda não vimos)
+  const fill = partial ? avg(series.slice(-3).map((x) => x.v)) : overall;
+  let profile = byHour.map((a) => avg(a) ?? fill);
+  profile = profile.map((v) => v ?? overall);
 
   const out = [];
   const start = Math.ceil(fromTs / HOUR) * HOUR;
@@ -48,6 +54,7 @@ export function forecast(points, value, fromTs, hours = 24, launchTs = Date.pars
     const t = start + i * HOUR;
     out.push({ ts: t, v: Math.max(0, Math.round(profile[lisbonHour(t)] * trend)) });
   }
+  out.partial = partial;
   return out;
 }
 
