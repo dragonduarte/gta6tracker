@@ -11,7 +11,8 @@ import { redact, notPortugal, twitchSnapshot, twitchExtras, kickSnapshot, youtub
 import { forecast, peakOf } from '../public/forecast.js';
 import PORTUGAL_LIST from '../portugal.js';
 
-const LAUNCH = Date.parse('2026-11-19T00:00:00Z');
+// lançamento mundial: meia-noite de 19/11 na Nova Zelândia = 11:00 de 18/11 em Lisboa
+const LAUNCH = Date.parse('2026-11-18T11:00:00Z');
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const PUB = path.join(ROOT, 'public', 'data');
@@ -142,9 +143,11 @@ async function run() {
     const big = r.list.filter((x) => x.viewers >= thr);
     const sets = { g: new Set(big.map((x) => x.id)), p: new Set(big.filter((x) => x.lang === 'pt').map((x) => x.id)), q: new Set(big.filter((x) => x.portugal).map((x) => x.id)) };
     const all = new Set(r.list.map((x) => x.id));
-    nextSets[k] = { ...Object.fromEntries(Object.entries(sets).map(([n, v]) => [n, [...v]])), a: [...all], t: thr };
+    nextSets[k] = { ...Object.fromEntries(Object.entries(sets).map(([n, v]) => [n, [...v]])), a: [...all], t: thr, c: r.complete !== false };
     const prevSets = liveSets[k];
     if (!prevSets || !liveSets.ts || now - Date.parse(liveSets.ts) > 25 * 60e3 || now <= Date.parse(liveSets.ts)) continue;
+    // lista completa só se compara com outra lista completa (uma recolha cortada a meio daria milhares de "saídas" falsas)
+    if (thr === 0 && prevSets.c !== true) continue;
     const oldAll = new Set(prevSets.a || prevSets.g || []);
     const f = {};
     for (const [n, cur] of Object.entries(sets)) {
@@ -158,6 +161,20 @@ async function run() {
 
   // ---- histórico
   const history = readJSON(path.join(PUB, 'history.json'), { points: [] });
+  // correção única (19/11): entre as 15:10 e esta correção a Twitch foi lida só em parte (a paginação parava cedo).
+  // Os espectadores ficam (as maiores streams vêm primeiro), mas o número de streams, as contas por tamanho
+  // e as entradas/saídas dessas recolhas estavam errados e saem. A recolha em que só vieram < 1 000 streams sai toda.
+  if (!history.fix_tw_pages) {
+    const from = Date.parse('2026-11-19T15:05:00Z');
+    history.points = (history.points || []).filter((p) => !(Date.parse(p.ts) >= from && p.twitch?.s != null && p.twitch.s < 1000 && p.twitch.si != null));
+    for (const p of history.points) {
+      const tw = p.twitch;
+      if (!tw || Date.parse(p.ts) < from || tw.si == null) continue;
+      for (const f of ['s', 'ps', 'pps', 'si', 'so', 'psi', 'pso', 'ppsi', 'ppso', 'sz', 'sv', 'ad', 'md', 'psz', 'psv', 'pad', 'pmd', 'ppsz', 'ppsv', 'ppad', 'ppmd']) delete tw[f];
+      if (p.kick) for (const f of ['si', 'so', 'psi', 'pso', 'ppsi', 'ppso', 'ft']) delete p.kick[f];
+    }
+    history.fix_tw_pages = new Date().toISOString();
+  }
   const point = { ts };
   // YouTube não consultado nesta recolha: repete o último valor (marcado com c:1) para os totais não caírem
   if (!res.youtube) {
@@ -187,7 +204,13 @@ async function run() {
   // quem domina o top 10 (todas as plataformas juntas)
   const top10all = Object.values(res).flatMap((r) => r.list).sort((a, b) => b.viewers - a.viewers).slice(0, 10);
   if (top10all.length) point.mix = Object.fromEntries(Object.keys(res).map((k) => [k, top10all.filter((s) => s.platform === k).length]));
-  history.points = history.points.filter((p) => p.ts !== ts); // re-run no mesmo intervalo substitui
+  // re-run no mesmo intervalo substitui, mas uma plataforma que falhou agora mantém o valor que já lá estava
+  const same = history.points.find((p) => p.ts === ts);
+  if (same) {
+    for (const k of ['twitch', 'kick', 'youtube']) if (same[k] && (!point[k] || (point[k].c && !same[k].c))) point[k] = same[k];
+    if (!point.mix && same.mix) point.mix = same.mix;
+  }
+  history.points = history.points.filter((p) => p.ts !== ts);
   if (Object.keys(point).length > 1) history.points.push(point);
   history.points.sort((a, b) => a.ts.localeCompare(b.ts));
   // compactação: pontos com mais de 3 dias ficam 1 por hora (o mais próximo da hora certa)
@@ -233,6 +256,22 @@ async function run() {
   for (const b of [hall.all, hall.first24]) for (const h of Object.values(b || {})) if (h.portugal && notPortugal(h.id, h.name)) h.portugal = false;
   for (const D of Object.values(hall.days || {})) for (const [k, v] of Object.entries(D?.portugal?.top || {})) if (notPortugal(v.id, v.name)) delete D.portugal.top[k];
   const inFirst24 = now.getTime() >= LAUNCH && now.getTime() < LAUNCH + 24 * 3600e3;
+  // a hora do lançamento mudou (era 19/11 00:00, passou a 18/11 11:00): refaz as "primeiras 24 h" uma vez,
+  // só com picos dentro da nova janela. Fontes: o recorde geral (se o pico foi na janela), os recordes
+  // antigos das 24 h que caem na janela e as séries horárias dos 150 maiores. Nada mais é alterado.
+  if (hall.f24_launch !== LAUNCH) {
+    const a = LAUNCH, b = LAUNCH + 24 * 3600e3, inW = (t) => t >= a && t < b;
+    const nb = {};
+    const put = (key, h, peak, at) => { if (peak >= 50 && (!nb[key] || peak > nb[key].peak)) nb[key] = { ...h, peak, at }; };
+    for (const [key, h] of Object.entries(hall.all || {})) if (inW(Date.parse(h.at))) put(key, h, h.peak, h.at);
+    for (const [key, h] of Object.entries(hall.first24 || {})) if (inW(Date.parse(h.at))) put(key, h, h.peak, h.at);
+    const ser = readJSON(path.join(PUB, 'streamers.json'), {});
+    for (const [key, r] of Object.entries(ser)) {
+      const base = hall.all?.[key] || hall.first24?.[key]; if (!base) continue;
+      for (const [hi, v] of r.pts || []) { const t = hi * 3600e3; if (inW(t) || inW(t + 3599e3)) put(key, base, v, new Date(Math.max(t, a)).toISOString()); }
+    }
+    hall.first24 = nb; hall.f24_launch = LAUNCH;
+  }
   const bump = (bucket, s) => {
     const key = `${s.platform}:${s.id}`, cur = bucket[key];
     if (!cur || s.viewers > cur.peak) bucket[key] = { ...strip(s), peak: s.viewers, at: ts, avatar: s.avatar || cur?.avatar || null };

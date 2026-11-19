@@ -7,7 +7,7 @@ const L = {
   en: { loc: 'en-US', lbl: { global: 'watching now, worldwide', portugal: 'watching Portuguese streams', luso: 'watching Portuguese-language streams' }, sc: { global: '🌍 World', portugal: '🇵🇹 Portugal', luso: '🗣️ In Portuguese' }, until: 'until launch', since: 'since launch', by: 'by', go: 'Open dashboard ↗' },
 }[lang];
 const K = { global: ['v', 'viewers'], portugal: ['ppv', 'ptpt_viewers'], luso: ['pv', 'pt_viewers'] }[scope];
-const LAUNCH = Date.parse(C.launch || '2026-11-19T00:00:00Z') || Date.parse('2026-11-19T00:00:00Z');
+const LAUNCH = Date.parse(C.launch || '2026-11-18T11:00:00Z') || Date.parse('2026-11-18T11:00:00Z');
 document.getElementById('scope').textContent = L.sc[scope];
 document.getElementById('l').textContent = L.lbl[scope];
 // crédito do autor, construído com DOM (sem HTML a partir de texto)

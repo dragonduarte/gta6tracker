@@ -205,6 +205,24 @@ section[id] { scroll-margin-top: 112px; }
 .plat .pct { font-size: 12.5px; font-weight: 600; color: var(--text-secondary); margin-left: 8px; font-family: var(--sans); letter-spacing: 0; }
 .kpis { margin-top: 12px; grid-template-columns: repeat(4, 1fr); }
 .fc-row { margin-top: 12px; grid-template-columns: 1fr 1fr; }
+.flowp { margin-top: 12px; }
+.flow-grid { display: grid; grid-template-columns: 230px minmax(0, 1fr); gap: 20px; align-items: stretch; }
+.flow-side { display: flex; flex-direction: column; gap: 0; border-right: 1px solid var(--border); padding-right: 20px; }
+.flow-side .fh { color: var(--text-muted); font-size: 12.5px; margin-bottom: 6px; }
+.fs { padding: 10px 0; border-top: 1px solid var(--border); display: grid; grid-template-columns: 22px 1fr; column-gap: 8px; align-items: baseline; }
+.fs:first-of-type { border-top: 0; }
+.fs .ic { font-weight: 700; font-size: 15px; }
+.fs .n { font-family: var(--font-display); font-size: 28px; font-weight: 700; letter-spacing: -.02em; line-height: 1.05; }
+.fs .l { grid-column: 2; color: var(--text-secondary); font-size: 12.5px; margin-top: 2px; }
+.fs.net .n { font-size: 22px; }
+@media (max-width: 760px) {
+  .flow-grid { grid-template-columns: 1fr; gap: 12px; }
+  .flow-side { border-right: 0; padding-right: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+  .flow-side .fh { grid-column: 1 / -1; margin: 0; }
+  .fs { border-top: 0; padding: 0; display: block; }
+  .fs .ic { display: inline; font-size: 14px; margin-right: 3px; } .fs .l { display: block; }
+  .fs .n, .fs.net .n { font-size: 21px; }
+}
 
 /* listas */
 .board { display: flex; flex-direction: column; }
@@ -426,14 +444,17 @@ main.nodata > section:not(:first-child), main.nodata > div, main.nodata #platfor
         <div class="board" id="board"></div>
       </div>
     </div>
-    <div class="panel" style="margin-top:12px">
-      <div class="card-head"><div><h3><span id="flowT"></span><span class="info-slot" data-info="flow"></span></h3><div class="desc" id="flowD"></div></div><div class="legend" id="flowLegend"></div></div>
-      <p class="insight" id="flowInsight" style="margin:0 0 8px"></p>
-      <div class="chart sm"><canvas id="flowChart" aria-label="Streams a entrar e a sair"></canvas></div>
-    </div>
     <div class="grid2 fc-row" id="secForecast">
       <div class="panel"><h3 data-i="fc_title"></h3><p class="insight" id="fcInsight" style="margin-bottom:0"></p></div>
       <div class="panel"><h3 data-i="fc_track"></h3><div class="desc" data-i="fc_track_desc"></div><div id="fcTable"></div></div>
+    </div>
+    <div class="panel flowp">
+      <div class="card-head"><div><h3><span id="flowT"></span><span class="info-slot" data-info="flow"></span></h3><div class="desc" id="flowD"></div></div><div class="legend" id="flowLegend"></div></div>
+      <div class="flow-grid">
+        <div class="flow-side" id="flowSide"></div>
+        <div class="chart sm"><canvas id="flowChart" aria-label="Streams a entrar e a sair"></canvas></div>
+      </div>
+      <p class="insight" id="flowInsight" style="margin:10px 0 0"></p>
     </div>
   </section>
 

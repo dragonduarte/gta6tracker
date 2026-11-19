@@ -4,7 +4,7 @@ const CFG = window.SITE_CONFIG || {};               // editar em public/config.j
 const AUTHOR = String(CFG.author || 'Duarte Rodrigues');
 const AUTHOR_URL = (() => { try { const u = new URL(CFG.authorUrl); if (u.protocol === 'https:') return u.href; } catch { /* usa o padrão */ } return 'https://www.linkedin.com/in/duartenrodrigues26/'; })();
 const PUBLIC_DOWNLOADS = CFG.publicDownloads !== false;
-const LAUNCH = new Date(CFG.launch || '2026-11-19T00:00:00Z');
+const LAUNCH = new Date(CFG.launch || '2026-11-18T11:00:00Z');
 const LIVE_EVERY = 120e3, HISTORY_EVERY = 5 * 60e3, VISIT_EVERY = 300e3;
 const ALL = ['twitch', 'kick', 'youtube'];
 const SRC_SETS = { twitch: ['twitch'], kick: ['twitch', 'kick'], all: ALL };
@@ -520,7 +520,7 @@ const launchLine = { id: 'launch', afterDatasetsDraw(ch) {
   const g = ch.ctx; g.save(); g.strokeStyle = css('--text-muted'); g.setLineDash([4, 4]); g.lineWidth = 1;
   g.beginPath(); g.moveTo(px, top); g.lineTo(px, bottom); g.stroke(); g.setLineDash([]);
   g.fillStyle = css('--text-secondary'); g.font = `600 12px ${css('--sans')}`;
-  const lbl = S.lang === 'pt' ? `Lançamento em Portugal ${new Date(LAUNCH).toLocaleString(T().locale, { timeZone: 'Europe/Lisbon', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}` : `Launch ${dt(LAUNCH, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}`;
+  const lbl = `${S.lang === 'pt' ? 'Lançamento' : 'Launch'} ${dt(LAUNCH, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}`;
   const w = g.measureText(lbl).width, flip = px + 6 + w > right; g.textAlign = flip ? 'right' : 'left'; g.fillText(lbl, flip ? px - 6 : px + 6, top + 12); g.restore();
 } };
 const tickFor = (xs) => { const span = xs.length > 1 ? xs[xs.length - 1] - xs[0] : 0;
@@ -683,40 +683,64 @@ function renderYoutube() {
 
 /* ============================================================ entradas e saídas de streams */
 function renderFlow() {
-  const keys = { global: ['si', 'so'], luso: ['psi', 'pso'], portugal: ['ppsi', 'ppso'] }[S.scope];
+  const pt = S.lang === 'pt', L = (x, y) => (pt ? x : y);
+  const keys = { global: ['si', 'so', 's'], luso: ['psi', 'pso', 'ps'], portugal: ['ppsi', 'ppso', 'pps'] }[S.scope];
   document.getElementById('flowT').textContent = t('flow_title');
   const kFt = PLATFORMS.includes('kick') ? [...points()].reverse().find((p) => p.kick?.ft)?.kick.ft : null;
-  document.getElementById('flowD').textContent = t('flow_desc') + (kFt ? (S.lang === 'pt' ? `. Na Kick (só top 100) contam só canais com ${fmt(kFt)}+ espectadores.` : `. On Kick (top 100 only), only channels with ${fmt(kFt)}+ viewers count.`) : '');
+  document.getElementById('flowD').textContent = t('flow_desc') + (kFt ? L(`. Na Kick (só top 100) contam só canais com ${fmt(kFt)}+ espectadores.`, `. On Kick (top 100 only), only channels with ${fmt(kFt)}+ viewers count.`) : '');
   const pts = points().filter((p) => Date.parse(p.ts) >= rangeStart());
   const byH = new Map();
   for (const p of pts) {
     let has = false, i = 0, o = 0;
     for (const pl of ['twitch', 'kick']) if (PLATFORMS.includes(pl) && p[pl]?.[keys[0]] != null) { has = true; i += p[pl][keys[0]]; o += p[pl][keys[1]] || 0; }
     if (!has) continue;
-    const h = Math.floor(Date.parse(p.ts) / 3600e3) * 3600e3, e = byH.get(h) || { i: 0, o: 0 };
-    e.i += i; e.o += o; byH.set(h, e);
+    const h = Math.floor(Date.parse(p.ts) / 3600e3) * 3600e3, e = byH.get(h) || { i: 0, o: 0, n: 0 };
+    e.i += i; e.o += o; e.n++; byH.set(h, e);
   }
   const hs = [...byH.keys()].sort((a, b) => a - b);
-  // última hora (as 6 recolhas mais recentes com dados)
+  // última hora (as recolhas dos últimos ~60 min com dados)
   const refTs = points().length ? Date.parse(lastPoint().ts) : Date.now();
-  const recent = points().filter((p) => refTs - Date.parse(p.ts) <= 65 * 60e3);
+  const recent = points().filter((p) => refTs - Date.parse(p.ts) <= 55 * 60e3);
   let ri = 0, ro = 0, rn = 0;
   for (const p of recent) for (const pl of ['twitch', 'kick']) if (PLATFORMS.includes(pl) && p[pl]?.[keys[0]] != null) { ri += p[pl][keys[0]]; ro += p[pl][keys[1]] || 0; rn++; }
-  document.getElementById('flowInsight').innerHTML = rn ? T().flow_insight(ri, ro, ri - ro) : esc(t('flow_wait'));
-  document.getElementById('flowChart').parentElement.hidden = !hs.length;
-  if (!hs.length) return;
+  const live = ['twitch', 'kick'].filter((pl) => PLATFORMS.includes(pl)).reduce((a, pl) => a + (lastPoint()?.[pl]?.[keys[2]] || 0), 0);
   const UP = '#3987e5', DOWN = '#e8864a';
-  document.getElementById('flowLegend').innerHTML = `<span><i class="dot" style="background:${UP}"></i>${esc(t('flow_in'))}</span><span><i class="dot" style="background:${DOWN}"></i>${esc(t('flow_out'))}</span>`;
+  const side = document.getElementById('flowSide');
+  side.innerHTML = rn ? `<div class="fh">${L('Na última hora', 'In the last hour')}</div>
+    <div class="fs"><span class="ic" style="color:${UP}">↑</span><span class="n tnum">${fmt(ri)}</span><span class="l">${L('começaram a transmitir', 'started streaming')}</span></div>
+    <div class="fs"><span class="ic" style="color:${DOWN}">↓</span><span class="n tnum">${fmt(ro)}</span><span class="l">${L('terminaram', 'stopped')}</span></div>
+    <div class="fs net"><span class="ic">=</span><span class="n tnum">${ri - ro >= 0 ? '+' : '−'}${fmt(Math.abs(ri - ro))}</span><span class="l">${live && ri ? L(`saldo · ${Math.round(ri / live * 100)}% dos ${fmt(live)} em direto começaram nesta hora`, `net · ${Math.round(ri / live * 100)}% of the ${fmt(live)} live started this hour`) : L('saldo de canais em direto', 'net change in live channels')}</span></div>`
+    : `<div class="fh">${esc(t('flow_wait'))}</div>`;
+  document.getElementById('flowChart').parentElement.hidden = !hs.length;
+  // só horas completas para os destaques (a hora atual ainda está a meio)
+  const full = hs.filter((h) => byH.get(h).n >= 5);
+  const bi = full.length ? full.reduce((m, h) => (byH.get(h).i > byH.get(m).i ? h : m)) : null;
+  const bo = full.length ? full.reduce((m, h) => (byH.get(h).o > byH.get(m).o ? h : m)) : null;
+  const hh = (h) => dt(h, { weekday: 'short', hour: '2-digit', minute: '2-digit' });
+  document.getElementById('flowInsight').innerHTML = full.length >= 2
+    ? L(`A hora com mais estreias foi <b>${esc(hh(bi))}</b> (${fmt(byH.get(bi).i)} canais a começar). A que mais canais perdeu foi <b>${esc(hh(bo))}</b> (${fmt(byH.get(bo).o)} a terminar).`,
+        `The busiest hour for new streams was <b>${esc(hh(bi))}</b> (${fmt(byH.get(bi).i)} started). The most channels stopped at <b>${esc(hh(bo))}</b> (${fmt(byH.get(bo).o)} ended).`)
+    : '';
+  if (!hs.length) return;
+  document.getElementById('flowLegend').innerHTML = `<span><i class="dot" style="background:${UP}"></i>${esc(t('flow_in'))}</span><span><i class="dot" style="background:${DOWN}"></i>${esc(t('flow_out'))}</span><span><i class="dot" style="background:var(--text-primary)"></i>${esc(L('Saldo', 'Net'))}</span>`;
+  const cur = (h) => byH.get(h).n < 5;   // hora ainda a decorrer: mais clara
+  const alpha = (c, h) => (cur(h) ? c + '66' : c);
   mkOrUpdate('flowChart', {
     type: 'bar', plugins: [launchLine],
     data: { datasets: [
-      { label: t('flow_in'), data: hs.map((h) => ({ x: h, y: byH.get(h).i })), backgroundColor: UP, borderRadius: 3, borderSkipped: false, maxBarThickness: 18, stack: 'f' },
-      { label: t('flow_out'), data: hs.map((h) => ({ x: h, y: -byH.get(h).o })), backgroundColor: DOWN, borderRadius: 3, borderSkipped: false, maxBarThickness: 18, stack: 'f' },
+      { label: t('flow_in'), data: hs.map((h) => ({ x: h, y: byH.get(h).i })), backgroundColor: hs.map((h) => alpha(UP, h)), borderRadius: 4, borderSkipped: false, maxBarThickness: 22, stack: 'f', order: 2 },
+      { label: t('flow_out'), data: hs.map((h) => ({ x: h, y: -byH.get(h).o })), backgroundColor: hs.map((h) => alpha(DOWN, h)), borderRadius: 4, borderSkipped: false, maxBarThickness: 22, stack: 'f', order: 2 },
+      { type: 'line', label: L('Saldo', 'Net'), data: hs.map((h) => ({ x: h, y: byH.get(h).i - byH.get(h).o })), showLine: false, pointRadius: 4.5, pointHoverRadius: 6, pointBackgroundColor: '#f3f1f7', pointBorderColor: '#17151f', pointBorderWidth: 2, order: 1 },
     ] },
-    options: { responsive: true, maintainAspectRatio: false, parsing: false, animation: false,
-      plugins: { tooltip: { callbacks: { title: (it) => dt(it[0].parsed.x, { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }), label: (c) => ` ${c.dataset.label}: ${fmt(Math.abs(c.parsed.y))}` } } },
-      scales: { x: { type: 'linear', stacked: true, offset: true, min: hs.length ? hs[0] - 1800e3 : undefined, max: hs.length ? hs[hs.length - 1] + 1800e3 : undefined, grid: { display: false }, ticks: { maxTicksLimit: 7, maxRotation: 0, callback: tickFor(hs) } },
-                y: { stacked: true, border: { display: false }, ticks: { callback: (v) => fmtC(Math.abs(v)) } } } },
+    options: { responsive: true, maintainAspectRatio: false, parsing: false, animation: false, interaction: { mode: 'nearest', axis: 'x', intersect: false },
+      plugins: { legend: { display: false }, tooltip: { callbacks: {
+        title: (it) => dt(it[0].parsed.x, { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) + (cur(it[0].parsed.x) ? L(' (em curso)', ' (in progress)') : ''),
+        label: (c) => c.datasetIndex === 2 ? ` ${c.dataset.label}: ${c.parsed.y >= 0 ? '+' : '−'}${fmt(Math.abs(c.parsed.y))}` : ` ${c.dataset.label}: ${fmt(Math.abs(c.parsed.y))}` } } },
+      scales: { x: { type: 'linear', stacked: true, offset: true, min: hs[0] - 1800e3, max: hs[hs.length - 1] + 1800e3, grid: { display: false },
+                  // marcas só nas horas certas (no máximo ~7)
+                  afterBuildTicks: (ax) => { const k = Math.max(1, Math.ceil(hs.length / 7)); ax.ticks = hs.filter((_, i) => i % k === 0).map((value) => ({ value })); },
+                  ticks: { maxRotation: 0, autoSkip: false, callback: tickFor(hs) } },
+                y: { stacked: true, border: { display: false }, grid: { color: (c) => (c.tick.value === 0 ? '#4a4658' : '#26232f') }, ticks: { callback: (v) => fmtC(Math.abs(v)) } } } },
   });
 }
 

@@ -16,7 +16,7 @@ const lisbonHour = (t) => Number(new Intl.DateTimeFormat('en-GB', { hour: '2-dig
  * @param {number} launchTs  momento do lançamento (ms)
  * @returns {{ts:number, v:number}[] | null}
  */
-export function forecast(points, value, fromTs, hours = 24, launchTs = Date.parse('2026-11-19T00:00:00Z')) {
+export function forecast(points, value, fromTs, hours = 24, launchTs = Date.parse('2026-11-18T11:00:00Z')) {
   // médias por hora (a recolha é de 10 em 10 min; o modelo trabalha à hora)
   const buckets = new Map();
   for (const p of points) {

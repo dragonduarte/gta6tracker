@@ -80,3 +80,21 @@ test('Segurança: contador de visitas só aceita o próprio site', async () => {
   await v({ method: 'POST', url: '/api/visitors', headers: { host: 'a.com' }, body: { first: true } }, r);
   assert.equal(r.code, 403);
 });
+
+test('Twitch: streams com 0 espectadores a meio da lista não cortam a recolha', async () => {
+  resetUsage();
+  // 3 páginas; a 1.ª já tem uma stream com 0 espectadores (a Twitch não ordena de forma estrita);
+  // a 3.ª devolve um cursor mas só repetidos -> fim
+  const mk = (from, n, zeroAt = -1) => Array.from({ length: n }, (_, i) => ({ id: 's' + (from + i), user_id: String(from + i), user_login: 'u' + (from + i), user_name: 'U', viewer_count: i === zeroAt ? 0 : 100 - i, language: 'en', title: '', tags: [] }));
+  const pages = { '': [mk(0, 100, 3), 'c1'], c1: [mk(100, 100), 'c2'], c2: [mk(150, 50), 'c3'] };
+  globalThis.fetch = async (url) => {
+    url = String(url);
+    if (url.includes('oauth2/token')) return J({ access_token: 'T', expires_in: 5000 });
+    if (url.includes('/helix/games?')) return J({ data: [{ id: '9', name: 'Grand Theft Auto VI', box_art_url: '' }] });
+    if (url.includes('/helix/streams?')) { const after = new URL(url).searchParams.get('after') || ''; const [data, c] = pages[after] || [[], null]; return J({ data, pagination: c ? { cursor: c } : {} }); }
+    return J({ data: [] });
+  };
+  const r = await twitchSnapshot({ clientId: 'x', clientSecret: 'y' });
+  assert.equal(r.streams, 200);
+  assert.equal(r.complete, true);
+});

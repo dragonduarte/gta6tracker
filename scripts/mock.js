@@ -2,7 +2,7 @@
 // node scripts/mock.js [fim] [início] -> preenche public/data e data/ com dias simulados (NÃO fazer commit disto).
 import { fileURLToPath } from 'node:url';
 
-const LAUNCH = Date.parse('2026-11-19T00:00:00Z');
+const LAUNCH = Date.parse('2026-11-18T11:00:00Z');
 const names = ['ShadowRaven', 'Kaique', 'Gaules', 'xQcOW', 'summit1g', 'Tuga_Gamer', 'Rubius', 'ibai', 'LobaLX', 'ZeroPT', 'Coringa', 'NataPT', 'Pato', 'MiguelPlays', 'Lucasbrnx'];
 const rnd = (a, b) => a + Math.random() * (b - a);
 

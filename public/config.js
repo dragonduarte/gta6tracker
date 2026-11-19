@@ -9,8 +9,8 @@ window.SITE_CONFIG = {
   // false = o botão só aparece se abrires o site com ?owner=1 no fim do link
   publicDownloads: true,
 
-  // Hora do lançamento (UTC). 00:00Z = meia-noite em Lisboa no dia 19.
-  launch: '2026-11-19T00:00:00Z',
+  // Hora do lançamento (UTC). Meia-noite de 19/11 na Nova Zelândia = 11:00 de 18/11 em Lisboa.
+  launch: '2026-11-18T11:00:00Z',
 
   // 💸 BANNER "COMPRA O GTA VI" — o teu link de afiliado da Instant Gaming (só aceita links instant-gaming.com).
   // Se apagares o link ou deixares "COLOCA_AQUI", o banner fica escondido.
